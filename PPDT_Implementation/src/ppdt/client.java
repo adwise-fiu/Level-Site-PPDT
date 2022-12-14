@@ -31,6 +31,8 @@ public class client {
 			if (value.equals("f") || (value.equals("no"))) {
 				value = "0";
 			}
+			// WARNING: SEE LevelOrderTreeTraversalGetValues
+			// I DONT KNOW HOW THE "other" edge case is handled, but IT SHOULD BE MANAGED HERE!
 			values.put(key, value);
 		}
 		br.close();
