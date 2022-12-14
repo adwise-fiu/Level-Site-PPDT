@@ -50,7 +50,7 @@ public class server_site {
 
 				ClassifierTree p = q.peek();
 				q.remove();
-				
+
 				DataInfo node_info = null;
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
@@ -81,7 +81,8 @@ public class server_site {
 								threshold=1;
 
 							}
-						} else if (rightSideChar[1]=='!'){
+						}
+						else if (rightSideChar[1]=='!'){
 
 							type=4;
 							if (rightSideChar[2]=='='){
@@ -105,19 +106,22 @@ public class server_site {
 								rightValue = new char[rightSideChar.length - 4];
 								for (int k = 4; k < rightSideChar.length; k++)
 									rightValue[k - 4] = rightSideChar[k];
-							} else {
+							}
+							else {
 								type = 3;
 								rightValue = new char[rightSideChar.length - 3];
 								for (int k = 3; k < rightSideChar.length; k++)
 									rightValue[k - 3] = rightSideChar[k];
 							}
-						} else if (rightSideChar[1] == '<') {
+						} 
+						else if (rightSideChar[1] == '<') {
 							if (rightSideChar[2] == '=') {
 								type = 4;
 								rightValue = new char[rightSideChar.length - 4];
 								for (int k = 4; k < rightSideChar.length; k++)
 									rightValue[k - 4] = rightSideChar[k];
-							} else {
+							} 
+							else {
 								type = 5;
 								rightValue = new char[rightSideChar.length - 3];
 								for (int k = 3; k < rightSideChar.length; k++)
@@ -152,7 +156,7 @@ public class server_site {
 			all_level_sites.add(Level_Order_S);
 		} // While Tree Not Empty
 	}
-	
+
 	public static void main(String [] args) throws Exception {
 		// Assuming a 192.168.1.X Network, I can support 251 levels?
 		// I will assume 192.168.1.1 is Server
@@ -160,24 +164,24 @@ public class server_site {
 		// Level Site 0 is 192.168.1.3
 		// Level Site 1 is 192.168.1.2, ...
 		// Level Site d is 192.168.1.8 (depth)
-		
+
 		// Each level site needs the 
 		// 1- public keys (will get from Part 4)
 		// 2- IP of where to send result to (or Client)
 		// 3- Socket of previous Level-Site to talk to...
 		// 4- Socket of Client-site for using Alice/Bob
-	
+
 		// TODO: 
 		// Spyrios can you please check that the creation of level sites looks good?
 		// Also, I want to know how you think this approach looks so far?
-		
+
 		// Arguments:
 		String file = "PLEASE PUT ARFF FILE FOR TRAINING DATA";
 		ClassifierTree ppdt = train_decision_tree(file);
-		
+
 		List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
 		get_level_site_data(ppdt, all_level_sites);
-		
+
 		// Might be a good idea to double check the level-site correct pulled data from DT?
 		for (level_order_site l: all_level_sites) {
 			System.out.println(l.toString());
