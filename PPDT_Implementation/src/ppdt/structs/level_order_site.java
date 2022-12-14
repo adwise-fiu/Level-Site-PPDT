@@ -20,7 +20,7 @@ public class level_order_site implements Serializable {
     private String next_ip_address;   //Point to next IP to send data to
     private Socket client_connection; // Socket to client-site, used to build alice/bob
     
-    private List<DataInfo> node_level_data = new ArrayList<DataInfo>();
+    private List<NodeInfo> node_level_data = new ArrayList<NodeInfo>();
     
     public void set_current_index(int index) {
     	this.index = index;
@@ -30,13 +30,13 @@ public class level_order_site implements Serializable {
     	this.next_index = next_index;
     }
     
-    public void append_data(DataInfo info) {
+    public void append_data(NodeInfo info) {
     	node_level_data.add(info);
     }
     
     public String toString() {
     	StringBuilder output = new StringBuilder();
-    	for (DataInfo i: node_level_data) {
+    	for (NodeInfo i: node_level_data) {
     		output.append(i.toString());
     		output.append('\n');
     	}

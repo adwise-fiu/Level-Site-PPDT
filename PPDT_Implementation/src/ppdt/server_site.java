@@ -7,8 +7,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import ppdt.structs.DataInfo;
+import ppdt.structs.NodeInfo;
 import ppdt.structs.level_order_site;
+
 import weka.classifiers.trees.j48.C45ModelSelection;
 import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
@@ -51,10 +52,10 @@ public class server_site {
 				ClassifierTree p = q.peek();
 				q.remove();
 
-				DataInfo node_info = null;
+				NodeInfo node_info = null;
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
-					node_info = new DataInfo(true, variable);
+					node_info = new NodeInfo(true, variable);
 					Level_Order_S.append_data(node_info);
 				}
 				else {
@@ -143,7 +144,7 @@ public class server_site {
 							}
 						}
 
-						node_info = new DataInfo(false, leftSide);
+						node_info = new NodeInfo(false, leftSide);
 						node_info.comparisonType = type;
 						node_info.threshold = threshold;
 
