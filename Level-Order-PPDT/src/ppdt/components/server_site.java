@@ -2,6 +2,7 @@ package ppdt.components;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class server_site {
 	// Given a Plain-text Decision Tree, split the data up for each level site.
 	public static void get_level_site_data(ClassifierTree root, List<level_order_site> all_level_sites) throws Exception {
 
-		if (root == null){
+		if (root == null) {
 			return;
 		}
 
@@ -45,8 +46,8 @@ public class server_site {
 		q.add(root);
 		while (!q.isEmpty()) {
 			level_order_site Level_Order_S = new level_order_site();
-
 			int n = q.size();
+			
 			while (n > 0) {
 
 				ClassifierTree p = q.peek();
@@ -68,30 +69,28 @@ public class server_site {
 						char[] rightSideChar = rightSide.toCharArray();
 						int type = 0;
 
-
 						char[] rightValue = new char[0];
 						if (rightSideChar[1] == '=') {
 							type = 1;
-
 							rightValue = new char[rightSideChar.length - 3];
-							for (int k = 3; k < rightSideChar.length; k++)
+							for (int k = 3; k < rightSideChar.length; k++) {
 								rightValue[k - 3] = rightSideChar[k];
+							}
 							String rightValueStr = new String(rightValue);
-							if (rightValueStr.equals("other")){
+							if (rightValueStr.equals("other")) {
 								type = 2;
 								threshold=1;
-
 							}
 						}
-						else if (rightSideChar[1]=='!'){
-
-							type=4;
-							if (rightSideChar[2]=='='){
+						else if (rightSideChar[1]=='!') {
+							type = 4;
+							if (rightSideChar[2] == '=') {
 								rightValue = new char[rightSideChar.length - 4];
-								for (int k = 4; k < rightSideChar.length; k++)
+								for (int k = 4; k < rightSideChar.length; k++) {
 									rightValue[k - 4] = rightSideChar[k];
+								}
 								String rightValueStr = new String(rightValue);
-								if (rightValueStr.equals("other")){
+								if (rightValueStr.equals("other")) {
 									type = 4;
 									threshold = 0;
 								}
@@ -114,19 +113,21 @@ public class server_site {
 								for (int k = 3; k < rightSideChar.length; k++)
 									rightValue[k - 3] = rightSideChar[k];
 							}
-						} 
+						}
 						else if (rightSideChar[1] == '<') {
 							if (rightSideChar[2] == '=') {
 								type = 4;
 								rightValue = new char[rightSideChar.length - 4];
-								for (int k = 4; k < rightSideChar.length; k++)
+								for (int k = 4; k < rightSideChar.length; k++) {
 									rightValue[k - 4] = rightSideChar[k];
+								}
 							} 
 							else {
 								type = 5;
 								rightValue = new char[rightSideChar.length - 3];
-								for (int k = 3; k < rightSideChar.length; k++)
+								for (int k = 3; k < rightSideChar.length; k++) {
 									rightValue[k - 3] = rightSideChar[k];
+								}
 							}
 						}
 
@@ -177,7 +178,7 @@ public class server_site {
 		// Also, I want to know how you think this approach looks so far?
 
 		// Arguments:
-		String file = "PLEASE PUT ARFF FILE FOR TRAINING DATA";
+		String file = "../data/hypothyroid.arff";
 		ClassifierTree ppdt = train_decision_tree(file);
 
 		List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
@@ -187,6 +188,12 @@ public class server_site {
 		for (level_order_site l: all_level_sites) {
 			System.out.println(l.toString());
 		}
+		
+		// Send the data to each level site
+		for (int i = 0; i < all_level_sites.size(); i++) {
+			level_order_site current_level_site = all_level_sites.get(i);
+			String level_site_ip = "192.168.1" + String.valueOf(i + 100);
+			Socket level_site_socket = new Socket(level_site_ip, 9254);
+		}
 	}
-
 }

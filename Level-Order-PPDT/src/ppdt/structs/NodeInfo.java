@@ -17,6 +17,14 @@ public class NodeInfo {
     	this.variable_name = variable_name;
     }
     
+    public boolean isLeaf() {
+    	return this.is_leaf;
+    }
+    
+    public String getVariableName() {
+    	return this.variable_name;
+    }
+    
     public String toString() {
     	StringBuilder output = new StringBuilder();
     	output.append(this.variable_name);
