@@ -27,20 +27,20 @@ public class client {
 	        String[] splitted = line.split("\\t");
 	        key = splitted[0];
 	        value = splitted[1];
-	        if (value.equals("t") || (value.equals("yes")))
-	          value = "1";
-	        if (value.equals("f") || (value.equals("no")))
-	          value = "0";
-
-
+	        if (value.equals("t") || (value.equals("yes"))) {
+	        	value = "1";
+	        }
+	        if (value.equals("f") || (value.equals("no"))) {
+	        	value = "0";
+	        }
 	        values.put(key, value);
 	      }
 	      Enumeration<String> e = values.keys();
 	      while (e.hasMoreElements()) {
-	        String key = e.nextElement();
-	        if (values.get(key).equals("other")) {
-	          values.put(key, "1");
-	        }
+	    	  String key = e.nextElement();
+	    	  if (values.get(key).equals("other")) {
+	    		  values.put(key, "1");
+	    	  }
 	      }
 	      return values;
 	}
@@ -49,7 +49,7 @@ public class client {
 		// ARGUMENTS
 		int KEY_SIZE = 1024;
 		String server_ip = "127.0.0.1"; // Level-Site 0
-		String file_name = "../data/hypothyroid.arff";
+		String file_name = "../data/hypothyroid.values";
 		ServerSocket receive = new ServerSocket(9000);
 		ObjectInputStream from_level_site_d = null;
 		ObjectOutputStream to_level_site_d = null;
@@ -73,6 +73,8 @@ public class client {
 		// Read the Features
 		Hashtable<String, String> feature = read_features(file_name);
 		
+		System.exit(0);
+		
 		// Communicate with Level-Site 0
 		try {
 			Socket level_site_zero = new Socket(server_ip, 9000);
@@ -91,7 +93,6 @@ public class client {
 			from_level_site_zero.close();
 			to_level_site_zero.close();
 		}
-		
 		
 		// Receive data from Level-site d
 		Socket level_site_d = receive.accept();
