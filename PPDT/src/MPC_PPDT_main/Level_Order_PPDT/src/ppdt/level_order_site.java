@@ -50,7 +50,11 @@ public class level_order_site implements Serializable {
     
     public String toString() {
     	StringBuilder output = new StringBuilder();
+    	int num = 0;
     	for (NodeInfo i: node_level_data) {
+    		output.append("Index ");
+    		output.append(num);
+    		output.append('\n');
     		output.append(i.toString());
     		output.append('\n');
     	}

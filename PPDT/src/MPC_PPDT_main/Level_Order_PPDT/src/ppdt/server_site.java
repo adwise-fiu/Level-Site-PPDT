@@ -1,6 +1,9 @@
 package MPC_PPDT_main.Level_Order_PPDT.src.ppdt;
+
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -13,24 +16,41 @@ import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.level_order_site;
 import weka.classifiers.trees.j48.C45ModelSelection;
 import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 
 
 public class server_site {
 	
-	// Reference: https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
+	// Reference: 
+	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
 	// Build J48 as it uses C45?
 	// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
 	public static ClassifierTree train_decision_tree(String arff_file) throws Exception {
 		BufferedReader reader = null;
-		reader = new BufferedReader(new FileReader(arff_file));
-		Instances train = new Instances(reader);
-		train.setClassIndex(0);     
-	    reader.close();
-	    
+		Instances train = null;
+		
+		try {
+			reader = new BufferedReader(new FileReader(arff_file));
+			train = new Instances(reader);
+			reader.close();
+		}
+		catch (FileNotFoundException e2) {
+			e2.printStackTrace();
+		}
+		catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
 	    C45ModelSelection j48_model = new C45ModelSelection(0, train, false, false);
 	    ClassifierTree j48 = new ClassifierTree(j48_model);
+	    train.setClassIndex(train.numAttributes() - 1);
+	    
+	    // train.setClassIndex(0);
+	    System.out.println(train.classAttribute());
 	    j48.buildTree(train, true);
-	    // weka.core.SerializationHelper.write("/some/where/j48.model", j48);
+
+	    //SerializationHelper.write("j48.model", j48);
 	    return j48;
 	}
 	
@@ -43,6 +63,7 @@ public class server_site {
 
 		Queue<ClassifierTree> q = new LinkedList<>();
 		q.add(root);
+		
 		while (!q.isEmpty()) {
 			level_order_site Level_Order_S = new level_order_site();
 			int n = q.size();
@@ -51,7 +72,17 @@ public class server_site {
 
 				ClassifierTree p = q.peek();
 				q.remove();
-
+				
+				System.out.println(p.getLocalModel().dumpModel(p.getTrainingData()));
+				
+				System.out.println("L: " + p.getLocalModel().leftSide(p.getTrainingData()));
+				System.out.println("R0: " + p.getLocalModel().rightSide(0, p.getTrainingData()));
+				
+				System.out.println("See sons");
+				for (int i = 0; i < p.getSons().length; i++) {
+					System.out.println(p.getSons()[i].getLocalModel().dumpModel(p.getTrainingData()));
+				}
+				
 				NodeInfo node_info = null;
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
@@ -61,7 +92,6 @@ public class server_site {
 				else {
 					float threshold = 0;
 					for (int i = 0; i < p.getSons().length; i++) {
-
 						String leftSide = p.getLocalModel().leftSide(p.getTrainingData());
 						String rightSide = p.getLocalModel().rightSide(i, p.getTrainingData());
 
@@ -120,7 +150,7 @@ public class server_site {
 								for (int k = 4; k < rightSideChar.length; k++) {
 									rightValue[k - 4] = rightSideChar[k];
 								}
-							} 
+							}
 							else {
 								type = 5;
 								rightValue = new char[rightSideChar.length - 3];
@@ -154,7 +184,17 @@ public class server_site {
 				}// else
 				n--;
 			} // While n > 0
+			System.out.println("ESCAPE WHILE");
 			all_level_sites.add(Level_Order_S);
+			
+			System.out.println("Checking current level site data list...");
+			int level = 0;
+			for (level_order_site l: all_level_sites) {
+				System.out.println("-------------level: " + level);
+				System.out.println(l.toString());
+				level++;
+			}
+			
 		} // While Tree Not Empty
 	}
 
@@ -177,22 +217,20 @@ public class server_site {
 		// Also, I want to know how you think this approach looks so far?
 
 		// Arguments:
-		String file = "/home/spyros/MPC-PPDT-main/Data/hypothyroid.arff";
+		// System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		
+		// Runs at: MPC-PPDT\PPDT
+		String file = "../data/hypothyroid.arff";
 		ClassifierTree ppdt = train_decision_tree(file);
 
 		List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
 		get_level_site_data(ppdt, all_level_sites);
-
-		// Might be a good idea to double check the level-site correct pulled data from DT?
-		for (level_order_site l: all_level_sites) {
-			System.out.println(l.toString());
-		}
 		
 		// Send the data to each level site
 		for (int i = 0; i < all_level_sites.size(); i++) {
 			level_order_site current_level_site = all_level_sites.get(i);
 			String level_site_ip = "192.168.1" + String.valueOf(i + 100);
-			Socket level_site_socket = new Socket(level_site_ip, 9254);
+			//Socket level_site_socket = new Socket(level_site_ip, 9254);
 		}
 	}
 }

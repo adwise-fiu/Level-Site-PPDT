@@ -26,11 +26,16 @@ public class NodeInfo {
     
     public String toString() {
     	StringBuilder output = new StringBuilder();
-    	output.append(this.variable_name);
+    	output.append("var_name: " + this.variable_name + '\n');
     	output.append("Leaf: ");
     	output.append(this.is_leaf);
+    	output.append('\n');
+    	output.append("comparison_type: ");
     	output.append(comparisonType);
+    	output.append('\n');
+    	output.append("threshold: ");
     	output.append(threshold);
+    	output.append('\n');
     	return output.toString();
     }
 }

@@ -18,35 +18,31 @@ import security.paillier.PaillierKeyPairGenerator;
 public class client {
 
 	public static Hashtable<String, String> read_features(String path) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(path));
-		Hashtable<String, String> values = new Hashtable<String, String>();
-		String line;
-		
-		while((line = br.readLine()) != null) {
-			String key, value;
-			String[] splitted = line.split("\\t");
-			key = splitted[0];
-			value = splitted[1];
-			if (value.equals("t") ||(value.equals("yes"))) {
-				value = "1"; 
-			}
-			if (value.equals("f") || (value.equals("no"))) {
-				value = "0";
-			}
-			values.put(key, value);
-		}
-		
-		// WARNING: SEE LevelOrderTreeTraversalGetValues
-		// I DONT KNOW HOW THE "other" edge case is handled, but IT SHOULD BE MANAGED HERE!
-		Enumeration<String> ex = values.keys();
-        while (ex.hasMoreElements()){
-            String key = ex.nextElement();
-            if (values.get(key).equals("other")) {
-            	values.put(key, "1");
-            }
-        }
-		br.close();
-		return values;
+
+	      BufferedReader br = new BufferedReader(new FileReader(path));
+	      String line;
+	      Hashtable<String, String> values = new Hashtable<String, String>();
+	      while ((line = br.readLine()) != null) {
+	        String key, value;
+	        String[] splitted = line.split("\\t");
+	        key = splitted[0];
+	        value = splitted[1];
+	        if (value.equals("t") || (value.equals("yes")))
+	          value = "1";
+	        if (value.equals("f") || (value.equals("no")))
+	          value = "0";
+
+
+	        values.put(key, value);
+	      }
+	      Enumeration<String> e = values.keys();
+	      while (e.hasMoreElements()) {
+	        String key = e.nextElement();
+	        if (values.get(key).equals("other")) {
+	          values.put(key, "1");
+	        }
+	      }
+	      return values;
 	}
 
 	public static void main(String [] args) throws HomomorphicException, IllegalArgumentException, UnknownHostException, IOException {
