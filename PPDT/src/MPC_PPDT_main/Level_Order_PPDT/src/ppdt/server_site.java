@@ -10,10 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.NodeInfo;
-import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.level_order_site;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
-import weka.classifiers.trees.j48.C45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
@@ -50,10 +47,13 @@ public class server_site {
 		// -C 0.25, default confidence
 		BinC45ModelSelection j48_model = new BinC45ModelSelection(2, train, true, false);
 		ClassifierTree j48 = new C45PruneableClassifierTree(j48_model, true, (float) 0.25, true, true, true);
-	        
+		
 	    // train.setClassIndex(0);
-	    System.out.println(train.classAttribute());
 	    j48.buildClassifier(train);
+	    
+	    System.out.println(j48.toString());
+	    System.out.println("Graph");
+	    System.out.println(j48.graph());
 
 	    //SerializationHelper.write("j48.model", j48);
 	    return j48;
@@ -77,16 +77,6 @@ public class server_site {
 
 				ClassifierTree p = q.peek();
 				q.remove();
-				
-				System.out.println(p.getLocalModel().dumpModel(p.getTrainingData()));
-				
-				System.out.println("L: " + p.getLocalModel().leftSide(p.getTrainingData()));
-				System.out.println("R0: " + p.getLocalModel().rightSide(0, p.getTrainingData()));
-				
-				System.out.println("See sons");
-				for (int i = 0; i < p.getSons().length; i++) {
-					System.out.println(p.getSons()[i].getLocalModel().dumpModel(p.getTrainingData()));
-				}
 				
 				NodeInfo node_info = null;
 				if (p.isLeaf()) {
@@ -189,16 +179,8 @@ public class server_site {
 				}// else
 				n--;
 			} // While n > 0
-			System.out.println("ESCAPE WHILE");
 			all_level_sites.add(Level_Order_S);
 			
-			System.out.println("Checking current level site data list...");
-			int level = 0;
-			for (level_order_site l: all_level_sites) {
-				System.out.println("-------------level: " + level);
-				System.out.println(l.toString());
-				level++;
-			}
 			
 		} // While Tree Not Empty
 	}
@@ -230,6 +212,14 @@ public class server_site {
 
 		List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
 		get_level_site_data(ppdt, all_level_sites);
+		
+		System.out.println("Checking current level site data list...");
+		int level = 0;
+		for (level_order_site l: all_level_sites) {
+			System.out.println("-------------level: " + level);
+			System.out.println(l.toString());
+			level++;
+		}
 		
 		// Send the data to each level site
 		for (int i = 0; i < all_level_sites.size(); i++) {
