@@ -12,8 +12,9 @@ import java.util.Queue;
 
 import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.NodeInfo;
 import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.level_order_site;
-
+import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45ModelSelection;
+import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
@@ -40,15 +41,19 @@ public class server_site {
 		catch (IOException e1) {
 			e1.printStackTrace();
 		}
+		train.setClassIndex(train.numAttributes() - 1);
 		
 		// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
-	    C45ModelSelection j48_model = new C45ModelSelection(0, train, false, false);
-	    ClassifierTree j48 = new ClassifierTree(j48_model);
-	    train.setClassIndex(train.numAttributes() - 1);
-	    
+		// J48 -B -C 0.25 -M 2
+		// -M 2 is minimum 2, DEFAULT
+		// -B this tree ONLY works for binary split is true, so pick this model...
+		// -C 0.25, default confidence
+		BinC45ModelSelection j48_model = new BinC45ModelSelection(2, train, true, false);
+		ClassifierTree j48 = new C45PruneableClassifierTree(j48_model, true, (float) 0.25, true, true, true);
+	        
 	    // train.setClassIndex(0);
 	    System.out.println(train.classAttribute());
-	    j48.buildTree(train, true);
+	    j48.buildClassifier(train);
 
 	    //SerializationHelper.write("j48.model", j48);
 	    return j48;
