@@ -35,7 +35,6 @@ public class level_site_thread implements Runnable {
 			fromClient = new ObjectInputStream(client_socket.getInputStream());
 			toClient = new ObjectOutputStream(client_socket.getOutputStream());
 			
-
 			Object x = fromClient.readObject();
 			if (x instanceof level_order_site) {
 				this.level_site_data = (level_order_site) x;
@@ -46,7 +45,13 @@ public class level_site_thread implements Runnable {
 				dgk_public_key = Niu.getDGKPublicKey();
 				paillier_public_key = Niu.getPaillierPublicKey();
 				
-				// The Object was features from a Client...
+				// Have encrypted copy of thresholds if not done already for all nodes in level-site
+				if (level_site_data != null) {
+					this.level_site_data = level_site_data;
+				}
+				if (!this.level_site_data.are_values_encrypted()) {
+					this.level_site_data.encrypt(dgk_public_key, paillier_public_key);
+				}
 			}
 		}
 		catch (IOException e) {
@@ -54,8 +59,10 @@ public class level_site_thread implements Runnable {
 		} 
 		catch (ClassNotFoundException e) {
 			e.printStackTrace();
+		} 
+		catch (HomomorphicException e) {
+			e.printStackTrace();
 		}
-
 	}
 	
 	public level_order_site getLevelSiteParameters() {
@@ -92,8 +99,10 @@ public class level_site_thread implements Runnable {
         System.out.println("b:" + plain_b);
 
         BigInteger b = BigInteger.ZERO;
-        // TODO: HOW CAN THE CLIENT KNOW WHICH MODE TO USER?
-        if ((ld.comparisonType==1) || (ld.comparisonType==2) || (ld.comparisonType==4)) {
+        toClient.writeInt(ld.comparisonType);
+        toClient.writeObject(ld.variable_name);
+        
+        if ((ld.comparisonType == 1) || (ld.comparisonType == 2) || (ld.comparisonType == 4)) {
             b = PaillierCipher.encrypt(plain_b, this.paillier_public_key);
             Niu.setDGKMode(false);
         }
@@ -122,7 +131,8 @@ public class level_site_thread implements Runnable {
 			if (i == 0) {
 				this.level_site_data.set_current_index(0);
 				bound = 2;
-			} else {
+			} 
+			else {
 				bound = node_level_data.size();
 			}
 
@@ -134,7 +144,7 @@ public class level_site_thread implements Runnable {
 			int next_index = 0;
 
 			while (node_level_index < bound && (!equalsFound) && (!terminalLeafFound)) {
-				NodeInfo ls = (NodeInfo) node_level_data.get(node_level_index);
+				NodeInfo ls = node_level_data.get(node_level_index);
 				System.out.println("j=" + node_level_index);
 				if (ls.isLeaf()) {
 					if (n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1) {
@@ -176,6 +186,12 @@ public class level_site_thread implements Runnable {
 					System.out.println("Variable Name:" + ls.getVariableName() + " " + ls.comparisonType + ", " + ls.threshold);
 				}
 			}
+			
+			// Place -1 to break Protocol4 loop
+			toClient.writeInt(-1);
+			
+			// TODO: Encrypt and send to client with shared AES Key of Level-sites
+			level_site_data.get_next_index();
 		}
         catch (IOException e) {
 			e.printStackTrace();
@@ -195,6 +211,4 @@ public class level_site_thread implements Runnable {
 			}
 		}
 	}
-	
-	
 }

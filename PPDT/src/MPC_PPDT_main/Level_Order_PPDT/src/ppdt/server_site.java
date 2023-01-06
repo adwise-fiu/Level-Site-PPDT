@@ -221,10 +221,10 @@ public class server_site {
 			level++;
 		}
 		
-		// Send the data to each level site
+		// Send the data to each level site, use data in-transit encryption
 		for (int i = 0; i < all_level_sites.size(); i++) {
 			level_order_site current_level_site = all_level_sites.get(i);
-			String level_site_ip = "192.168.1" + String.valueOf(i + 100);
+			String level_site_ip = "192.168.1." + String.valueOf(i + 100);
 			//Socket level_site_socket = new Socket(level_site_ip, 9254);
 		}
 	}

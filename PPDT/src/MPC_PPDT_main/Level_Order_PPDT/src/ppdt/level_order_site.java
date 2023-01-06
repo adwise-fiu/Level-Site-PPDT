@@ -7,6 +7,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import security.DGK.DGKPublicKey;
+import security.misc.HomomorphicException;
+import security.paillier.PaillierPublicKey;
+
 /**
  * @author Andrew Quijano
  * This class contains all the necessary information for a Level-site to complete evaluation
@@ -40,8 +44,23 @@ public class level_order_site implements Serializable {
     	this.next_index = next_index;
     }
     
+    public int get_next_index() {
+    	return this.next_index;
+    }
+    
     public int get_current_index() {
     	return this.index;
+    }
+    
+    public void encrypt(DGKPublicKey dgk_public_key, PaillierPublicKey paillier_public_key) throws HomomorphicException {
+    	for (NodeInfo n: node_level_data) {
+    		n.encrypt_thresholds(dgk_public_key, paillier_public_key);
+    	}	
+    }
+    
+    public boolean are_values_encrypted() {
+    	NodeInfo node = node_level_data.get(0);
+    	return node.dgk_encrypted != null && node.paillier_encrypted != null;
     }
     
     public void append_data(NodeInfo info) {
