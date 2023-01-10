@@ -176,6 +176,24 @@ public class server_site {
 						q.add(p.getSons()[i]);
 					}
 					Level_Order_S.append_data(node_info);
+					if (!node_info.is_leaf){
+						NodeInfo additionalNode=new NodeInfo(false, node_info.getVariableName());
+						if (node_info.comparisonType==1){
+							additionalNode.comparisonType=6;
+						} else if (node_info.comparisonType==2){
+							additionalNode.comparisonType=4;
+						} else if (node_info.comparisonType==3){
+							additionalNode.comparisonType=5;
+						} else if (node_info.comparisonType==4){
+							additionalNode.comparisonType=2;
+						} else if (node_info.comparisonType==5){
+							additionalNode.comparisonType=3;
+						} else if (node_info.comparisonType==6){
+							additionalNode.comparisonType=1;
+						}
+						additionalNode.threshold= node_info.threshold;
+						Level_Order_S.append_data(additionalNode);
+					}
 				}// else
 				n--;
 			} // While n > 0
@@ -204,10 +222,10 @@ public class server_site {
 		// Also, I want to know how you think this approach looks so far?
 
 		// Arguments:
-		// System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		//System.out.println("Working Directory = " + System.getProperty("user.dir"));
 		
 		// Runs at: MPC-PPDT\PPDT
-		String file = "../data/hypothyroid.arff";
+		String file = "../../Data/hypothyroid.arff";
 		ClassifierTree ppdt = train_decision_tree(file);
 
 		List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
