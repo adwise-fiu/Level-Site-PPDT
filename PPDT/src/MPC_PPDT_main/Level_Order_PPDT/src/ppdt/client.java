@@ -22,7 +22,13 @@ import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
 
 public class client {
+	static int precision=2;
+	static BigInteger integerValue;
 
+	static BigInteger integerValuePaillier;
+
+	static BigInteger integerValueDGK;
+	static int intermediateInteger;
 	static ObjectInputStream from_level_site_d = null;
 	static ObjectOutputStream to_level_site_d = null;
 	static ObjectInputStream from_level_site_zero = null;
@@ -31,11 +37,11 @@ public class client {
 	private static PaillierPublicKey paillier_public_key;
 	private static DGKPublicKey dgk_public_key;
 	
-	public static Hashtable<String, BigInteger> read_features(String path) throws IOException {
+	public static Hashtable<String, BigIntegers> read_features(String path) throws IOException, HomomorphicException {
 
 	      try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 	    	  String line;
-			  Hashtable<String, BigInteger> values = new Hashtable<String, BigInteger>();
+			  Hashtable<String, BigIntegers> values = new Hashtable<String, BigIntegers>();
 			  while ((line = br.readLine()) != null) {
 			    String key, value;
 			    String[] splitted = line.split("\\t");
@@ -50,18 +56,39 @@ public class client {
 			    if (value.equals("other")) {
 			    	value = "1";
 			    }
-			    values.put(key, new BigInteger(value));
+				int KEY_SIZE = 1024;
+				  DGKKeyPairGenerator p = new DGKKeyPairGenerator();
+				  p.initialize(KEY_SIZE, null);
+				  KeyPair dgk = p.generateKeyPair();
+
+				  PaillierKeyPairGenerator pa = new PaillierKeyPairGenerator();
+				  p.initialize(KEY_SIZE, null);
+				  KeyPair paillier = pa.generateKeyPair();
+
+				  paillier_public_key = (PaillierPublicKey) paillier.getPublic();
+				  dgk_public_key = (DGKPublicKey) dgk.getPublic();
+				try {
+					integerValue=new BigInteger(value);
+					integerValuePaillier=PaillierCipher.encrypt(integerValue, paillier_public_key);
+					integerValueDGK = DGKOperations.encrypt(integerValue, dgk_public_key);
+					values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
+				} catch (NumberFormatException nfe){
+					intermediateInteger=(int) Double.parseDouble(value)*(int)Math.pow(10, precision);
+					integerValuePaillier=PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
+					integerValueDGK= DGKOperations.encrypt(intermediateInteger, dgk_public_key);
+					values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
+				}
 			  }
 			  return values;
 		}
 	}
 	
-	private static void evaluate(bob client, Hashtable<String, BigInteger> features)
+	private static void evaluate(bob client, Hashtable<String, BigIntegers> features)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 
 		int comparison_type = -1;
-		BigInteger thresh_hold = null;
-		
+		BigIntegers threshold = null;
+		BigInteger thresh_hold=null;
 		// TODO: Avoid leaking comparison type, send boolean from level-site
 		// Hashtable is sent to client, encrypt the feature value
 		while(true) {
@@ -71,14 +98,14 @@ public class client {
 			}
 			// Get variable name
 			String variable_name = (String) from_level_site_zero.readObject();
-			thresh_hold = features.get(variable_name);
+			threshold = features.get(variable_name);
 			
 	        if ((comparison_type == 1) || (comparison_type == 2) || (comparison_type == 4)) {
-	        	thresh_hold = PaillierCipher.encrypt(thresh_hold, paillier_public_key);
+	            thresh_hold = threshold.getIntegerValuePaillier();
 	            client.setDGKMode(false);
 	        }
 	        else if ((comparison_type == 3) || (comparison_type == 5)) {
-	        	thresh_hold = DGKOperations.encrypt(thresh_hold, dgk_public_key);
+	            thresh_hold = threshold.getIntegerValueDGK();
 	            client.setDGKMode(true);
 	        }
 	        to_level_site_zero.writeObject(thresh_hold);
@@ -92,7 +119,7 @@ public class client {
 		// ARGUMENTS
 		int KEY_SIZE = 1024;
 		String server_ip = "127.0.0.1"; // Level-Site 0
-		String file_name = "../data/hypothyroid.values";
+		String file_name = "../../Data/hypothyroid.values";
 		ServerSocket receive = new ServerSocket(9000);
 
 		// Generate Key Pair
@@ -110,7 +137,7 @@ public class client {
 		// bob andrew = new bob(level_site_zero, paillier, dgk);
 		
 		// Read the Features
-		Hashtable<String, BigInteger> feature = read_features(file_name);
+		Hashtable<String, BigIntegers> feature = read_features(file_name);
 		
 		System.exit(0);
 		
