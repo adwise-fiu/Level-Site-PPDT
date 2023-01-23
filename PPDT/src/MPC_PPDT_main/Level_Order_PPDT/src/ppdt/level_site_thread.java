@@ -82,15 +82,15 @@ public class level_site_thread implements Runnable {
 			throws HomomorphicException, ClassNotFoundException, IOException {
 
         double secondDouble = ld.threshold;
-        long secondInt;
+        BigInteger secondInt=new BigInteger(String.valueOf(ld.threshold));
         BigInteger plain_b;
         
         int threshold = (int) ld.threshold;
         if (ld.comparisonType != 1) {
-            double newDouble2 = (secondDouble * 10.0 * Math.pow(10, precision));
-            secondInt = (long) newDouble2;
-            secondInt = secondInt/10;
-            plain_b = BigInteger.valueOf(secondInt);
+            //double newDouble2 = (secondDouble * 10.0 * Math.pow(10, precision));
+            //secondInt = (long) newDouble2;
+            //secondInt = secondInt/10;
+            plain_b = secondInt;
         }
         else {
             plain_b = new BigInteger("" + threshold);
