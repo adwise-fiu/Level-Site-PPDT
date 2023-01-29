@@ -12,9 +12,11 @@ public class level_site_server implements Runnable {
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
     protected level_order_site level_site_parameters = null;
+    protected int precision;
     
-    public level_site_server (int port) {
+    public level_site_server (int port, int precision) {
         this.serverPort = port;
+        this.precision = precision;
     }
 
     public void run() {
@@ -28,13 +30,13 @@ public class level_site_server implements Runnable {
                 clientSocket = this.serverSocket.accept();
             } catch (IOException e) {
                 if(isStopped()) {
-                    System.out.println("Server Stopped.") ;
+                    System.out.println("Server Stopped on port " + this.serverPort) ;
                     return;
                 }
                 throw new RuntimeException("Error accepting client connection", e);
             }
             
-            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters, 2);
+            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters, this.precision);
             if (this.level_site_parameters == null) {
             	this.level_site_parameters = current_level_site_class.getLevelSiteParameters();
             }
@@ -42,7 +44,7 @@ public class level_site_server implements Runnable {
             	new Thread(current_level_site_class).start();
             }
         }
-        System.out.println("Server Stopped.") ;
+        System.out.println("Server Stopped on port: " + this.serverPort) ;
     }
 
     private synchronized boolean isStopped() {
@@ -55,7 +57,7 @@ public class level_site_server implements Runnable {
             this.serverSocket.close();
         } 
         catch (IOException e) {
-        	throw new RuntimeException("Error closing server", e);
+        	throw new RuntimeException("Error closing server on port " + this.serverPort, e);
         }
     }
 
@@ -64,12 +66,12 @@ public class level_site_server implements Runnable {
             this.serverSocket = new ServerSocket(this.serverPort);
         } 
         catch (IOException e) {
-            throw new RuntimeException("Cannot open port 8080", e);
+            throw new RuntimeException("Cannot open port " + this.serverPort, e);
         }
     }
     
     public static void main (String [] args) {
-    	level_site_server server = new level_site_server(9000);
+    	level_site_server server = new level_site_server(9000, 2);
     	new Thread(server).start();
 
     	try {

@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Queue;
 
 import weka.classifiers.trees.j48.BinC45ModelSelection;
@@ -235,7 +236,7 @@ public class server_site implements Runnable {
 			// Send the data to each level site, use data in-transit encryption
 			for (int i = 0; i < level_site_ips.length; i++) {
 				level_order_site current_level_site = all_level_sites.get(i);
-				
+				/*
 				if (port == -1) {
 					level_site = new Socket(level_site_ips[i], level_site_ports[i]);
 				}
@@ -247,6 +248,7 @@ public class server_site implements Runnable {
 				to_level_site.writeObject(current_level_site);
 				to_level_site.close();
 				level_site.close();
+				*/
 			}
 		}
 		catch (Exception e) {
@@ -257,8 +259,23 @@ public class server_site implements Runnable {
 	public static void main(String [] args) throws Exception {
 
 		// Arguments:
-		// System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 		// Runs at: MPC-PPDT\PPDT
+		Properties config = new Properties();
+		try (FileReader in = new FileReader("../data/config.properties")) 
+		{
+		    config.load(in);
+		}
+		String [] level_site_ports_string = config.getProperty("level-site-ports").split(",");
+		String [] level_site_ips = config.getProperty("level-site-ips").split(",");
+		int levels = Integer.parseInt(config.getProperty("levels"));
+		String training_data = config.getProperty("training");
+		int [] level_site_ports = new int[levels];
 		
+    	for (int i = 0; i < levels; i++) {
+    		level_site_ports[i] = Integer.parseInt(level_site_ports_string[i]);
+    	}
+		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports);
+    	new Thread(cloud).start();
 	}
 }

@@ -1,9 +1,0 @@
-{
-	"level-site-ports" : [ 9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007],
-	"level-site-ips" : [ "127.0.0.1", "127.0.0.1", "127.0.0.1", "127.0.0.1",  "127.0.0.1", "127.0.0.1", "127.0.0.1", "127.0.0.1"],
-	"level-site-port" : 9000,
-	"levels" : 8,
-	"features" : "../../Data/hypothyroid.values",
-	"training" : "../../Data/hypothyroid.arff"
-	"key_size" : 1024
-}
