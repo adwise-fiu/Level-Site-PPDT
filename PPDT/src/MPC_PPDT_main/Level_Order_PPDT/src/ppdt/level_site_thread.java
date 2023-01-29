@@ -155,8 +155,9 @@ public class level_site_thread implements Runnable {
 			int n = 0;
 			int next_index = 0;
 
+			NodeInfo ls = null;
 			while (node_level_index < bound && (!equalsFound) && (!terminalLeafFound)) {
-				NodeInfo ls = node_level_data.get(node_level_index);
+				ls = node_level_data.get(node_level_index);
 				System.out.println("j=" + node_level_index);
 				if (ls.isLeaf()) {
 					if (n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1) {
@@ -199,11 +200,21 @@ public class level_site_thread implements Runnable {
 				}
 			}
 			
-			// Place -1 to break Protocol4 loop
+			// Place -1 to break Protocol4 loop at the client...
 			toClient.writeInt(-1);
 			
 			// TODO: Encrypt and send to client with shared AES Key of Level-sites
-			level_site_data.get_next_index();
+			if (terminalLeafFound) {
+				// Let the Client know you have the classification, return that!
+				toClient.writeObject(ls.getVariableName());
+			}
+			else {
+				// Give the client the AES encrypted index
+				// Note that ONLY the level sites have the AES Key
+				// Question is, why does the next level site need the next_index? do I update line 154 with the index?
+				level_site_data.get_next_index();
+			}
+			
 		}
         catch (IOException e) {
 			e.printStackTrace();
