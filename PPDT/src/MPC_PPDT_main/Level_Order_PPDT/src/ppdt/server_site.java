@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -14,10 +15,30 @@ import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
-import weka.core.SerializationHelper;
 
 
-public class server_site {
+public class server_site implements Runnable {
+	
+	private String training_data;
+	private String [] level_site_ips;
+	private int [] level_site_ports = null;
+	private int port = -1;
+	
+	private ObjectOutputStream to_level_site;
+	
+	// For local host testing
+	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports) {
+		this.training_data = training_data;
+		this.level_site_ips = level_site_ips;
+		this.level_site_ports = level_site_ports;
+	}
+	
+	// For Cloud environment?
+	public server_site(String training_data, String [] level_site_ips, int port) {
+		this.training_data = training_data;
+		this.level_site_ips = level_site_ips;
+		this.port = port;
+	}
 	
 	// Reference: 
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
@@ -47,15 +68,8 @@ public class server_site {
 		// -C 0.25, default confidence
 		BinC45ModelSelection j48_model = new BinC45ModelSelection(2, train, true, false);
 		ClassifierTree j48 = new C45PruneableClassifierTree(j48_model, true, (float) 0.25, true, true, true);
-		
-	    // train.setClassIndex(0);
-	    j48.buildClassifier(train);
-	    
-	    System.out.println(j48.toString());
-	    System.out.println("Graph");
-	    System.out.println(j48.graph());
 
-	    //SerializationHelper.write("j48.model", j48);
+	    j48.buildClassifier(train);
 	    return j48;
 	}
 	
@@ -103,10 +117,10 @@ public class server_site {
 							String rightValueStr = new String(rightValue);
 							if (rightValueStr.equals("other")) {
 								type = 2;
-								threshold=1;
+								threshold = 1;
 							}
 						}
-						else if (rightSideChar[1]=='!') {
+						else if (rightSideChar[1] == '!') {
 							type = 4;
 							if (rightSideChar[2] == '=') {
 								rightValue = new char[rightSideChar.length - 4];
@@ -158,10 +172,10 @@ public class server_site {
 						String rightValueStr = new String(rightValue);
 
 						if (!rightValueStr.equals("other")) {
-							if (rightValueStr.equals("t")||rightValueStr.equals("yes")) {
+							if (rightValueStr.equals("t") || rightValueStr.equals("yes")) {
 								threshold = 1;
 							} 
-							else if (rightValueStr.equals("f")||rightValueStr.equals("no")) {
+							else if (rightValueStr.equals("f") || rightValueStr.equals("no")) {
 								threshold = 0;
 							}
 							else {
@@ -178,18 +192,18 @@ public class server_site {
 					Level_Order_S.append_data(node_info);
 					if (!node_info.is_leaf){
 						NodeInfo additionalNode=new NodeInfo(false, node_info.getVariableName());
-						if (node_info.comparisonType==1){
-							additionalNode.comparisonType=6;
-						} else if (node_info.comparisonType==2){
-							additionalNode.comparisonType=4;
-						} else if (node_info.comparisonType==3){
-							additionalNode.comparisonType=5;
-						} else if (node_info.comparisonType==4){
-							additionalNode.comparisonType=2;
-						} else if (node_info.comparisonType==5){
-							additionalNode.comparisonType=3;
-						} else if (node_info.comparisonType==6){
-							additionalNode.comparisonType=1;
+						if (node_info.comparisonType == 1){
+							additionalNode.comparisonType = 6;
+						} else if (node_info.comparisonType == 2){
+							additionalNode.comparisonType = 4;
+						} else if (node_info.comparisonType == 3){
+							additionalNode.comparisonType = 5;
+						} else if (node_info.comparisonType == 4){
+							additionalNode.comparisonType = 2;
+						} else if (node_info.comparisonType == 5){
+							additionalNode.comparisonType = 3;
+						} else if (node_info.comparisonType == 6){
+							additionalNode.comparisonType = 1;
 						}
 						additionalNode.threshold= node_info.threshold;
 						Level_Order_S.append_data(additionalNode);
@@ -198,52 +212,53 @@ public class server_site {
 				n--;
 			} // While n > 0
 			all_level_sites.add(Level_Order_S);
-			
-			
+
 		} // While Tree Not Empty
 	}
 
+	public void run() {
+		ClassifierTree ppdt;
+		try {
+			ppdt = train_decision_tree(this.training_data);
+			List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
+			get_level_site_data(ppdt, all_level_sites);
+			System.out.println("Checking current level site data list...");
+			
+			int level = 0;
+			for (level_order_site l: all_level_sites) {
+				System.out.println("-------------level: " + level);
+				System.out.println(l.toString());
+				level++;
+			}
+			
+			Socket level_site = null;
+			// Send the data to each level site, use data in-transit encryption
+			for (int i = 0; i < level_site_ips.length; i++) {
+				level_order_site current_level_site = all_level_sites.get(i);
+				
+				if (port == -1) {
+					level_site = new Socket(level_site_ips[i], level_site_ports[i]);
+				}
+				else {
+					level_site = new Socket(level_site_ips[i], port);
+				}
+				
+				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+				to_level_site.writeObject(current_level_site);
+				to_level_site.close();
+				level_site.close();
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}	
+	}
+	
 	public static void main(String [] args) throws Exception {
-		// Assuming a 192.168.1.X Network, I can support 251 levels?
-		// I will assume 192.168.1.1 is Server
-		// I will assume 192.168.1.2 is Client
-		// Level Site 0 is 192.168.1.3
-		// Level Site 1 is 192.168.1.2, ...
-		// Level Site d is 192.168.1.8 (depth)
-
-		// Each level site needs the 
-		// 1- public keys (will get from Part 4)
-		// 2- IP of where to send result to (or Client)
-		// 3- Socket of previous Level-Site to talk to...
-		// 4- Socket of Client-site for using Alice/Bob
-
-		// TODO: 
-		// Spyrios can you please check that the creation of level sites looks good?
-		// Also, I want to know how you think this approach looks so far?
 
 		// Arguments:
-		//System.out.println("Working Directory = " + System.getProperty("user.dir"));
-		
+		// System.out.println("Working Directory = " + System.getProperty("user.dir"));
 		// Runs at: MPC-PPDT\PPDT
-		String file = "../../Data/hypothyroid.arff";
-		ClassifierTree ppdt = train_decision_tree(file);
-
-		List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
-		get_level_site_data(ppdt, all_level_sites);
 		
-		System.out.println("Checking current level site data list...");
-		int level = 0;
-		for (level_order_site l: all_level_sites) {
-			System.out.println("-------------level: " + level);
-			System.out.println(l.toString());
-			level++;
-		}
-		
-		// Send the data to each level site, use data in-transit encryption
-		for (int i = 0; i < all_level_sites.size(); i++) {
-			level_order_site current_level_site = all_level_sites.get(i);
-			String level_site_ip = "192.168.1." + String.valueOf(i + 100);
-			//Socket level_site_socket = new Socket(level_site_ip, 9254);
-		}
 	}
 }

@@ -1,9 +1,9 @@
 package MPC_PPDT_main.Level_Order_PPDT.src.ppdt;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +22,6 @@ public class level_order_site implements Serializable {
 
 	private int index;
     private int next_index;
-    private String next_ip_address;   //Point to next IP to send data to
-    private String client_ip; 		// Point to IP of client-site, used to build alice/bob
     private int level;
     
     private List<NodeInfo> node_level_data = new ArrayList<NodeInfo>();

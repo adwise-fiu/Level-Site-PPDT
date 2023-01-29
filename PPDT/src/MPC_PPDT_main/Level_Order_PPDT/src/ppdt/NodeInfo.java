@@ -9,7 +9,6 @@ import security.paillier.PaillierCipher;
 import security.paillier.PaillierPublicKey;
 
 /**
- * 
  * @author Andrew Quijano
  * This class contains all the information about a specific node in the DT
  */

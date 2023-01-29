@@ -1,8 +1,7 @@
 package MPC_PPDT_main.Level_Order_PPDT.src.ppdt;
+
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.level_order_site;
 
 import java.io.IOException;
 
@@ -35,7 +34,7 @@ public class level_site_server implements Runnable {
                 throw new RuntimeException("Error accepting client connection", e);
             }
             
-            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters);
+            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters, 2);
             if (this.level_site_parameters == null) {
             	this.level_site_parameters = current_level_site_class.getLevelSiteParameters();
             }

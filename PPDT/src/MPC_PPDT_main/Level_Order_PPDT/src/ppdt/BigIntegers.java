@@ -1,30 +1,32 @@
 package MPC_PPDT_main.Level_Order_PPDT.src.ppdt;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
-public class BigIntegers {
-    BigInteger integerValuePaillier;
-    BigInteger integerValueDGK;
-
-
+public class BigIntegers implements Serializable {
+    
+	private static final long serialVersionUID = -2096873915807049906L;
+	private BigInteger integerValuePaillier;
+    private BigInteger integerValueDGK;
 
     public BigIntegers(BigInteger integerValuePaillier, BigInteger integerValueDGK){
-        this.integerValuePaillier=integerValuePaillier;
-        this.integerValueDGK=integerValueDGK;
+        this.integerValuePaillier = integerValuePaillier;
+        this.integerValueDGK = integerValueDGK;
     }
-    BigInteger getIntegerValuePaillier(){
+    
+    public BigInteger getIntegerValuePaillier() {
         return this.integerValuePaillier;
     }
 
-    BigInteger getIntegerValueDGK(){
+    public BigInteger getIntegerValueDGK() {
         return this.integerValueDGK;
     }
 
-    void setIntegerValuePaillier(BigInteger bigI){
-        this.integerValuePaillier=bigI;
+    public void setIntegerValuePaillier(BigInteger integerValuePaillier) {
+        this.integerValuePaillier = integerValuePaillier;
     }
 
-    void setIntegerValueDGK(BigInteger bigI){
-        this.integerValueDGK=bigI;
+    public void setIntegerValueDGK(BigInteger integerValueDGK){
+        this.integerValueDGK = integerValueDGK;
     }
 }
