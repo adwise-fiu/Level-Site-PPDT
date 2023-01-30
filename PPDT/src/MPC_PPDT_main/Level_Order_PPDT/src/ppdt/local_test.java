@@ -6,9 +6,12 @@ import java.util.Properties;
 public class local_test {
 		
 	public static void main(String [] args) throws Exception {
+		
+		// Arguments:
+		System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		
 		Properties config = new Properties();
-		try (FileReader in = new FileReader("../data/config.properties")) 
-		{
+		try (FileReader in = new FileReader("../data/config.properties")) {
 		    config.load(in);
 		}
 		String [] level_site_ports_string = config.getProperty("level-site-ports").split(",");

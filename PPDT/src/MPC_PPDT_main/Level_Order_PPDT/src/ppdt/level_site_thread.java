@@ -186,7 +186,7 @@ public class level_site_thread implements Runnable {
 						System.out.println("Inequality Holds:" + inequalityHolds);
 						System.out.println("n:" + n + " first node index:" + 2 * this.level_site_data.get_current_index() + " second node index:" + (2 * this.level_site_data.get_current_index() + 1));
 						if ((inequalityHolds) && ((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
-							equalsFound = true;	
+							equalsFound = true;
 							this.level_site_data.set_next_index(next_index);
 							
 							//TransmitValueSecurely.transmit_value_securely(Level_Nodes.get(i), Level_Nodes.get(i + 1));
