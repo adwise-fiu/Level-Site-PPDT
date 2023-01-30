@@ -84,7 +84,7 @@ public class level_site_thread implements Runnable {
 	private boolean compare(NodeInfo ld) 
 			throws HomomorphicException, ClassNotFoundException, IOException {
 
-		// Obtain the thresh-hold values
+		// Obtain the thresh-hold value from DT
         double secondDouble = ld.threshold;
         BigInteger secondInt = new BigInteger(String.valueOf(ld.threshold));
         BigInteger plain_b;
@@ -134,6 +134,11 @@ public class level_site_thread implements Runnable {
 	// https://github.com/spyrosthalkidis/Weka_Code_Finito/blob/main/Weka/weka-trunk-master/weka/src/main/java/weka/classifiers/trees/j48/ClassifierTree.java#L764-L822
 	public void run() {
 		try {
+			
+			// decrypt index from client
+			// client has [[1]]
+			// now level site has 1, and decrypts it.
+			
 			int i = this.level_site_data.getLevel();
 			System.out.println("i=" + i);
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
@@ -145,6 +150,8 @@ public class level_site_thread implements Runnable {
 				bound = 2;
 			} 
 			else {
+				// Line 155, use the next_index from level-site.
+				this.level_site_data.set_current_index(3);
 				bound = node_level_data.size();
 			}
 
@@ -173,11 +180,17 @@ public class level_site_thread implements Runnable {
 						if (ls.comparisonType == 6) {
 							ls.comparisonType = 3;
 							boolean firstInequalityHolds = compare(ls);
-							ls.comparisonType = 5;
-							boolean secondInequalityHolds = compare(ls);
-							if (firstInequalityHolds || secondInequalityHolds) {
+							if (firstInequalityHolds) {
 								inequalityHolds = true;
 							}
+							else {
+								ls.comparisonType = 5;
+								boolean secondInequalityHolds = compare(ls);
+								if(secondInequalityHolds) {
+									inequalityHolds = true;
+								}
+							}
+							ls.comparisonType = 6;
 						}
 						else {
 							inequalityHolds = compare(ls);
@@ -188,8 +201,6 @@ public class level_site_thread implements Runnable {
 						if ((inequalityHolds) && ((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
 							equalsFound = true;
 							this.level_site_data.set_next_index(next_index);
-							
-							//TransmitValueSecurely.transmit_value_securely(Level_Nodes.get(i), Level_Nodes.get(i + 1));
 							System.out.println("New index:" + this.level_site_data.get_current_index());
 						}
 					}
@@ -197,8 +208,8 @@ public class level_site_thread implements Runnable {
 					next_index++;
 					node_level_index++;
 					System.out.println("Variable Name:" + ls.getVariableName() + " " + ls.comparisonType + ", " + ls.threshold);
-				}
-			}
+				} // else
+			} // while
 			
 			// Place -1 to break Protocol4 loop at the client...
 			toClient.writeInt(-1);
@@ -212,7 +223,11 @@ public class level_site_thread implements Runnable {
 				// Give the client the AES encrypted index
 				// Note that ONLY the level sites have the AES Key
 				// Question is, why does the next level site need the next_index? do I update line 154 with the index?
+				
+				// encrypt this
 				level_site_data.get_next_index();
+				
+				// send to client
 			}
 			
 		}
