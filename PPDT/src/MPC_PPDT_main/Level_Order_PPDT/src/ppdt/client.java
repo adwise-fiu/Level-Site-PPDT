@@ -137,6 +137,10 @@ public class client implements Runnable {
 				// Send the encrypted data to Level-Site
 				to_level_site.writeObject(feature);
 				
+				// Send bool:
+				// 1- true, there is a encrypted index coming
+				// 2- false, there is NO encrypted index coming
+				
 				// Work with the comparison
 				int comparison_type = -1;
 				while(true) {
@@ -153,9 +157,9 @@ public class client implements Runnable {
 			        client.Protocol4();
 				}
 				
-				// Get the encrypted index for next level-site
-				// Get encrypted index, NOTE all Level-sites
-				// Share SAME AES Key, do NOT give to Client the Key
+				// Get boolean from level-site:
+				// true - get leaf value
+				// false - get encrypted AES index for next round
 				
 				from_level_site.close();
 				to_level_site.close();
