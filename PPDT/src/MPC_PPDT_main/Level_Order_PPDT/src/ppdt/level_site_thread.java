@@ -115,14 +115,14 @@ public class level_site_thread implements Runnable {
         }
         else {
         	 return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
-        }  
+        }
 	}
 	
 	// This will run the communication with client and next level site
 	public void run() {
 		try {
 			int i = this.level_site_data.getLevel();
-			System.out.println("i=" + i);
+			System.out.println("level= " + i);
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
 			
 			// Level Data is the Node Data...
@@ -132,6 +132,8 @@ public class level_site_thread implements Runnable {
 				bound = 2;
 			} 
 			else {
+				// TODO: Set to value from previous level-site
+				this.level_site_data.set_current_index(3);
 				bound = node_level_data.size();
 			}
 
@@ -187,8 +189,13 @@ public class level_site_thread implements Runnable {
 			// Place -1 to break Protocol4 loop
 			toClient.writeInt(-1);
 			
-			// TODO: Encrypt and send to client with shared AES Key of Level-sites
-			level_site_data.get_next_index();
+			if (terminalLeafFound) {
+				// Tell the client the value
+			}
+			else {
+				// encrypt with AES, send to client which will send to next level-site
+				level_site_data.get_next_index();
+			}
 		}
         catch (IOException e) {
 			e.printStackTrace();
