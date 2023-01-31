@@ -1,13 +1,13 @@
 package MPC_PPDT_main.Level_Order_PPDT.src.ppdt;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.util.Hashtable;
 import java.util.List;
 
+import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.NodeInfo;
+import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.level_order_site;
 import security.DGK.DGKOperations;
 import security.DGK.DGKPublicKey;
 import security.misc.HomomorphicException;
@@ -26,15 +26,13 @@ public class level_site_thread implements Runnable {
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
 	
+	static int intermediateInteger=0;
+	
 	private alice Niu = null;
-	private Hashtable<String, BigIntegers> encrypted_features;
-	private int precision;
 	
-	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision) {
-		
+	public level_site_thread(Socket client_socket, level_order_site level_site_data) {
 		this.client_socket = client_socket;
-		this.precision = precision;
-	
+		
 		try {
 			fromClient = new ObjectInputStream(client_socket.getInputStream());
 			toClient = new ObjectOutputStream(client_socket.getOutputStream());
@@ -44,7 +42,7 @@ public class level_site_thread implements Runnable {
 				this.level_site_data = (level_order_site) x;
 				closeClientConnection();
 			}
-			else if (x instanceof Hashtable){
+			else {
 				Niu = new alice(client_socket);
 				dgk_public_key = Niu.getDGKPublicKey();
 				paillier_public_key = Niu.getPaillierPublicKey();
@@ -53,16 +51,18 @@ public class level_site_thread implements Runnable {
 				if (level_site_data != null) {
 					this.level_site_data = level_site_data;
 				}
-				this.encrypted_features = (Hashtable<String, BigIntegers>) x;
-			}
-			else {
-				return;
+				if (!this.level_site_data.are_values_encrypted()) {
+					this.level_site_data.encrypt(dgk_public_key, paillier_public_key);
+				}
 			}
 		}
 		catch (IOException e) {
 			e.printStackTrace();
 		} 
 		catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} 
+		catch (HomomorphicException e) {
 			e.printStackTrace();
 		}
 	}
@@ -80,17 +80,25 @@ public class level_site_thread implements Runnable {
 	}
 	
 	// a - from CLIENT, should already be encrypted...
-	// https://github.com/spyrosthalkidis/Weka_Code_Finito/blob/main/Weka/weka-trunk-master/weka/src/main/java/weka/classifiers/trees/j48/OfflineAuction.java
-	private boolean compare(NodeInfo ld) 
+	private boolean compare(NodeInfo ld, int precision, BigInteger encrypted_client_value) 
 			throws HomomorphicException, ClassNotFoundException, IOException {
 
-		// Obtain the thresh-hold value from DT
         double secondDouble = ld.threshold;
-        BigInteger secondInt = new BigInteger(String.valueOf(ld.threshold));
-        BigInteger plain_b;
-        BigInteger b = null;
-        BigIntegers encrypted_client_values = encrypted_features.get(ld.variable_name);
-        BigInteger encrypted_client_value = null;
+		
+		BigInteger secondInt;
+		try {
+			secondInt = new BigInteger(String.valueOf(ld.threshold));
+		} catch (NumberFormatException nfe){
+			intermediateInteger= (int) Double.parseDouble(ld.threshold+"")*(int)Math.pow(10, precision);
+			secondInt = new BigInteger(String.valueOf(intermediateInteger));
+		}
+        BigInteger plain_b=secondInt;
+		if (ld.comparisonType == 1) {
+			PaillierPublicKey pk = (PaillierPublicKey) this.paillier_public_key;
+			if (plain_b==BigInteger.ONE) {
+				plain_b = PaillierCipher.encrypt(BigInteger.ONE, pk);
+			}
+		}
         
         int threshold = (int) ld.threshold;
         if (ld.comparisonType != 1) {
@@ -104,24 +112,20 @@ public class level_site_thread implements Runnable {
         }
         System.out.println("Comparison type:" + ld.comparisonType);
         System.out.println("b:" + plain_b);
+
+        BigInteger b = BigInteger.ZERO;
+        toClient.writeInt(ld.comparisonType);
+        toClient.writeObject(ld.variable_name);
         
-        // Encrypt the value for the value in Decision Tree
         if ((ld.comparisonType == 1) || (ld.comparisonType == 2) || (ld.comparisonType == 4)) {
-        	encrypted_client_value = encrypted_client_values.getIntegerValuePaillier();
-        	
-        	b = PaillierCipher.encrypt(plain_b, this.paillier_public_key);
-            toClient.writeInt(0);
+            b = PaillierCipher.encrypt(plain_b, this.paillier_public_key);
             Niu.setDGKMode(false);
         }
         else if ((ld.comparisonType == 3) || (ld.comparisonType == 5)) {
-        	encrypted_client_value = encrypted_client_values.getIntegerValueDGK();
-        	
-        	b = DGKOperations.encrypt(plain_b, this.dgk_public_key);
-            toClient.writeInt(1);
+            b = DGKOperations.encrypt(plain_b, this.dgk_public_key);
             Niu.setDGKMode(true);
         }
         
-        // Get the value from the client you will compare against
         if (threshold == 0) {
             return Niu.Protocol4(b, encrypted_client_value);
         }
@@ -130,15 +134,9 @@ public class level_site_thread implements Runnable {
         }
 	}
 	
-	// This will run the communication with client and current level site
-	// https://github.com/spyrosthalkidis/Weka_Code_Finito/blob/main/Weka/weka-trunk-master/weka/src/main/java/weka/classifiers/trees/j48/ClassifierTree.java#L764-L822
+	// This will run the communication with client and next level site
 	public void run() {
 		try {
-			
-			// decrypt index from client
-			// client has [[1]]
-			// now level site has 1, and decrypts it.
-			
 			int i = this.level_site_data.getLevel();
 			System.out.println("i=" + i);
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
@@ -150,8 +148,6 @@ public class level_site_thread implements Runnable {
 				bound = 2;
 			} 
 			else {
-				// Line 155, use the next_index from level-site.
-				this.level_site_data.set_current_index(3);
 				bound = node_level_data.size();
 			}
 
@@ -162,9 +158,8 @@ public class level_site_thread implements Runnable {
 			int n = 0;
 			int next_index = 0;
 
-			NodeInfo ls = null;
 			while (node_level_index < bound && (!equalsFound) && (!terminalLeafFound)) {
-				ls = node_level_data.get(node_level_index);
+				NodeInfo ls = node_level_data.get(node_level_index);
 				System.out.println("j=" + node_level_index);
 				if (ls.isLeaf()) {
 					if (n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1) {
@@ -176,31 +171,27 @@ public class level_site_thread implements Runnable {
 					System.out.println("Variable:" + ls.getVariableName());
 				}
 				else {
-					if ((i == 0)||((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
+					if ((i==0)||((n==2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
 						if (ls.comparisonType == 6) {
 							ls.comparisonType = 3;
-							boolean firstInequalityHolds = compare(ls);
-							if (firstInequalityHolds) {
+							boolean firstInequalityHolds = compare(ls, 2, BigInteger.ZERO);
+							ls.comparisonType = 5;
+							boolean secondInequalityHolds = compare(ls, 2, BigInteger.ZERO);
+							if (firstInequalityHolds || secondInequalityHolds) {
 								inequalityHolds = true;
 							}
-							else {
-								ls.comparisonType = 5;
-								boolean secondInequalityHolds = compare(ls);
-								if(secondInequalityHolds) {
-									inequalityHolds = true;
-								}
-							}
-							ls.comparisonType = 6;
 						}
 						else {
-							inequalityHolds = compare(ls);
+							inequalityHolds = compare(ls, 2, BigInteger.ZERO);
 						}
 
 						System.out.println("Inequality Holds:" + inequalityHolds);
 						System.out.println("n:" + n + " first node index:" + 2 * this.level_site_data.get_current_index() + " second node index:" + (2 * this.level_site_data.get_current_index() + 1));
 						if ((inequalityHolds) && ((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
-							equalsFound = true;
+							equalsFound = true;	
 							this.level_site_data.set_next_index(next_index);
+							
+							//TransmitValueSecurely.transmit_value_securely(Level_Nodes.get(i), Level_Nodes.get(i + 1));
 							System.out.println("New index:" + this.level_site_data.get_current_index());
 						}
 					}
@@ -208,30 +199,16 @@ public class level_site_thread implements Runnable {
 					next_index++;
 					node_level_index++;
 					System.out.println("Variable Name:" + ls.getVariableName() + " " + ls.comparisonType + ", " + ls.threshold);
-				} // else
-			} // while
+				}
+			}
 			
-			// Place -1 to break Protocol4 loop at the client...
+			// Place -1 to break Protocol4 loop
 			toClient.writeInt(-1);
 			
 			// TODO: Encrypt and send to client with shared AES Key of Level-sites
-			if (terminalLeafFound) {
-				// Let the Client know you have the classification, return that!
-				toClient.writeObject(ls.getVariableName());
-			}
-			else {
-				// Give the client the AES encrypted index
-				// Note that ONLY the level sites have the AES Key
-				// Question is, why does the next level site need the next_index? do I update line 154 with the index?
-				
-				// encrypt this
-				level_site_data.get_next_index();
-				
-				// send to client
-			}
-			
+			level_site_data.get_next_index();
 		}
-        catch (IOException e) {
+        	catch (IOException e) {
 			e.printStackTrace();
 		} 
 		catch (ClassNotFoundException e) {
