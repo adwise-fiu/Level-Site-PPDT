@@ -187,26 +187,30 @@ public class server_site implements Runnable {
 						node_info = new NodeInfo(false, leftSide);
 						node_info.comparisonType = type;
 						node_info.threshold = threshold;
-
 						q.add(p.getSons()[i]);
 					}
 					Level_Order_S.append_data(node_info);
 					if (!node_info.is_leaf){
-						NodeInfo additionalNode=new NodeInfo(false, node_info.getVariableName());
-						if (node_info.comparisonType == 1){
+						NodeInfo additionalNode = new NodeInfo(false, node_info.getVariableName());
+						if (node_info.comparisonType == 1) {
 							additionalNode.comparisonType = 6;
-						} else if (node_info.comparisonType == 2){
+						} 
+						else if (node_info.comparisonType == 2) {
 							additionalNode.comparisonType = 4;
-						} else if (node_info.comparisonType == 3){
+						} 
+						else if (node_info.comparisonType == 3) {
 							additionalNode.comparisonType = 5;
-						} else if (node_info.comparisonType == 4){
+						} 
+						else if (node_info.comparisonType == 4) {
 							additionalNode.comparisonType = 2;
-						} else if (node_info.comparisonType == 5){
+						} 
+						else if (node_info.comparisonType == 5) {
 							additionalNode.comparisonType = 3;
-						} else if (node_info.comparisonType == 6){
+						} 
+						else if (node_info.comparisonType == 6) {
 							additionalNode.comparisonType = 1;
 						}
-						additionalNode.threshold= node_info.threshold;
+						additionalNode.threshold = node_info.threshold;
 						Level_Order_S.append_data(additionalNode);
 					}
 				}// else

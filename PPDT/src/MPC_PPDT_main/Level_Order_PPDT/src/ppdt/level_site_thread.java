@@ -1,13 +1,13 @@
 package MPC_PPDT_main.Level_Order_PPDT.src.ppdt;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.util.Hashtable;
 import java.util.List;
 
-import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.NodeInfo;
-import MPC_PPDT_main.Level_Order_PPDT.src.ppdt.level_order_site;
 import security.DGK.DGKOperations;
 import security.DGK.DGKPublicKey;
 import security.misc.HomomorphicException;
@@ -26,12 +26,13 @@ public class level_site_thread implements Runnable {
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
 	
-	static int intermediateInteger=0;
-	
 	private alice Niu = null;
+	private int precision;
+	private Hashtable<String, BigIntegers> encrypted_features;
 	
-	public level_site_thread(Socket client_socket, level_order_site level_site_data) {
+	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision) {
 		this.client_socket = client_socket;
+		this.precision = precision;
 		
 		try {
 			fromClient = new ObjectInputStream(client_socket.getInputStream());
@@ -42,17 +43,15 @@ public class level_site_thread implements Runnable {
 				this.level_site_data = (level_order_site) x;
 				closeClientConnection();
 			}
-			else {
+			else if (x instanceof Hashtable){
 				Niu = new alice(client_socket);
 				dgk_public_key = Niu.getDGKPublicKey();
 				paillier_public_key = Niu.getPaillierPublicKey();
 				
+				encrypted_features = (Hashtable<String, BigIntegers>) x;
 				// Have encrypted copy of thresholds if not done already for all nodes in level-site
 				if (level_site_data != null) {
 					this.level_site_data = level_site_data;
-				}
-				if (!this.level_site_data.are_values_encrypted()) {
-					this.level_site_data.encrypt(dgk_public_key, paillier_public_key);
 				}
 			}
 		}
@@ -60,9 +59,6 @@ public class level_site_thread implements Runnable {
 			e.printStackTrace();
 		} 
 		catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} 
-		catch (HomomorphicException e) {
 			e.printStackTrace();
 		}
 	}
@@ -80,58 +76,46 @@ public class level_site_thread implements Runnable {
 	}
 	
 	// a - from CLIENT, should already be encrypted...
-	private boolean compare(NodeInfo ld, int precision, BigInteger encrypted_client_value) 
+	private boolean compare(NodeInfo ld) 
 			throws HomomorphicException, ClassNotFoundException, IOException {
 
-        double secondDouble = ld.threshold;
+		BigIntegers encrypted_values = this.encrypted_features.get(ld.variable_name);
+		BigInteger encrypted_client_value = null;
 		
-		BigInteger secondInt;
+		// Convert threshold into BigInteger. Note we know threshold is always a float.
+		BigInteger encrypted_thresh = null;
+		String value = String.valueOf(ld.threshold);
 		try {
-			secondInt = new BigInteger(String.valueOf(ld.threshold));
-		} catch (NumberFormatException nfe){
-			intermediateInteger= (int) Double.parseDouble(ld.threshold+"")*(int)Math.pow(10, precision);
-			secondInt = new BigInteger(String.valueOf(intermediateInteger));
+			encrypted_thresh = new BigInteger(value);
 		}
-        BigInteger plain_b=secondInt;
-		if (ld.comparisonType == 1) {
-			PaillierPublicKey pk = (PaillierPublicKey) this.paillier_public_key;
-			if (plain_b==BigInteger.ONE) {
-				plain_b = PaillierCipher.encrypt(BigInteger.ONE, pk);
-			}
+		catch (NumberFormatException e) {
+			int intermediateInteger = (int) ld.threshold * (int)Math.pow(10, precision);
+			encrypted_thresh = BigInteger.valueOf(intermediateInteger);
 		}
-        
-        int threshold = (int) ld.threshold;
-        if (ld.comparisonType != 1) {
-            //double newDouble2 = (secondDouble * 10.0 * Math.pow(10, precision));
-            //secondInt = (long) newDouble2;
-            //secondInt = secondInt/10;
-            plain_b = secondInt;
-        }
-        else {
-            plain_b = new BigInteger("" + threshold);
-        }
-        System.out.println("Comparison type:" + ld.comparisonType);
-        System.out.println("b:" + plain_b);
 
-        BigInteger b = BigInteger.ZERO;
-        toClient.writeInt(ld.comparisonType);
-        toClient.writeObject(ld.variable_name);
+        System.out.println("Comparison type: " + ld.comparisonType);
+        System.out.println("plain-text value: " + encrypted_thresh);
         
+        // Encrypt the thresh-hold correctly
         if ((ld.comparisonType == 1) || (ld.comparisonType == 2) || (ld.comparisonType == 4)) {
-            b = PaillierCipher.encrypt(plain_b, this.paillier_public_key);
+        	encrypted_thresh = PaillierCipher.encrypt(encrypted_thresh, this.paillier_public_key);
+        	encrypted_client_value = encrypted_values.getIntegerValuePaillier();
+            toClient.writeInt(0);
             Niu.setDGKMode(false);
         }
         else if ((ld.comparisonType == 3) || (ld.comparisonType == 5)) {
-            b = DGKOperations.encrypt(plain_b, this.dgk_public_key);
+        	encrypted_thresh = DGKOperations.encrypt(encrypted_thresh, this.dgk_public_key);
+        	encrypted_client_value = encrypted_values.getIntegerValueDGK();
+            toClient.writeInt(1);
             Niu.setDGKMode(true);
         }
         
-        if (threshold == 0) {
-            return Niu.Protocol4(b, encrypted_client_value);
+        if (ld.threshold == 0) {
+        	 return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
         }
         else {
-        	return Niu.Protocol4(encrypted_client_value, b);
-        }
+        	 return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
+        }  
 	}
 	
 	// This will run the communication with client and next level site
@@ -174,15 +158,15 @@ public class level_site_thread implements Runnable {
 					if ((i==0)||((n==2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
 						if (ls.comparisonType == 6) {
 							ls.comparisonType = 3;
-							boolean firstInequalityHolds = compare(ls, 2, BigInteger.ZERO);
+							boolean firstInequalityHolds = compare(ls);
 							ls.comparisonType = 5;
-							boolean secondInequalityHolds = compare(ls, 2, BigInteger.ZERO);
+							boolean secondInequalityHolds = compare(ls);
 							if (firstInequalityHolds || secondInequalityHolds) {
 								inequalityHolds = true;
 							}
 						}
 						else {
-							inequalityHolds = compare(ls, 2, BigInteger.ZERO);
+							inequalityHolds = compare(ls);
 						}
 
 						System.out.println("Inequality Holds:" + inequalityHolds);
@@ -190,8 +174,6 @@ public class level_site_thread implements Runnable {
 						if ((inequalityHolds) && ((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
 							equalsFound = true;	
 							this.level_site_data.set_next_index(next_index);
-							
-							//TransmitValueSecurely.transmit_value_securely(Level_Nodes.get(i), Level_Nodes.get(i + 1));
 							System.out.println("New index:" + this.level_site_data.get_current_index());
 						}
 					}
@@ -208,7 +190,7 @@ public class level_site_thread implements Runnable {
 			// TODO: Encrypt and send to client with shared AES Key of Level-sites
 			level_site_data.get_next_index();
 		}
-        	catch (IOException e) {
+        catch (IOException e) {
 			e.printStackTrace();
 		} 
 		catch (ClassNotFoundException e) {
