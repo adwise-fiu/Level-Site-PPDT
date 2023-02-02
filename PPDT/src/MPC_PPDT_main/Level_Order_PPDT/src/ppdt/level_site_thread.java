@@ -29,7 +29,7 @@ public class level_site_thread implements Runnable {
 	private alice Niu = null;
 	private int precision;
 	private Hashtable<String, BigIntegers> encrypted_features;
-	private AES crypto;
+	private AES crypto = null;
 	
 	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision, AES crypto) {
 		this.client_socket = client_socket;
@@ -43,6 +43,8 @@ public class level_site_thread implements Runnable {
 			Object x = fromClient.readObject();
 			if (x instanceof level_order_site) {
 				this.level_site_data = (level_order_site) x;
+				System.out.println("Level-Site received listening on Port: " + client_socket.getLocalPort());
+				System.out.println(this.level_site_data.toString());
 				closeClientConnection();
 			}
 			else if (x instanceof Hashtable){

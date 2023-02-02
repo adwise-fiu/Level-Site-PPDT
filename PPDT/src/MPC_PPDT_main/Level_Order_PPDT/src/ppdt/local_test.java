@@ -8,6 +8,7 @@ public class local_test {
 	public static void main(String [] args) throws Exception {
 		
 		// Arguments:
+		System.out.println("Running Full Local Test...");
 		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 		
 		Properties config = new Properties();
@@ -30,6 +31,8 @@ public class local_test {
     		level_sites[i] = new level_site_server(level_site_ports[i], precision);
         	new Thread(level_sites[i]).start();
     	}
+    	
+    	Thread.sleep(1000 * 5);
 
 		// Create the server
 		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports);
@@ -39,6 +42,7 @@ public class local_test {
     	// client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
     	// new Thread(evaluate).start();
     	
+    	Thread.sleep(1000 * 5);
     	// Close the Level Sites
     	for (int i = 0; i < level_sites.length; i++) {
     		level_sites[i].stop();

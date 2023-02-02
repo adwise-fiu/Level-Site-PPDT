@@ -1,5 +1,6 @@
 package MPC_PPDT_main.Level_Order_PPDT.src.ppdt;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 import security.DGK.DGKOperations;
@@ -12,8 +13,10 @@ import security.paillier.PaillierPublicKey;
  * @author Andrew Quijano
  * This class contains all the information about a specific node in the DT
  */
-public class NodeInfo {
 
+public class NodeInfo implements Serializable {
+	private static final long serialVersionUID = -3569139531917752891L;
+	
 	public final boolean is_leaf;
 	public final String variable_name;
 	public int comparisonType;

@@ -83,6 +83,7 @@ public class server_site implements Runnable {
 
 		Queue<ClassifierTree> q = new LinkedList<>();
 		q.add(root);
+		int level = 0;
 		
 		while (!q.isEmpty()) {
 			level_order_site Level_Order_S = new level_order_site();
@@ -215,9 +216,10 @@ public class server_site implements Runnable {
 					}
 				}// else
 				n--;
-			} // While n > 0
+			} // While n > 0 (nodes > 0?)
 			all_level_sites.add(Level_Order_S);
-
+			Level_Order_S.set_level(level);
+			++level;
 		} // While Tree Not Empty
 	}
 
@@ -227,20 +229,17 @@ public class server_site implements Runnable {
 			ppdt = train_decision_tree(this.training_data);
 			List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
 			get_level_site_data(ppdt, all_level_sites);
+			/*
 			System.out.println("Checking current level site data list...");
-			
-			int level = 0;
 			for (level_order_site l: all_level_sites) {
-				System.out.println("-------------level: " + level);
 				System.out.println(l.toString());
-				level++;
 			}
+			*/
 			
 			Socket level_site = null;
 			// Send the data to each level site, use data in-transit encryption
 			for (int i = 0; i < level_site_ips.length; i++) {
 				level_order_site current_level_site = all_level_sites.get(i);
-				/*
 				if (port == -1) {
 					level_site = new Socket(level_site_ips[i], level_site_ports[i]);
 				}
@@ -252,7 +251,6 @@ public class server_site implements Runnable {
 				to_level_site.writeObject(current_level_site);
 				to_level_site.close();
 				level_site.close();
-				*/
 			}
 		}
 		catch (Exception e) {

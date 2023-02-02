@@ -20,9 +20,9 @@ public class level_order_site implements Serializable {
 	
 	private static final long serialVersionUID = 575566807906351024L;
 
-	private int index;
+	private int index = 0;
     private int next_index;
-    private int level;
+    private int level = 0;
     
     private List<NodeInfo> node_level_data = new ArrayList<NodeInfo>();
     
@@ -50,6 +50,10 @@ public class level_order_site implements Serializable {
     	return this.index;
     }
     
+    public void set_level(int level) {
+    	this.level = level;
+    }
+    
     public void encrypt(DGKPublicKey dgk_public_key, PaillierPublicKey paillier_public_key) throws HomomorphicException {
     	for (NodeInfo n: node_level_data) {
     		n.encrypt_thresholds(dgk_public_key, paillier_public_key);
@@ -68,6 +72,9 @@ public class level_order_site implements Serializable {
     public String toString() {
     	StringBuilder output = new StringBuilder();
     	int num = 0;
+    	output.append("level: ");
+    	output.append(this.level);
+    	output.append('\n');
     	for (NodeInfo i: node_level_data) {
     		output.append("Index ");
     		output.append(num);

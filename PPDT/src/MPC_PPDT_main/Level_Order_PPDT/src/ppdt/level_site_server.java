@@ -29,10 +29,12 @@ public class level_site_server implements Runnable {
         while(! isStopped()) {
             Socket clientSocket = null;
             try {
+            	System.out.println("Ready to accept connections at: " + this.serverPort);
                 clientSocket = this.serverSocket.accept();
-            } catch (IOException e) {
+            } 
+            catch (IOException e) {
                 if(isStopped()) {
-                    System.out.println("Server Stopped on port " + this.serverPort) ;
+                    System.out.println("Server Stopped on port " + this.serverPort);
                     return;
                 }
                 throw new RuntimeException("Error accepting client connection", e);
@@ -57,7 +59,7 @@ public class level_site_server implements Runnable {
         this.isStopped = true;
         try {
             this.serverSocket.close();
-        } 
+        }
         catch (IOException e) {
         	throw new RuntimeException("Error closing server on port " + this.serverPort, e);
         }
@@ -70,19 +72,5 @@ public class level_site_server implements Runnable {
         catch (IOException e) {
             throw new RuntimeException("Cannot open port " + this.serverPort, e);
         }
-    }
-    
-    public static void main (String [] args) {
-    	level_site_server server = new level_site_server(9000, 2);
-    	new Thread(server).start();
-
-    	try {
-    	    Thread.sleep(20 * 1000);
-    	} 
-    	catch (InterruptedException e) {
-    	    e.printStackTrace();
-    	}
-    	System.out.println("Stopping Server");
-    	server.stop();
     }
 }
