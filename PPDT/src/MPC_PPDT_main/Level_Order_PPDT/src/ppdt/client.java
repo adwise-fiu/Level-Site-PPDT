@@ -97,7 +97,7 @@ public class client implements Runnable {
 
 	
 	public void run() {
-		// Generate Key Pair
+		// Generate Key Pairs
 		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
 		p.initialize(key_size, null);
 		KeyPair dgk = p.generateKeyPair();
@@ -119,6 +119,11 @@ public class client implements Runnable {
 		
 		// Communicate with each Level-Site	
 		Socket level_site = null;
+		String next_index = null;
+		String classification = null;
+		Object o = null;
+		boolean classification_complete = false;
+		
 		try {
 			for (int i = 0; i < level_site_ips.length; i++) {
 				if (port == -1) {
@@ -140,6 +145,13 @@ public class client implements Runnable {
 				// Send bool:
 				// 1- true, there is a encrypted index coming
 				// 2- false, there is NO encrypted index coming
+				if (next_index == null) {
+					to_level_site.writeBoolean(false);
+				}
+				else {
+					to_level_site.writeBoolean(true);
+					to_level_site.writeObject(next_index);
+				}
 				
 				// Work with the comparison
 				int comparison_type = -1;
@@ -160,10 +172,22 @@ public class client implements Runnable {
 				// Get boolean from level-site:
 				// true - get leaf value
 				// false - get encrypted AES index for next round
-				
+				classification_complete = from_level_site.readBoolean();
+				o = from_level_site.readObject();
+				if (classification_complete) {
+					if (o instanceof String) {
+						classification = (String) o;
+					}
+				}
+				else {
+					if (o instanceof String) {
+						next_index = (String) o;
+					}
+				}
 				from_level_site.close();
 				to_level_site.close();
 			}
+			System.out.println("The Classification is: " + classification);
 		}
 		catch (IOException e) {
 			

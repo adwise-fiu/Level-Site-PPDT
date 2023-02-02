@@ -29,10 +29,12 @@ public class level_site_thread implements Runnable {
 	private alice Niu = null;
 	private int precision;
 	private Hashtable<String, BigIntegers> encrypted_features;
+	private AES crypto;
 	
-	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision) {
+	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision, AES crypto) {
 		this.client_socket = client_socket;
 		this.precision = precision;
+		this.crypto = crypto;
 		
 		try {
 			fromClient = new ObjectInputStream(client_socket.getInputStream());
@@ -120,10 +122,22 @@ public class level_site_thread implements Runnable {
 	
 	// This will run the communication with client and next level site
 	public void run() {
+		Object o;
+		String previous_index = null;
+		boolean get_previous_index = false;
 		try {
 			int i = this.level_site_data.getLevel();
 			System.out.println("level= " + i);
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
+			
+			get_previous_index = fromClient.readBoolean();
+			if (get_previous_index) {
+				o = fromClient.readObject();
+				if (o instanceof String) {
+					previous_index = (String) o;
+				}
+				previous_index = crypto.decrypt(previous_index);
+			}
 			
 			// Level Data is the Node Data...
 			int bound = 0;
@@ -132,8 +146,7 @@ public class level_site_thread implements Runnable {
 				bound = 2;
 			} 
 			else {
-				// TODO: Set to value from previous level-site
-				this.level_site_data.set_current_index(3);
+				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
 				bound = node_level_data.size();
 			}
 
@@ -143,9 +156,11 @@ public class level_site_thread implements Runnable {
 			int node_level_index = 0;
 			int n = 0;
 			int next_index = 0;
-
+			NodeInfo ls = null;
+			String encrypted_next_index = null;
+			
 			while (node_level_index < bound && (!equalsFound) && (!terminalLeafFound)) {
-				NodeInfo ls = node_level_data.get(node_level_index);
+				ls = node_level_data.get(node_level_index);
 				System.out.println("j=" + node_level_index);
 				if (ls.isLeaf()) {
 					if (n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1) {
@@ -191,10 +206,14 @@ public class level_site_thread implements Runnable {
 			
 			if (terminalLeafFound) {
 				// Tell the client the value
+				toClient.writeBoolean(true);
+				toClient.writeObject(ls.getVariableName());
 			}
 			else {
+				toClient.writeBoolean(false);
 				// encrypt with AES, send to client which will send to next level-site
-				level_site_data.get_next_index();
+				encrypted_next_index = crypto.encrypt(level_site_data.get_next_index() + "");
+				toClient.writeObject(encrypted_next_index);
 			}
 		}
         catch (IOException e) {

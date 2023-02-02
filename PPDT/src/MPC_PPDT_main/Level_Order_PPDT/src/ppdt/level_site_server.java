@@ -13,6 +13,8 @@ public class level_site_server implements Runnable {
     protected Thread       runningThread= null;
     protected level_order_site level_site_parameters = null;
     protected int precision;
+    // TODO: Password is here...
+    protected AES crypto = new AES("AppSecSpring2023");
     
     public level_site_server (int port, int precision) {
         this.serverPort = port;
@@ -36,7 +38,7 @@ public class level_site_server implements Runnable {
                 throw new RuntimeException("Error accepting client connection", e);
             }
             
-            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters, this.precision);
+            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters, this.precision, this.crypto);
             if (this.level_site_parameters == null) {
             	this.level_site_parameters = current_level_site_class.getLevelSiteParameters();
             }
