@@ -81,6 +81,7 @@ public class level_order_site implements Serializable {
     		output.append('\n');
     		output.append(i.toString());
     		output.append('\n');
+    		num++;
     	}
     	return output.toString();
     }

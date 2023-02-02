@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -71,6 +72,9 @@ public class server_site implements Runnable {
 		ClassifierTree j48 = new C45PruneableClassifierTree(j48_model, true, (float) 0.25, true, true, true);
 
 	    j48.buildClassifier(train);
+	    try (PrintWriter out = new PrintWriter("dt-graph.txt")) {
+	        out.println(j48.graph());
+	    }
 	    return j48;
 	}
 	
@@ -256,28 +260,5 @@ public class server_site implements Runnable {
 		catch (Exception e) {
 			e.printStackTrace();
 		}	
-	}
-	
-	public static void main(String [] args) throws Exception {
-
-		// Arguments:
-		System.out.println("Working Directory = " + System.getProperty("user.dir"));
-		// Runs at: MPC-PPDT\PPDT
-		Properties config = new Properties();
-		try (FileReader in = new FileReader("../data/config.properties")) 
-		{
-		    config.load(in);
-		}
-		String [] level_site_ports_string = config.getProperty("level-site-ports").split(",");
-		String [] level_site_ips = config.getProperty("level-site-ips").split(",");
-		int levels = Integer.parseInt(config.getProperty("levels"));
-		String training_data = config.getProperty("training");
-		int [] level_site_ports = new int[levels];
-		
-    	for (int i = 0; i < levels; i++) {
-    		level_site_ports[i] = Integer.parseInt(level_site_ports_string[i]);
-    	}
-		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports);
-    	new Thread(cloud).start();
 	}
 }
