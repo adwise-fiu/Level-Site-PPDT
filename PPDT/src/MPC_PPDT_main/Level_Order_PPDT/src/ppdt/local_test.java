@@ -39,8 +39,8 @@ public class local_test {
     	new Thread(cloud).start();
     	
 		// Create client
-    	// client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
-    	// new Thread(evaluate).start();
+    	//client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
+    	//new Thread(evaluate).start();
     	
     	Thread.sleep(1000 * 5);
     	// Close the Level Sites
