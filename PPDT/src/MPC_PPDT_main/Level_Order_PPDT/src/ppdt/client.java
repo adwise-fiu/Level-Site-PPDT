@@ -124,17 +124,21 @@ public class client implements Runnable {
 		Object o = null;
 		boolean classification_complete = false;
 		
+		System.out.println("Read features...");
+		
 		try {
 			for (int i = 0; i < level_site_ips.length; i++) {
 				if (port == -1) {
+					System.out.println("Local Test:" + level_site_ips[i] + " " + level_site_ports[i]);
 					level_site = new Socket(level_site_ips[i], level_site_ports[i]);
 				}
 				else {
 					level_site = new Socket(level_site_ips[i], port);
 				}
 				
-				from_level_site = new ObjectInputStream(level_site.getInputStream());
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+				from_level_site = new ObjectInputStream(level_site.getInputStream());
+				System.out.println("Client connected to level " + i);
 				
 				// Send the Public Keys using Alice and Bob
 				bob client = new bob(level_site, dgk, paillier);
@@ -163,7 +167,7 @@ public class client implements Runnable {
 					else if (comparison_type == 0) {
 						client.setDGKMode(false);
 					}
-					else if (comparison_type == 1){
+					else if (comparison_type == 1) {
 			            client.setDGKMode(true);
 			        }
 			        client.Protocol4();
@@ -184,8 +188,6 @@ public class client implements Runnable {
 						next_index = (String) o;
 					}
 				}
-				from_level_site.close();
-				to_level_site.close();
 			}
 			System.out.println("The Classification is: " + classification);
 		}

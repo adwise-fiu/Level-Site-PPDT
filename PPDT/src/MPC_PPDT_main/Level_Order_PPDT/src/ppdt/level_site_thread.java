@@ -42,12 +42,13 @@ public class level_site_thread implements Runnable {
 			
 			Object x = fromClient.readObject();
 			if (x instanceof level_order_site) {
+				// Traffic from Server. Level-Site alone will manage closing this.
 				this.level_site_data = (level_order_site) x;
 				System.out.println("Level-Site received listening on Port: " + client_socket.getLocalPort());
 				System.out.println(this.level_site_data.toString());
-				closeClientConnection();
 			}
 			else if (x instanceof Hashtable){
+				System.out.println("Received Features");
 				Niu = new alice(client_socket);
 				dgk_public_key = Niu.getDGKPublicKey();
 				paillier_public_key = Niu.getPaillierPublicKey();
@@ -58,6 +59,10 @@ public class level_site_thread implements Runnable {
 					this.level_site_data = level_site_data;
 				}
 			}
+			else {
+				System.out.println("Wrong Object Received");
+			}
+			closeClientConnection();
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -77,6 +82,7 @@ public class level_site_thread implements Runnable {
 		if (this.client_socket != null && this.client_socket.isConnected()) {
 			this.client_socket.close();	
 		}
+		System.out.println("Connection Closed!");
 	}
 	
 	// a - from CLIENT, should already be encrypted...

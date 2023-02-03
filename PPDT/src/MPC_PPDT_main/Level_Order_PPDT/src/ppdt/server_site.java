@@ -4,13 +4,13 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
 import java.util.Queue;
 
 import weka.classifiers.trees.j48.BinC45ModelSelection;
@@ -26,7 +26,8 @@ public class server_site implements Runnable {
 	private int [] level_site_ports = null;
 	private int port = -1;
 	
-	private ObjectOutputStream to_level_site;
+	private ObjectOutputStream to_level_site = null;
+	private ObjectInputStream from_level_site = null;
 	
 	// For local host testing
 	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports) {
@@ -233,13 +234,7 @@ public class server_site implements Runnable {
 			ppdt = train_decision_tree(this.training_data);
 			List<level_order_site> all_level_sites = new ArrayList<level_order_site>();
 			get_level_site_data(ppdt, all_level_sites);
-			/*
-			System.out.println("Checking current level site data list...");
-			for (level_order_site l: all_level_sites) {
-				System.out.println(l.toString());
-			}
-			*/
-			
+
 			Socket level_site = null;
 			// Send the data to each level site, use data in-transit encryption
 			for (int i = 0; i < level_site_ips.length; i++) {
@@ -252,9 +247,8 @@ public class server_site implements Runnable {
 				}
 				
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+				from_level_site = new ObjectInputStream(level_site.getInputStream());
 				to_level_site.writeObject(current_level_site);
-				to_level_site.close();
-				level_site.close();
 			}
 		}
 		catch (Exception e) {

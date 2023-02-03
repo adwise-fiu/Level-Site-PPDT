@@ -31,7 +31,7 @@ public class level_site_server implements Runnable {
             try {
             	System.out.println("Ready to accept connections at: " + this.serverPort);
                 clientSocket = this.serverSocket.accept();
-            } 
+            }
             catch (IOException e) {
                 if(isStopped()) {
                     System.out.println("Server Stopped on port " + this.serverPort);
