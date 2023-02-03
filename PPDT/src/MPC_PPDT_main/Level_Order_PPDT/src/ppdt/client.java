@@ -123,6 +123,7 @@ public class client implements Runnable {
 		String classification = null;
 		Object o = null;
 		boolean classification_complete = false;
+		bob client;
 		
 		System.out.println("Read features...");
 		
@@ -140,11 +141,12 @@ public class client implements Runnable {
 				from_level_site = new ObjectInputStream(level_site.getInputStream());
 				System.out.println("Client connected to level " + i);
 				
-				// Send the Public Keys using Alice and Bob
-				bob client = new bob(level_site, dgk, paillier);
-
 				// Send the encrypted data to Level-Site
 				to_level_site.writeObject(feature);
+				to_level_site.flush();
+				
+				// Send the Public Keys using Alice and Bob
+				client = new bob(level_site, paillier, dgk);
 				
 				// Send bool:
 				// 1- true, there is a encrypted index coming
@@ -156,6 +158,7 @@ public class client implements Runnable {
 					to_level_site.writeBoolean(true);
 					to_level_site.writeObject(next_index);
 				}
+				to_level_site.flush();
 				
 				// Work with the comparison
 				int comparison_type = -1;

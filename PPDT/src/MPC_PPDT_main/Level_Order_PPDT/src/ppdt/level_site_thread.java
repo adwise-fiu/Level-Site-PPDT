@@ -21,7 +21,7 @@ public class level_site_thread implements Runnable {
 	private ObjectInputStream fromClient;
 	private ObjectOutputStream toClient;
 	
-	private level_order_site level_site_data;
+	private level_order_site level_site_data = null;
 	
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
@@ -37,8 +37,8 @@ public class level_site_thread implements Runnable {
 		this.crypto = crypto;
 		
 		try {
-			fromClient = new ObjectInputStream(client_socket.getInputStream());
 			toClient = new ObjectOutputStream(client_socket.getOutputStream());
+			fromClient = new ObjectInputStream(client_socket.getInputStream());
 			
 			Object x = fromClient.readObject();
 			if (x instanceof level_order_site) {
@@ -46,13 +46,10 @@ public class level_site_thread implements Runnable {
 				this.level_site_data = (level_order_site) x;
 				System.out.println("Level-Site received listening on Port: " + client_socket.getLocalPort());
 				System.out.println(this.level_site_data.toString());
+				closeClientConnection();
 			}
 			else if (x instanceof Hashtable){
-				System.out.println("Received Features");
-				Niu = new alice(client_socket);
-				dgk_public_key = Niu.getDGKPublicKey();
-				paillier_public_key = Niu.getPaillierPublicKey();
-				
+				System.out.println("Received Features from Client");
 				encrypted_features = (Hashtable<String, BigIntegers>) x;
 				// Have encrypted copy of thresholds if not done already for all nodes in level-site
 				if (level_site_data != null) {
@@ -60,9 +57,9 @@ public class level_site_thread implements Runnable {
 				}
 			}
 			else {
-				System.out.println("Wrong Object Received");
+				System.out.println("Wrong Object Received: " + x.getClass().toString());
+				closeClientConnection();
 			}
-			closeClientConnection();
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -119,6 +116,7 @@ public class level_site_thread implements Runnable {
             toClient.writeInt(1);
             Niu.setDGKMode(true);
         }
+        toClient.flush();
         
         if (ld.threshold == 0) {
         	 return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
@@ -133,7 +131,12 @@ public class level_site_thread implements Runnable {
 		Object o;
 		String previous_index = null;
 		boolean get_previous_index = false;
+		
 		try {
+			Niu = new alice(client_socket);
+			dgk_public_key = Niu.getDGKPublicKey();
+			paillier_public_key = Niu.getPaillierPublicKey();
+			
 			int i = this.level_site_data.getLevel();
 			System.out.println("level= " + i);
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
@@ -152,7 +155,7 @@ public class level_site_thread implements Runnable {
 			if (i == 0) {
 				this.level_site_data.set_current_index(0);
 				bound = 2;
-			} 
+			}
 			else {
 				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
 				bound = node_level_data.size();
@@ -184,11 +187,17 @@ public class level_site_thread implements Runnable {
 						if (ls.comparisonType == 6) {
 							ls.comparisonType = 3;
 							boolean firstInequalityHolds = compare(ls);
-							ls.comparisonType = 5;
-							boolean secondInequalityHolds = compare(ls);
-							if (firstInequalityHolds || secondInequalityHolds) {
+							if (firstInequalityHolds) {
 								inequalityHolds = true;
 							}
+							else {
+								ls.comparisonType = 5;
+								boolean secondInequalityHolds = compare(ls);
+								if (secondInequalityHolds) {
+									inequalityHolds = true;
+								}
+							}
+							ls.comparisonType = 6;
 						}
 						else {
 							inequalityHolds = compare(ls);
@@ -211,6 +220,7 @@ public class level_site_thread implements Runnable {
 			
 			// Place -1 to break Protocol4 loop
 			toClient.writeInt(-1);
+			toClient.flush();
 			
 			if (terminalLeafFound) {
 				// Tell the client the value
@@ -223,6 +233,7 @@ public class level_site_thread implements Runnable {
 				encrypted_next_index = crypto.encrypt(level_site_data.get_next_index() + "");
 				toClient.writeObject(encrypted_next_index);
 			}
+			closeClientConnection();
 		}
         catch (IOException e) {
 			e.printStackTrace();
