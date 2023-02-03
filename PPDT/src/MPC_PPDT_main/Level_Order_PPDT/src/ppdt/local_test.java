@@ -44,13 +44,11 @@ public class local_test {
     	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
     	new Thread(evaluate).start();
     	
-    	Thread.sleep(1000 * 7);
+    	Thread.sleep(1000 * 60);
     	
     	// Close the Level Sites
-    	/*
     	for (int i = 0; i < level_sites.length; i++) {
     		level_sites[i].stop();
     	}
-    	*/
 	}
 }

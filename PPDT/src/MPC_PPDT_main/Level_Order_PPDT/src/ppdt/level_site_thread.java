@@ -79,7 +79,6 @@ public class level_site_thread implements Runnable {
 		if (this.client_socket != null && this.client_socket.isConnected()) {
 			this.client_socket.close();	
 		}
-		System.out.println("Connection Closed!");
 	}
 	
 	// a - from CLIENT, should already be encrypted...
