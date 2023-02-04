@@ -5,8 +5,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 import java.util.List;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import security.DGK.DGKOperations;
 import security.DGK.DGKPublicKey;
@@ -129,6 +136,7 @@ public class level_site_thread implements Runnable {
 	public void run() {
 		Object o;
 		String previous_index = null;
+		String iv = null;
 		boolean get_previous_index = false;
 		
 		try {
@@ -146,7 +154,11 @@ public class level_site_thread implements Runnable {
 				if (o instanceof String) {
 					previous_index = (String) o;
 				}
-				previous_index = crypto.decrypt(previous_index);
+				o = fromClient.readObject();
+				if (o instanceof String) {
+					iv = (String) o;
+				}
+				previous_index = crypto.decrypt(previous_index, iv);
 			}
 			
 			// Level Data is the Node Data...
@@ -230,7 +242,9 @@ public class level_site_thread implements Runnable {
 				toClient.writeBoolean(false);
 				// encrypt with AES, send to client which will send to next level-site
 				encrypted_next_index = crypto.encrypt(level_site_data.get_next_index() + "");
+				iv = crypto.getIV();
 				toClient.writeObject(encrypted_next_index);
+				toClient.writeObject(iv);
 			}
 			closeClientConnection();
 		}
@@ -241,6 +255,24 @@ public class level_site_thread implements Runnable {
 			e.printStackTrace();
 		} 
 		catch (HomomorphicException e) {
+			e.printStackTrace();
+		} 
+		catch (InvalidKeyException e) {
+			e.printStackTrace();
+		} 
+		catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		catch (NoSuchPaddingException e) {
+			e.printStackTrace();
+		}
+		catch (IllegalBlockSizeException e) {
+			e.printStackTrace();
+		} 
+		catch (BadPaddingException e) {
+			e.printStackTrace();
+		} 
+		catch (InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
 		}
 		finally {

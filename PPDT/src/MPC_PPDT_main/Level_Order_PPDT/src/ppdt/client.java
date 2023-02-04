@@ -121,6 +121,7 @@ public class client implements Runnable {
 		Socket level_site = null;
 		String next_index = null;
 		String classification = null;
+		String iv = null;
 		Object o = null;
 		boolean classification_complete = false;
 		bob client;
@@ -157,6 +158,7 @@ public class client implements Runnable {
 				else {
 					to_level_site.writeBoolean(true);
 					to_level_site.writeObject(next_index);
+					to_level_site.writeObject(iv);
 				}
 				to_level_site.flush();
 				
@@ -189,6 +191,10 @@ public class client implements Runnable {
 				else {
 					if (o instanceof String) {
 						next_index = (String) o;
+					}
+					o = from_level_site.readObject();
+					if (o instanceof String) {
+						iv = (String) o;
 					}
 				}
 			}
