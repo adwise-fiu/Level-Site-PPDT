@@ -86,8 +86,8 @@ public class client implements Runnable {
 
 
 			}
+			return values;
 		}
-		return values;
 	}
 
 	
