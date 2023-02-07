@@ -59,10 +59,10 @@ public class client implements Runnable {
 		BigInteger integerValuePaillier;
 		BigInteger integerValueDGK;
 		int intermediateInteger;
-
+		Hashtable<String, BigIntegers> values = new Hashtable<String, BigIntegers>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 			String line;
-			Hashtable<String, BigIntegers> values = new Hashtable<String, BigIntegers>();
+
 			while ((line = br.readLine()) != null) {
 				String key, value;
 				String[] splitted = line.split("\\t");
@@ -78,21 +78,16 @@ public class client implements Runnable {
 					value = "1";
 				}
 
-				try {
-					integerValue = new BigInteger(value);
-					integerValuePaillier = PaillierCipher.encrypt(integerValue, paillier_public_key);
-					integerValueDGK = DGKOperations.encrypt(integerValue, dgk_public_key);
-					values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
-				} 
-				catch (NumberFormatException nfe){
-					intermediateInteger = (int) Double.parseDouble(value)*(int)Math.pow(10, precision);
-					integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
-					integerValueDGK = DGKOperations.encrypt(intermediateInteger, dgk_public_key);
-					values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
-				}
+
+				intermediateInteger = (int) Double.parseDouble(value) * (int) Math.pow(10, precision);
+				integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
+				integerValueDGK = DGKOperations.encrypt(intermediateInteger, dgk_public_key);
+				values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
+
+
 			}
-			return values;
 		}
+		return values;
 	}
 
 	
