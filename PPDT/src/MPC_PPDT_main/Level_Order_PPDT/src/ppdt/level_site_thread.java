@@ -98,13 +98,11 @@ public class level_site_thread implements Runnable {
 		// Convert threshold into BigInteger. Note we know threshold is always a float.
 		BigInteger encrypted_thresh = null;
 		String value = String.valueOf(ld.threshold);
-		try {
-			encrypted_thresh = new BigInteger(value);
-		}
-		catch (NumberFormatException e) {
-			int intermediateInteger = (int) ld.threshold * (int)Math.pow(10, precision);
-			encrypted_thresh = BigInteger.valueOf(intermediateInteger);
-		}
+
+
+		int intermediateInteger = (int) ld.threshold * (int)Math.pow(10, precision);
+		encrypted_thresh = BigInteger.valueOf(intermediateInteger);
+
 
         System.out.println("Comparison type: " + ld.comparisonType);
         System.out.println("plain-text value: " + encrypted_thresh);
@@ -124,7 +122,7 @@ public class level_site_thread implements Runnable {
         }
         toClient.flush();
         
-        if (ld.threshold == 0) {
+        if (((ld.comparisonType==1)&&(ld.threshold == 0))||(ld.comparisonType==4)||(ld.comparisonType==5)) {
         	 return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
         }
         else {
