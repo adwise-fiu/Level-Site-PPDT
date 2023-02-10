@@ -195,7 +195,7 @@ public class server_site implements Runnable {
 						node_info.threshold = threshold;
 						q.add(p.getSons()[i]);
 					}
-					Level_Order_S.append_data(node_info);
+
 					if (!node_info.is_leaf){
 						NodeInfo additionalNode = new NodeInfo(false, node_info.getVariableName());
 						if (node_info.comparisonType == 1) {
@@ -219,6 +219,7 @@ public class server_site implements Runnable {
 						additionalNode.threshold = node_info.threshold;
 						Level_Order_S.append_data(additionalNode);
 					}
+					Level_Order_S.append_data(node_info);
 				}// else
 				n--;
 			} // While n > 0 (nodes > 0?)
@@ -238,6 +239,7 @@ public class server_site implements Runnable {
 			Socket level_site = null;
 			// Send the data to each level site, use data in-transit encryption
 			for (int i = 0; i < level_site_ips.length; i++) {
+				System.out.println("i:"+i+" port:"+level_site_ports[i]);
 				level_order_site current_level_site = all_level_sites.get(i);
 				if (port == -1) {
 					level_site = new Socket(level_site_ips[i], level_site_ports[i]);
@@ -245,6 +247,7 @@ public class server_site implements Runnable {
 				else {
 					level_site = new Socket(level_site_ips[i], port);
 				}
+				System.out.println(current_level_site.toString());
 				
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = new ObjectInputStream(level_site.getInputStream());
