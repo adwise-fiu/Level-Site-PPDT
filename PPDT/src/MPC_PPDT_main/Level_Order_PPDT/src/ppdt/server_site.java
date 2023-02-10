@@ -202,16 +202,16 @@ public class server_site implements Runnable {
 							additionalNode.comparisonType = 6;
 						} 
 						else if (node_info.comparisonType == 2) {
-							additionalNode.comparisonType = 4;
-						} 
-						else if (node_info.comparisonType == 3) {
 							additionalNode.comparisonType = 5;
 						} 
+						else if (node_info.comparisonType == 3) {
+							additionalNode.comparisonType = 4;
+						} 
 						else if (node_info.comparisonType == 4) {
-							additionalNode.comparisonType = 2;
+							additionalNode.comparisonType = 3;
 						} 
 						else if (node_info.comparisonType == 5) {
-							additionalNode.comparisonType = 3;
+							additionalNode.comparisonType = 2;
 						} 
 						else if (node_info.comparisonType == 6) {
 							additionalNode.comparisonType = 1;
