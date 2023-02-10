@@ -52,7 +52,7 @@ public class level_site_thread implements Runnable {
 				// Traffic from Server. Level-Site alone will manage closing this.
 				this.level_site_data = (level_order_site) x;
 				System.out.println("Level-Site received listening on Port: " + client_socket.getLocalPort());
-				System.out.println(this.level_site_data.toString());
+				//System.out.println(this.level_site_data.toString());
 				closeClientConnection();
 			}
 			else if (x instanceof Hashtable){
@@ -213,6 +213,7 @@ public class level_site_thread implements Runnable {
 						}
 
 						System.out.println("Inequality Holds:" + inequalityHolds);
+						System.out.println("Node level index:" + node_level_index);
 						System.out.println("n:" + n + " first node index:" + 2 * this.level_site_data.get_current_index() + " second node index:" + (2 * this.level_site_data.get_current_index() + 1));
 						if ((inequalityHolds) && ((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
 							equalsFound = true;	
