@@ -181,6 +181,7 @@ public class client implements Runnable {
 				if (classification_complete) {
 					if (o instanceof String) {
 						classification = (String) o;
+						break;
 					}
 				}
 				else {
