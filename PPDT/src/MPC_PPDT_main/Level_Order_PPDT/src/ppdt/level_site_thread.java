@@ -100,7 +100,7 @@ public class level_site_thread implements Runnable {
 		String value = String.valueOf(ld.threshold);
 
 
-		int intermediateInteger = (int) ld.threshold * (int)Math.pow(10, precision);
+		int intermediateInteger = (int) (ld.threshold * Math.pow(10, precision));
 		encrypted_thresh = BigInteger.valueOf(intermediateInteger);
 
 
