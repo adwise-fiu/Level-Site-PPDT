@@ -78,8 +78,9 @@ public class client implements Runnable {
 					value = "1";
 				}
 
-
-				intermediateInteger = (int) Double.parseDouble(value) * (int) Math.pow(10, precision);
+				System.out.println("Inital value:"+value);
+				intermediateInteger = (int) (Double.parseDouble(value) * Math.pow(10, precision));
+				System.out.println("Value to be compared with:"+intermediateInteger);
 				integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
 				integerValueDGK = DGKOperations.encrypt(intermediateInteger, dgk_public_key);
 				values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
