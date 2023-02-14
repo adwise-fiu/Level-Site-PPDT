@@ -237,8 +237,9 @@ public class server_site implements Runnable {
 			get_level_site_data(ppdt, all_level_sites);
 
 			Socket level_site = null;
+
 			// Send the data to each level site, use data in-transit encryption
-			for (int i = 0; i < level_site_ips.length; i++) {
+			for (int i = 0; i < all_level_sites.size(); i++) {
 				System.out.println("i:"+i+" port:"+level_site_ports[i]);
 				level_order_site current_level_site = all_level_sites.get(i);
 				if (port == -1) {
