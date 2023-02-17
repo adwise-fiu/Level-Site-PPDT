@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -16,6 +15,7 @@ import java.util.Queue;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
+import weka.core.SerializationHelper;
 import weka.core.Instances;
 
 
@@ -27,7 +27,6 @@ public class server_site implements Runnable {
 	private int port = -1;
 	
 	private ObjectOutputStream to_level_site = null;
-	private ObjectInputStream from_level_site = null;
 	
 	// For local host testing
 	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports) {
@@ -41,20 +40,19 @@ public class server_site implements Runnable {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_ips;
 		this.port = port;
-	}
+	}	
 	
 	// Reference: 
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
 	// Build J48 as it uses C45?
 	// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
+	
+	// Look at J48.java, buildClassifier function to see how this method was created.
 	public static ClassifierTree train_decision_tree(String arff_file) throws Exception {
-		BufferedReader reader = null;
 		Instances train = null;
 		
-		try {
-			reader = new BufferedReader(new FileReader(arff_file));
+		try (BufferedReader reader = new BufferedReader(new FileReader(arff_file))){			
 			train = new Instances(reader);
-			reader.close();
 		}
 		catch (FileNotFoundException e2) {
 			e2.printStackTrace();
@@ -76,6 +74,7 @@ public class server_site implements Runnable {
 	    try (PrintWriter out = new PrintWriter("dt-graph.txt")) {
 	        out.println(j48.graph());
 	    }
+	    SerializationHelper.write("ppdt-j48.model", j48);
 	    return j48;
 	}
 	
@@ -251,12 +250,11 @@ public class server_site implements Runnable {
 				System.out.println(current_level_site.toString());
 				
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-				from_level_site = new ObjectInputStream(level_site.getInputStream());
 				to_level_site.writeObject(current_level_site);
 			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-		}	
+		}
 	}
 }

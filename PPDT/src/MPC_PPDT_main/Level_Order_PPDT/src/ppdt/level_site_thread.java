@@ -97,12 +97,8 @@ public class level_site_thread implements Runnable {
 		
 		// Convert threshold into BigInteger. Note we know threshold is always a float.
 		BigInteger encrypted_thresh = null;
-		String value = String.valueOf(ld.threshold);
-
-
 		int intermediateInteger = (int) (ld.threshold * Math.pow(10, precision));
 		encrypted_thresh = BigInteger.valueOf(intermediateInteger);
-
 
         System.out.println("Comparison type: " + ld.comparisonType);
         System.out.println("plain-text value: " + encrypted_thresh);

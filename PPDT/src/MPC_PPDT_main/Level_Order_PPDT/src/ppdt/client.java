@@ -32,6 +32,7 @@ public class client implements Runnable {
 	
 	private ObjectInputStream from_level_site;
 	private ObjectOutputStream to_level_site;
+	private String classification = null;
 
 	// For local host testing
 	public client(int key_size, String features_file, String [] level_site_ips, int [] level_site_ports, int precision) {
@@ -50,12 +51,19 @@ public class client implements Runnable {
 		this.port = port;
 		this.precision = precision;
 	}
+	
+	public void setFeatures(String features_file) {
+		this.features_file = features_file;
+	}
 
+	public String getClassification() {
+		return this.classification;
+	}
+	
 	public Hashtable<String, BigIntegers> read_features(String path, 
 			PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key, int precision) 
 					throws IOException, HomomorphicException {
 
-		BigInteger integerValue;
 		BigInteger integerValuePaillier;
 		BigInteger integerValueDGK;
 		int intermediateInteger;
@@ -77,21 +85,17 @@ public class client implements Runnable {
 				if (value.equals("other")) {
 					value = "1";
 				}
-
 				System.out.println("Inital value:"+value);
 				intermediateInteger = (int) (Double.parseDouble(value) * Math.pow(10, precision));
 				System.out.println("Value to be compared with:"+intermediateInteger);
 				integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
 				integerValueDGK = DGKOperations.encrypt(intermediateInteger, dgk_public_key);
 				values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
-
-
 			}
 			return values;
 		}
 	}
 
-	
 	public void run() {
 		// Generate Key Pairs
 		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
@@ -116,7 +120,6 @@ public class client implements Runnable {
 		// Communicate with each Level-Site	
 		Socket level_site = null;
 		String next_index = null;
-		String classification = null;
 		String iv = null;
 		Object o = null;
 		boolean classification_complete = false;
