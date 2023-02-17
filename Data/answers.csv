@@ -1,10 +1,11 @@
-D1.arff,D1.values
-D2.arff,D2.values
-D3.arff,D3.values
-D4.arff,D4.values
-D5.arff,D5.values
-diabetes.arff,diabetes.values
-hypothyroid.arff,hypothyroid.values
-iris.arff,iris.values
-iris2D.arff,iris2D.values
-labor.arff,labor.values
+D1.arff,D1.values,388.36 (3.0/2.0)
+D2.arff,D2.values,58 (3.0/2.0)
+D3.arff,D3.values,190 (3.0)
+D4.arff,D4.values,157 (3.0/2.0)
+D5.arff,D5.values,19 (2.0)
+diabetes.arff,diabetes.values,tested_positive (4.0)
+hypothyroid.arff,hypothyroid.values,negative(2.0/1.0)
+iris.arff,iris.values,Iris-virginica (3.0)
+iris2D.arff,iris2D.values,Iris-versicolor (48.0/1.0)
+labor.arff,labor.values,good (3.99)
+dry_bean.arff,dry_bean.values,SIRA (2.0)
