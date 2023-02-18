@@ -22,12 +22,10 @@ import weka.finito.structs.level_order_site;
 
 
 public class server_site implements Runnable {
-	
 	private String training_data;
 	private String [] level_site_ips;
 	private int [] level_site_ports = null;
 	private int port = -1;
-	
 	private ObjectOutputStream to_level_site = null;
 	
 	// For local host testing
@@ -36,13 +34,6 @@ public class server_site implements Runnable {
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
 	}
-	
-	// For Cloud environment?
-	public server_site(String training_data, String [] level_site_ips, int port) {
-		this.training_data = training_data;
-		this.level_site_ips = level_site_ips;
-		this.port = port;
-	}	
 	
 	// Reference: 
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
