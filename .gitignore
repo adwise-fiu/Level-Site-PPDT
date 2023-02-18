@@ -1,3 +1,7 @@
+#Any IntelliJ stuff
+.idea
+
+# Gradle Build Files
 .gradle
 **/build/
 !src/**/build/
