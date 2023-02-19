@@ -2,10 +2,9 @@ package weka.finito;
 
 import weka.finito.structs.level_order_site;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import java.io.IOException;
 
 public class level_site_server implements Runnable {
 

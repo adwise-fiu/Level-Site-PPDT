@@ -244,13 +244,9 @@ public class level_site_thread implements Runnable {
 		}
         catch (IOException | ClassNotFoundException | InvalidKeyException | NoSuchAlgorithmException |
 			   NoSuchPaddingException | BadPaddingException | InvalidAlgorithmParameterException |
-			   IllegalBlockSizeException e) {
+			   IllegalBlockSizeException | HomomorphicException e) {
 			e.printStackTrace();
-		}
-		catch (HomomorphicException e) {
-			e.printStackTrace();
-		}
-		finally {
+		} finally {
 			try {
 				closeClientConnection();
 			}
