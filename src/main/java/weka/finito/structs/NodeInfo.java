@@ -1,6 +1,5 @@
 package weka.finito.structs;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -9,9 +8,8 @@ import java.io.Serializable;
  */
 
 public class NodeInfo implements Serializable {
-	@Serial
+
 	private static final long serialVersionUID = -3569139531917752891L;
-	
 	public final boolean is_leaf;
 	public final String variable_name;
 	public int comparisonType;

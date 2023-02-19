@@ -1,6 +1,5 @@
 package weka.finito.structs;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +10,8 @@ import java.util.List;
  */
 
 public class level_order_site implements Serializable {
-	
-	@Serial
-	private static final long serialVersionUID = 575566807906351024L;
 
+	private static final long serialVersionUID = 575566807906351024L;
 	private int index = 0;
     private int next_index;
     private int level = 0;
