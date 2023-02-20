@@ -18,6 +18,10 @@ import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
 
+import weka.finito.structs.level_order_site;
+import weka.finito.structs.NodeInfo;
+
+
 
 public class server_site implements Runnable {
 	
