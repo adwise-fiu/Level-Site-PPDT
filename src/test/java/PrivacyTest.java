@@ -60,7 +60,7 @@ public class PrivacyTest {
 	@Test
 	public void basic_test() throws IOException, InterruptedException {
 		Properties config = new Properties();
-		try (FileReader in = new FileReader("data/config.properties")) {
+		try (FileReader in = new FileReader("../../data/config.properties")) {
 		    config.load(in);
 		}
 		String [] level_site_ports_string = config.getProperty("level-site-ports").split(",");
