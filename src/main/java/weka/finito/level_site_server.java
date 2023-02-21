@@ -8,7 +8,7 @@ import java.net.Socket;
 
 public class level_site_server implements Runnable {
 
-    protected int          serverPort   = 8080;
+    protected int          serverPort;
     protected ServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
@@ -22,13 +22,13 @@ public class level_site_server implements Runnable {
         this.precision = precision;
     }
 
-    public void run() {
+    public final void run() {
         synchronized(this) {
             this.runningThread = Thread.currentThread();
         }
         openServerSocket();
         while(! isStopped()) {
-            Socket clientSocket = null;
+            Socket clientSocket;
             try {
             	System.out.println("Ready to accept connections at: " + this.serverPort);
                 clientSocket = this.serverSocket.accept();
@@ -56,7 +56,7 @@ public class level_site_server implements Runnable {
         return this.isStopped;
     }
 
-    public synchronized void stop(){
+    public final synchronized void stop(){
         this.isStopped = true;
         try {
             this.serverSocket.close();

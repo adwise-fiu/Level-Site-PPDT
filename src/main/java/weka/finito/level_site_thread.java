@@ -75,7 +75,7 @@ public class level_site_thread implements Runnable {
 		}
 	}
 	
-	public level_order_site getLevelSiteParameters() {
+	public final level_order_site getLevelSiteParameters() {
 		return this.level_site_data;
 	}
 
@@ -116,9 +116,9 @@ public class level_site_thread implements Runnable {
             Niu.setDGKMode(true);
         }
         toClient.flush();
-        
+		assert encrypted_client_value != null;
         if (((ld.comparisonType==1)&&(ld.threshold == 0))||(ld.comparisonType==4)||(ld.comparisonType==5)) {
-        	 return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
+			return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
         }
         else {
         	 return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
@@ -126,7 +126,7 @@ public class level_site_thread implements Runnable {
 	}
 	
 	// This will run the communication with client and next level site
-	public void run() {
+	public final void run() {
 		Object o;
 		String previous_index = null;
 		String iv = null;
@@ -161,6 +161,7 @@ public class level_site_thread implements Runnable {
 				bound = 2;
 			}
 			else {
+				assert previous_index != null;
 				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
 				bound = node_level_data.size();
 			}

@@ -21,18 +21,14 @@ import security.socialistmillionaire.bob;
 import weka.finito.structs.BigIntegers;
 
 public class client implements Runnable {
-	private String features_file;
-	private int key_size;
-	private DGKPublicKey dgk_public_key = null;
-	private PaillierPublicKey paillier_public_key = null;
-	private int precision;
+	private final String features_file;
+	private final int key_size;
+	private final int precision;
 	
-	private String [] level_site_ips;
-	private int [] level_site_ports;
-	private int port = -1;
-	
-	private ObjectInputStream from_level_site;
-	private ObjectOutputStream to_level_site;
+	private final String [] level_site_ips;
+	private final int [] level_site_ports;
+	private final int port;
+
 	private String classification = null;
 
 	// For local host testing
@@ -42,28 +38,29 @@ public class client implements Runnable {
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
 		this.precision = precision;
+		this.port = -1;
 	}
 
-	public String getClassification() {
+	public final String getClassification() {
 		return this.classification;
 	}
 	
-	public Hashtable<String, BigIntegers> read_features(String path,
+	public final Hashtable<String, BigIntegers> read_features(String path,
 														PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key, int precision)
 					throws IOException, HomomorphicException {
 
 		BigInteger integerValuePaillier;
 		BigInteger integerValueDGK;
 		int intermediateInteger;
-		Hashtable<String, BigIntegers> values = new Hashtable<String, BigIntegers>();
+		Hashtable<String, BigIntegers> values = new Hashtable<>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 			String line;
 
 			while ((line = br.readLine()) != null) {
 				String key, value;
-				String[] splitted = line.split("\\t");
-				key = splitted[0];
-				value = splitted[1];
+				String[] split = line.split("\\t");
+				key = split[0];
+				value = split[1];
 				if (value.equals("t") || (value.equals("yes"))) {
 					value = "1";
 				}
@@ -73,7 +70,7 @@ public class client implements Runnable {
 				if (value.equals("other")) {
 					value = "1";
 				}
-				System.out.println("Inital value:"+value);
+				System.out.println("Initial value:"+value);
 				intermediateInteger = (int) (Double.parseDouble(value) * Math.pow(10, precision));
 				System.out.println("Value to be compared with:"+intermediateInteger);
 				integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
@@ -84,17 +81,17 @@ public class client implements Runnable {
 		}
 	}
 
-	public void run() {
+	public final void run() {
 		// Generate Key Pairs
 		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
 		p.initialize(key_size, null);
 		KeyPair dgk = p.generateKeyPair();
-		dgk_public_key = (DGKPublicKey) dgk.getPublic();
+		DGKPublicKey dgk_public_key = (DGKPublicKey) dgk.getPublic();
 
 		PaillierKeyPairGenerator pa = new PaillierKeyPairGenerator();
 		p.initialize(key_size, null);
 		KeyPair paillier = pa.generateKeyPair();
-		paillier_public_key = (PaillierPublicKey) paillier.getPublic();
+		PaillierPublicKey paillier_public_key = (PaillierPublicKey) paillier.getPublic();
 		
 		// Read the Features
 		Hashtable<String, BigIntegers> feature = null;
@@ -106,11 +103,11 @@ public class client implements Runnable {
 		}
 		
 		// Communicate with each Level-Site	
-		Socket level_site = null;
+		Socket level_site;
 		String next_index = null;
 		String iv = null;
-		Object o = null;
-		boolean classification_complete = false;
+		Object o;
+		boolean classification_complete;
 		bob client;
 		
 		System.out.println("Read features...");
@@ -124,9 +121,9 @@ public class client implements Runnable {
 				else {
 					level_site = new Socket(level_site_ips[i], port);
 				}
-				
-				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-				from_level_site = new ObjectInputStream(level_site.getInputStream());
+
+				ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+				ObjectInputStream from_level_site = new ObjectInputStream(level_site.getInputStream());
 				System.out.println("Client connected to level " + i);
 				
 				// Send the encrypted data to Level-Site
@@ -137,7 +134,7 @@ public class client implements Runnable {
 				client = new bob(level_site, paillier, dgk);
 				
 				// Send bool:
-				// 1- true, there is a encrypted index coming
+				// 1- true, there is an encrypted index coming
 				// 2- false, there is NO encrypted index coming
 				if (next_index == null) {
 					to_level_site.writeBoolean(false);
@@ -150,7 +147,7 @@ public class client implements Runnable {
 				to_level_site.flush();
 				
 				// Work with the comparison
-				int comparison_type = -1;
+				int comparison_type;
 				while(true) {
 					comparison_type = from_level_site.readInt();
 					if (comparison_type == -1) {

@@ -9,7 +9,7 @@ import java.util.List;
  * This class contains all the necessary information for a Level-site to complete evaluation
  */
 
-public class level_order_site implements Serializable {
+public final class level_order_site implements Serializable {
 
 	private static final long serialVersionUID = 575566807906351024L;
 	private int index = 0;

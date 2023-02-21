@@ -7,7 +7,7 @@ import java.io.Serializable;
  * This class contains all the information about a specific node in the DT
  */
 
-public class NodeInfo implements Serializable {
+public final class NodeInfo implements Serializable {
 
 	private static final long serialVersionUID = -3569139531917752891L;
 	public final boolean is_leaf;

@@ -3,7 +3,7 @@ package weka.finito.structs;
 import java.io.Serializable;
 import java.math.BigInteger;
 
-public class BigIntegers implements Serializable {
+public final class BigIntegers implements Serializable {
 
     private static final long serialVersionUID = -2096873915807049906L;
     private final BigInteger integerValuePaillier;

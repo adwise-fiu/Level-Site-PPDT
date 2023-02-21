@@ -20,10 +20,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Base64;
 
-public class AES {
+public final class AES {
 	private SecretKey key;
-	private final int iterations = 65536;
-	private final int key_length = 256;
+	private int iterations = 65536;
+	private int key_length = 256;
 	private final byte [] salt = "123456789".getBytes();
 	private final SecureRandom random = new SecureRandom();
 	
@@ -40,6 +40,12 @@ public class AES {
 			e.printStackTrace();
 		}
 	}
+
+	public AES(String password, int iterations, int key_length) {
+		this(password);
+		this.iterations = iterations;
+		this.key_length = key_length;
+	}
 	
 	public String getIV() {
 		return this.iv_string;
@@ -52,7 +58,7 @@ public class AES {
 		this.key = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
 	}
 	
-	public String encrypt(String strToEncrypt) 
+	public String encrypt(String strToEncrypt)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, 
 			IllegalBlockSizeException, BadPaddingException, InvalidKeyException, 
 			UnsupportedEncodingException, InvalidAlgorithmParameterException {
@@ -69,7 +75,7 @@ public class AES {
 		return Base64.getEncoder().encodeToString(output);
 	}
 
-	public String decrypt(String strToDecrypt, String iv) 
+	public String decrypt(String strToDecrypt, String iv)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, 
 			IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		// Get IV

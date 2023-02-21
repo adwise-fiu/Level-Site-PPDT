@@ -10,7 +10,7 @@ import weka.finito.server_site;
 import static org.junit.Assert.assertEquals;
 
 
-public class PrivacyTest {
+public final class PrivacyTest {
 
 	String [] level_site_ports_string;
 	String [] level_site_ips;
@@ -57,53 +57,9 @@ public class PrivacyTest {
 		}
 	}
 
-	@Test
-	public void basic_test() throws IOException, InterruptedException {
-		Properties config = new Properties();
-		try (FileReader in = new FileReader("data/config.properties")) {
-		    config.load(in);
-		}
-		String [] level_site_ports_string = config.getProperty("level-site-ports").split(",");
-		String [] level_site_ips = config.getProperty("level-site-ips").split(",");
-		int levels = Integer.parseInt(config.getProperty("levels"));
-		int key_size = Integer.parseInt(config.getProperty("key_size"));
-		int precision = Integer.parseInt(config.getProperty("precision"));
-
-		String features_file = config.getProperty("features");
-		String training_data = config.getProperty("training");
-		int [] level_site_ports = new int[levels];
-
-		// Create Level sites
-    	level_site_server[] level_sites = new level_site_server[levels];
-    	for (int i = 0; i < level_sites.length; i++) {
-    		level_site_ports[i] = Integer.parseInt(level_site_ports_string[i]);
-    		level_sites[i] = new level_site_server(level_site_ports[i], precision);
-        	new Thread(level_sites[i]).start();
-    	}
-
-    	Thread.sleep(1000 * 7);
-
-		// Create the server
-		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports);
-    	new Thread(cloud).start();
-
-    	Thread.sleep(1000 * 7);
-
-		// Create client
-    	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
-    	new Thread(evaluate).start();
-
-    	Thread.sleep(1000 * 60);
-
-    	// Close the Level Sites
-		for (level_site_server levelSite : level_sites) {
-			levelSite.stop();
-		}
-	}
-
 	public static String test_case(String training_data, String features_file, int levels, int key_size, int precision,
 			String [] level_site_ips, String [] level_site_ports_string) 
-			throws InterruptedException, FileNotFoundException, IOException {
+			throws InterruptedException {
 		
 		int [] level_site_ports = new int[levels];
 		
