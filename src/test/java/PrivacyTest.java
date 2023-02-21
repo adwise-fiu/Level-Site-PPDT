@@ -26,7 +26,7 @@ public class PrivacyTest {
 		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
 		Properties config = new Properties();
-		try (FileReader in = new FileReader("data/config.properties")) {
+		try (FileReader in = new FileReader("../../data/config.properties")) {
 			config.load(in);
 		}
 		level_site_ports_string = config.getProperty("level-site-ports").split(",");
@@ -40,7 +40,7 @@ public class PrivacyTest {
 	@Test
 	public  void test_all() throws Exception {
 		// Parse CSV file with various tests
-		try (BufferedReader br = new BufferedReader(new FileReader("data/answers.csv"))) {
+		try (BufferedReader br = new BufferedReader(new FileReader("../../data/answers.csv"))) {
 		    String line;
 		    while ((line = br.readLine()) != null) {
 		        String [] values = line.split(",");
