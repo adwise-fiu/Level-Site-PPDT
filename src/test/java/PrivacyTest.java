@@ -12,12 +12,12 @@ import static org.junit.Assert.assertEquals;
 
 public final class PrivacyTest {
 
-	String [] level_site_ports_string;
-	String [] level_site_ips;
-	int levels;
-	int key_size;
-	int precision;
-	String data_directory;
+	private String [] level_site_ports_string;
+	private String [] level_site_ips;
+	private int levels;
+	private int key_size;
+	private int precision;
+	private String data_directory;
 
 	@Before
 	public void read_properties() throws IOException {
@@ -26,7 +26,7 @@ public final class PrivacyTest {
 		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
 		Properties config = new Properties();
-		try (FileReader in = new FileReader("../../data/config.properties")) {
+		try (FileReader in = new FileReader("data/config.properties")) {
 			config.load(in);
 		}
 		level_site_ports_string = config.getProperty("level-site-ports").split(",");
@@ -40,7 +40,7 @@ public final class PrivacyTest {
 	@Test
 	public  void test_all() throws Exception {
 		// Parse CSV file with various tests
-		try (BufferedReader br = new BufferedReader(new FileReader("../../data/answers.csv"))) {
+		try (BufferedReader br = new BufferedReader(new FileReader("data/answers.csv"))) {
 		    String line;
 		    while ((line = br.readLine()) != null) {
 		        String [] values = line.split(",");
