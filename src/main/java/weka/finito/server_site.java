@@ -233,7 +233,7 @@ public final class server_site implements Runnable {
 		try {
 			// Send the data to each level site, use data in-transit encryption
 			for (int i = 0; i < all_level_sites.size(); i++) {
-				System.out.println("i:"+i+" port:"+level_site_ports[i]);
+				System.out.println("i:" + i + " port:" + level_site_ports[i]);
 				level_order_site current_level_site = all_level_sites.get(i);
 
 				if (port == -1) {
