@@ -71,19 +71,19 @@ public final class PrivacyTest {
         	new Thread(level_sites[i]).start();
     	}
     	
-    	Thread.sleep(1000 * 7);
+    	Thread.sleep(1000L * 10 * levels);
 
 		// Create the server
 		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports);
     	new Thread(cloud).start();
     	
-    	Thread.sleep(1000 * 7);
+    	Thread.sleep(1000L * levels);
     	
 		// Create client
     	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
     	new Thread(evaluate).start();
     	
-    	Thread.sleep(1000 * 60);
+    	Thread.sleep(1000L * 10 * levels);
     	
     	// Close the Level Sites
 		for (level_site_server levelSite : level_sites) {
