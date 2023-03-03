@@ -14,7 +14,7 @@ download the ZIP file and import the weka.jar file**
 ## Usage
 
 ## Authors and Acknowledgement
-Code Authors: Andrew Quijano, Spyros T. Hakaldis, Kevin Gallagher
+Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
