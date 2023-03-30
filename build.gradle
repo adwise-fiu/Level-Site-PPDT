@@ -39,8 +39,8 @@ gradle.projectsEvaluated {
 
 jacocoTestReport {
     reports {
-        xml.enabled true
-        html.enabled false
+        xml.required=false
+        html.required=true
     }
 }
 
