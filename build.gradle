@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'jacoco'
+    id 'application'
 }
 
 group 'weka.finito'
@@ -45,3 +46,11 @@ jacocoTestReport {
 }
 
 check.dependsOn jacocoTestReport
+
+ext {
+   javaMainClass = project.findProperty("chooseRole").toString()
+}
+
+application {
+    mainClassName = javaMainClass
+}
