@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ppdt-level-site-10-deploy
+  labels:
+    app: ppdt-level-site-10-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: ppdt-level-site-10-deploy
+  template:
+    metadata:
+      labels:
+        pod: ppdt-level-site-10-deploy
+    spec:
+      containers:
+        - name: ppdt-level-site-10-deploy
+          image: ppdt:experiment
+          ports:
+            - containerPort: 9000
+          env:
+            - name: TREE_ROLE
+              value: "LEVEL_SITE" 
+
+            - name: PPDT_DATA_DIR
+              value: "/data/"
+
+            - name: PORT_NUM
+              value: "9000"
+
+            - name: PRECISION
+              value: "2"
+
+            - name: LEVEL_SITE_DOMAINS
+              value: "levelsite01,levelsite02,levelsite03,levelsite04,levelsite05,levelsite06,levelsite07,levelsite08,levelsite09,levelsite10"
+
+            - name: TIME_METHODS
+              value: "true"
+
+            - name: AES_PASS
+              valueFrom:
+                secretKeyRef:
+                    name: ppdt-secrets
+                    key: aes-key

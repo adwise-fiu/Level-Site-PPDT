@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ppdt-client-deploy
+  labels:
+    app: ppdt-client-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: ppdt-client-deploy
+  template:
+    metadata:
+      labels:
+        pod: ppdt-client-deploy
+    spec:
+      containers:
+        - name: ppdt-client-deploy
+          image: ppdt:experiment
+          ports:
+            - containerPort: 8000
+          env:
+            - name: TREE_ROLE
+              value: "CLIENT" 
+
+            - name: PRECISION
+              value: "2"
+
+            - name: PPDT_DATA_DIR
+              value: "/data/"
+
+            - name: PPDT_KEY_SIZE
+              value: "1024"
+
+            - name: LEVEL_SITE_PORT
+              value: "9000"
+
+            - name: LEVEL_SITE_DOMAINS
+              value: "levelsite01,levelsite02,levelsite03,levelsite04,levelsite05,levelsite06,levelsite07,levelsite08,levelsite09,levelsite10"

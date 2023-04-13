@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ppdt-server-site-deploy
+  labels:
+    app: ppdt-server-site-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: ppdt-server-site-deploy
+  template:
+    metadata:
+      labels:
+        pod: ppdt-server-site-deploy
+    spec:
+      containers:
+        - name: ppdt-server-site-deploy
+          image: ppdt:experiment
+          ports:
+            - containerPort: 9000
+          env:
+            - name: TREE_ROLE
+              value: "SERVER" 
+
+            - name: PPDT_DATA_DIR
+              value: "/data/"
+
+            - name: LEVEL_SITE_PORT
+              value: "9000"
+
+            - name: LEVEL_SITE_DOMAINS
+              value: "levelsite01,levelsite02,levelsite03,levelsite04,levelsite05,levelsite06,levelsite07,levelsite08,levelsite09,levelsite10"
