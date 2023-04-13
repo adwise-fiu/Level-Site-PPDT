@@ -1,5 +1,8 @@
 package weka.finito;
 
+//For k8 implementation
+import java.lang.System;
+
 import security.DGK.DGKOperations;
 import security.DGK.DGKPublicKey;
 import security.misc.HomomorphicException;
@@ -39,11 +42,13 @@ public class level_site_thread implements Runnable {
 	private final int precision;
 	private Hashtable<String, BigIntegers> encrypted_features;
 	private AES crypto = null;
+    private boolean time_methods = false;
 	
-	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision, AES crypto) {
+	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision, AES crypto, boolean time_methods) {
 		this.client_socket = client_socket;
 		this.precision = precision;
 		this.crypto = crypto;
+        this.time_methods = time_methods;
 		
 		try {
 			toClient = new ObjectOutputStream(client_socket.getOutputStream());
@@ -91,6 +96,8 @@ public class level_site_thread implements Runnable {
 	private boolean compare(NodeInfo ld)
 			throws HomomorphicException, ClassNotFoundException, IOException {
 
+        long start_time = System.nanoTime();
+
 		BigIntegers encrypted_values = this.encrypted_features.get(ld.variable_name);
 		BigInteger encrypted_client_value = null;
 		
@@ -117,11 +124,14 @@ public class level_site_thread implements Runnable {
         }
         toClient.flush();
 		assert encrypted_client_value != null;
+        long stop_time = System.nanoTime();
         if (((ld.comparisonType==1)&&(ld.threshold == 0))||(ld.comparisonType==4)||(ld.comparisonType==5)) {
+            System.out.printf("Comparison took: %f\n", (stop_time - start_time)/1000000);
 			return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
         }
         else {
-        	 return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
+            System.out.printf("Comparison took: %f\n", (stop_time - start_time)/1000000);
+        	return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
         }
 	}
 	

@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+//For k8s implementation
+import java.lang.System;
+
 public class level_site_server implements Runnable {
 
     protected int          serverPort;
@@ -15,14 +18,54 @@ public class level_site_server implements Runnable {
     protected level_order_site level_site_parameters = null;
     protected int precision;
     // TODO: Password is here...
-    protected AES crypto = new AES("AppSecSpring2023");
+    protected AES crypto;// = new AES("AppSecSpring2023");
+    private boolean time_methods = false;
+
+    public static void main(String[] args) {
+        int our_port = 0;
+        int our_precision = 0;
+        System.exit(0);
+        String AES_Pass = System.getenv("AES_PASS");
+        boolean time_methods = !System.getenv("TIME_METHODS").isEmpty();
+        try {
+            our_port = Integer.parseInt(System.getenv("PORT_NUM"));
+        } catch (NumberFormatException e) {
+            System.out.println("Port is not defined.");
+            System.exit(1);
+        }
+        try {
+            our_precision = Integer.parseInt(System.getenv("PRECISION"));
+        } catch (NumberFormatException e) {
+            System.out.println("Precision is not defined.");
+            System.exit(1);
+        }
+        if(AES_Pass == null || AES_Pass.isEmpty()) {
+            System.out.println("AES_PASS is empty.");
+            System.exit(1);
+        }
+        level_site_server server = new level_site_server(our_port, our_precision, time_methods);
+        server.crypto = new AES(AES_Pass);
+        new Thread(server).start();
+        boolean run = true;
+        while(run) {
+            try {
+                continue;
+            } catch (Exception e) {
+                run = false;
+                System.out.println("Stopping server...");
+            }
+        }
+        server.stop();
+    };
     
-    public level_site_server (int port, int precision) {
+    public level_site_server (int port, int precision, boolean time_methods) {
         this.serverPort = port;
         this.precision = precision;
+        this.time_methods = time_methods;
     }
 
     public final void run() {
+        long start_time = System.nanoTime();
         synchronized(this) {
             this.runningThread = Thread.currentThread();
         }
@@ -40,8 +83,7 @@ public class level_site_server implements Runnable {
                 }
                 throw new RuntimeException("Error accepting client connection", e);
             }
-            
-            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters, this.precision, this.crypto);
+            level_site_thread current_level_site_class = new level_site_thread(clientSocket, this.level_site_parameters, this.precision, this.crypto, this.time_methods);
             if (this.level_site_parameters == null) {
             	this.level_site_parameters = current_level_site_class.getLevelSiteParameters();
             }
@@ -50,6 +92,10 @@ public class level_site_server implements Runnable {
             }
         }
         System.out.println("Server Stopped on port: " + this.serverPort) ;
+        long stop_time = System.nanoTime();
+        if(this.time_methods) {
+            System.out.printf("Time to start up: %f\n", (stop_time - start_time)/1000000);
+        }
     }
 
     private synchronized boolean isStopped() {

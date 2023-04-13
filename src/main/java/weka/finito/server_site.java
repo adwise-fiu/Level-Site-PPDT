@@ -2,7 +2,9 @@ package weka.finito;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -10,6 +12,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+
+//For k8s deployment.
+import java.lang.System;
 
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
@@ -23,11 +28,75 @@ import weka.finito.structs.NodeInfo;
 
 
 public final class server_site implements Runnable {
-	
+
 	private final String training_data;
 	private final String [] level_site_ips;
 	private int [] level_site_ports = null;
 	private int port = -1;
+
+    public static void main(String[] args) {
+        int port = -1;
+        String training_data = null;
+
+        if(args.length < 2) {
+            //TODO: Print error message.
+            System.exit(1);
+        }
+        String data_directory = System.getenv("PPDT_DATA_DIR");
+        if(data_directory == null || data_directory.isEmpty()) {
+            //TODO: Print error message.
+            System.exit(1);
+        }
+
+        try {
+            port = Integer.parseInt(System.getenv("LEVEL_SITE_PORT"));
+        } catch (NumberFormatException e) {
+            //TODO: print error message.
+            System.exit(1);
+        }
+        
+        // Get data for training.
+        String FilePath = args[1];
+        try (BufferedReader br = new BufferedReader(new FileReader(FilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String [] values = line.split(",");
+                String data_set = values[0];
+                String features = values[1];
+                //String expected_classification = values[2];
+                //String features_file = new File(data_directory, features).toString();
+                training_data = new File(data_directory, data_set).toString();
+                System.out.println(training_data);
+            }
+        } catch (FileNotFoundException e) {
+            //TODO: print error message.
+            System.exit(1);
+        } catch (IOException e) {
+            //TODO: print error message.
+            System.exit(1);
+        }
+        
+        // Pass data to level sites.
+        String level_domains_str = System.getenv("LEVEL_SITE_DOMAINS");
+        if(level_domains_str == null || level_domains_str.isEmpty()) {
+            //TODO: print error message.
+            System.exit(1);
+        }
+        String[] level_domains = level_domains_str.split(",");
+        // Create and run the server.
+        server_site server = new server_site(training_data, level_domains, port);
+        new Thread(server).start();
+        boolean run = true;
+        while(run) {
+            try {
+                continue;
+            } catch (Exception e) {
+                System.out.println("Stopping...");
+                run = false;
+            }
+        }
+        //server.stop();
+    }
 
 	// For local host testing
 	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports) {
@@ -35,21 +104,21 @@ public final class server_site implements Runnable {
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
 	}
-	
+
 	// For Cloud environment?
-	public server_site(String training_data, String [] level_site_ips, int port) {
+	public server_site(String training_data, String [] level_site_domains, int port) {
 		this.training_data = training_data;
-		this.level_site_ips = level_site_ips;
+		this.level_site_ips = level_site_domains;
 		this.port = port;
 	}
-	
-	// Reference: 
+
+	// Reference:
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
 	// Build J48 as it uses C45?
 	// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
 	public static ClassifierTree train_decision_tree(String arff_file) throws Exception {
 		Instances train = null;
-		
+
 		try (BufferedReader reader = new BufferedReader(new FileReader(arff_file))) {
 			train = new Instances(reader);
 		} catch (IOException e2) {
@@ -57,7 +126,7 @@ public final class server_site implements Runnable {
 		}
 		assert train != null;
 		train.setClassIndex(train.numAttributes() - 1);
-		
+
 		// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
 		// J48 -B -C 0.25 -M 2
 		// -M 2 is minimum 2, DEFAULT
@@ -73,7 +142,7 @@ public final class server_site implements Runnable {
 		SerializationHelper.write("ppdt-j48.model", j48);
 	    return j48;
 	}
-	
+
 	// Given a Plain-text Decision Tree, split the data up for each level site.
 	public static void get_level_site_data(ClassifierTree root, List<level_order_site> all_level_sites) throws Exception {
 
@@ -84,16 +153,16 @@ public final class server_site implements Runnable {
 		Queue<ClassifierTree> q = new LinkedList<>();
 		q.add(root);
 		int level = 0;
-		
+
 		while (!q.isEmpty()) {
 			level_order_site Level_Order_S = new level_order_site();
 			int n = q.size();
-			
+
 			while (n > 0) {
 
 				ClassifierTree p = q.peek();
 				q.remove();
-				
+
 				NodeInfo node_info = null;
 				assert p != null;
 				if (p.isLeaf()) {
@@ -166,7 +235,7 @@ public final class server_site implements Runnable {
 						if (!rightValueStr.equals("other")) {
 							if (rightValueStr.equals("t") || rightValueStr.equals("yes")) {
 								threshold = 1;
-							} 
+							}
 							else if (rightValueStr.equals("f") || rightValueStr.equals("no")) {
 								threshold = 0;
 							}
@@ -188,19 +257,19 @@ public final class server_site implements Runnable {
 
 						if (node_info.comparisonType == 1) {
 							additionalNode.comparisonType = 6;
-						} 
+						}
 						else if (node_info.comparisonType == 2) {
 							additionalNode.comparisonType = 5;
-						} 
+						}
 						else if (node_info.comparisonType == 3) {
 							additionalNode.comparisonType = 4;
-						} 
+						}
 						else if (node_info.comparisonType == 4) {
 							additionalNode.comparisonType = 3;
-						} 
+						}
 						else if (node_info.comparisonType == 5) {
 							additionalNode.comparisonType = 2;
-						} 
+						}
 						else if (node_info.comparisonType == 6) {
 							additionalNode.comparisonType = 1;
 						}
