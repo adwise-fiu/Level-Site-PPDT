@@ -32,7 +32,7 @@ spec:
             - name: PPDT_KEY_SIZE
               value: "1024"
 
-            - name: LEVEL_SITE_PORT
+            - name: PORT_NUM
               value: "9000"
 
             - name: LEVEL_SITE_DOMAINS

@@ -26,7 +26,7 @@ spec:
             - name: PPDT_DATA_DIR
               value: "/data/"
 
-            - name: LEVEL_SITE_PORT
+            - name: PORT_NUM
               value: "9000"
 
             - name: LEVEL_SITE_DOMAINS
