@@ -13,73 +13,69 @@ import weka.finito.structs.BigIntegers;
 import weka.finito.structs.NodeInfo;
 import weka.finito.structs.level_order_site;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 import java.util.List;
 
 public class level_site_thread implements Runnable {
-	
+
 	private final Socket client_socket;
 	private ObjectInputStream fromClient;
 	private ObjectOutputStream toClient;
-	
+
 	private level_order_site level_site_data = null;
-	
+
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
-	
+
 	private alice Niu = null;
 	private final int precision;
 	private Hashtable<String, BigIntegers> encrypted_features;
-	private AES crypto = null;
-    private boolean time_methods = false;
-	
-	public level_site_thread(Socket client_socket, level_order_site level_site_data, int precision, AES crypto, boolean time_methods) {
+	private final AES crypto;
+    private boolean time_methods;
+
+	public level_site_thread(Socket client_socket, level_order_site level_site_data,
+							 int precision, AES crypto, boolean time_methods) {
 		this.client_socket = client_socket;
 		this.precision = precision;
 		this.crypto = crypto;
-        this.time_methods = time_methods;
-		
+		this.time_methods = time_methods;
+
+		Object x;
 		try {
-			toClient = new ObjectOutputStream(client_socket.getOutputStream());
-			fromClient = new ObjectInputStream(client_socket.getInputStream());
-			
-			Object x = fromClient.readObject();
+			toClient = new ObjectOutputStream(this.client_socket.getOutputStream());
+			fromClient = new ObjectInputStream(this.client_socket.getInputStream());
+
+			x = fromClient.readObject();
 			if (x instanceof level_order_site) {
 				// Traffic from Server. Level-Site alone will manage closing this.
 				this.level_site_data = (level_order_site) x;
-				System.out.println("Level-Site received listening on Port: " + client_socket.getLocalPort());
-				//System.out.println(this.level_site_data.toString());
+				// System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
+				this.toClient.writeBoolean(true);
 				closeClientConnection();
-			}
-			else if (x instanceof Hashtable){
-				System.out.println("Received Features from Client");
+			} else if (x instanceof Hashtable) {
 				encrypted_features = (Hashtable<String, BigIntegers>) x;
+				// System.out.println("Received Features from Client");
+
 				// Have encrypted copy of thresholds if not done already for all nodes in level-site
-				if (level_site_data != null) {
-					this.level_site_data = level_site_data;
+				this.level_site_data = level_site_data;
+				if (this.level_site_data == null) {
+					closeClientConnection();
 				}
-			}
-			else {
+				assert this.level_site_data != null;
+			} else {
 				System.out.println("Wrong Object Received: " + x.getClass().toString());
 				closeClientConnection();
 			}
-		}
-		catch (IOException | ClassNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public final level_order_site getLevelSiteParameters() {
 		return this.level_site_data;
 	}
@@ -88,10 +84,10 @@ public class level_site_thread implements Runnable {
 		toClient.close();
 		fromClient.close();
 		if (this.client_socket != null && this.client_socket.isConnected()) {
-			this.client_socket.close();	
+			this.client_socket.close();
 		}
 	}
-	
+
 	// a - from CLIENT, should already be encrypted...
 	private boolean compare(NodeInfo ld)
 			throws HomomorphicException, ClassNotFoundException, IOException {
@@ -100,57 +96,59 @@ public class level_site_thread implements Runnable {
 
 		BigIntegers encrypted_values = this.encrypted_features.get(ld.variable_name);
 		BigInteger encrypted_client_value = null;
-		
+
 		// Convert threshold into BigInteger. Note we know threshold is always a float.
 		BigInteger encrypted_thresh;
 		int intermediateInteger = (int) (ld.threshold * Math.pow(10, precision));
 		encrypted_thresh = BigInteger.valueOf(intermediateInteger);
 
-        System.out.println("Comparison type: " + ld.comparisonType);
-        System.out.println("plain-text value: " + encrypted_thresh);
-        
+        //System.out.println("Comparison type: " + ld.comparisonType);
+        //System.out.println("plain-text value: " + encrypted_thresh);
+
         // Encrypt the thresh-hold correctly
         if ((ld.comparisonType == 1) || (ld.comparisonType == 2) || (ld.comparisonType == 4)) {
-        	encrypted_thresh = PaillierCipher.encrypt(encrypted_thresh, this.paillier_public_key);
-        	encrypted_client_value = encrypted_values.getIntegerValuePaillier();
+			encrypted_thresh = PaillierCipher.encrypt(encrypted_thresh, this.paillier_public_key);
+			encrypted_client_value = encrypted_values.getIntegerValuePaillier();
             toClient.writeInt(0);
             Niu.setDGKMode(false);
         }
         else if ((ld.comparisonType == 3) || (ld.comparisonType == 5)) {
-        	encrypted_thresh = DGKOperations.encrypt(encrypted_thresh, this.dgk_public_key);
-        	encrypted_client_value = encrypted_values.getIntegerValueDGK();
+			encrypted_thresh = DGKOperations.encrypt(encrypted_thresh, this.dgk_public_key);
+			encrypted_client_value = encrypted_values.getIntegerValueDGK();
             toClient.writeInt(1);
             Niu.setDGKMode(true);
         }
         toClient.flush();
 		assert encrypted_client_value != null;
         long stop_time = System.nanoTime();
-        if (((ld.comparisonType==1)&&(ld.threshold == 0))||(ld.comparisonType==4)||(ld.comparisonType==5)) {
-            System.out.printf("Comparison took: %f\n", (stop_time - start_time)/1000000);
+
+		double run_time = (double) ((stop_time - start_time) / 1000000);
+		System.out.printf("Comparison took: %f\n", run_time);
+		if (((ld.comparisonType == 1) && (ld.threshold == 0))
+				|| (ld.comparisonType == 4) || (ld.comparisonType == 5)) {
 			return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
         }
         else {
-            System.out.printf("Comparison took: %f\n", (stop_time - start_time)/1000000);
-        	return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
+			return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
         }
 	}
-	
+
 	// This will run the communication with client and next level site
 	public final void run() {
 		Object o;
 		String previous_index = null;
 		String iv = null;
-		boolean get_previous_index = false;
-		
+		boolean get_previous_index;
+
 		try {
 			Niu = new alice(client_socket);
 			dgk_public_key = Niu.getDGKPublicKey();
 			paillier_public_key = Niu.getPaillierPublicKey();
-			
+
 			int i = this.level_site_data.getLevel();
-			System.out.println("level= " + i);
+			// System.out.println("level= " + i);
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
-			
+
 			get_previous_index = fromClient.readBoolean();
 			if (get_previous_index) {
 				o = fromClient.readObject();
@@ -163,28 +161,27 @@ public class level_site_thread implements Runnable {
 				}
 				previous_index = crypto.decrypt(previous_index, iv);
 			}
-			
+
 			// Level Data is the Node Data...
-			int bound = 0;
+			int bound;
 			if (i == 0) {
 				this.level_site_data.set_current_index(0);
 				bound = 2;
-			}
-			else {
+			} else {
 				assert previous_index != null;
 				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
 				bound = node_level_data.size();
 			}
 
-		    boolean equalsFound = false;
-		    boolean inequalityHolds = false;
-		    boolean terminalLeafFound = false;
+			boolean equalsFound = false;
+			boolean inequalityHolds = false;
+			boolean terminalLeafFound = false;
 			int node_level_index = 0;
 			int n = 0;
 			int next_index = 0;
 			NodeInfo ls = null;
-			String encrypted_next_index = null;
-			
+			String encrypted_next_index;
+
 			while (node_level_index < bound && (!equalsFound) && (!terminalLeafFound)) {
 				ls = node_level_data.get(node_level_index);
 				System.out.println("j=" + node_level_index);
@@ -196,16 +193,14 @@ public class level_site_thread implements Runnable {
 					node_level_index++;
 					n += 2;
 					System.out.println("Variable:" + ls.getVariableName());
-				}
-				else {
+				} else {
 					if ((i==0)||((n==2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
 						if (ls.comparisonType == 6) {
 							ls.comparisonType = 3;
 							boolean firstInequalityHolds = compare(ls);
 							if (firstInequalityHolds) {
 								inequalityHolds = true;
-							}
-							else {
+							} else {
 								ls.comparisonType = 5;
 								boolean secondInequalityHolds = compare(ls);
 								if (secondInequalityHolds) {
@@ -213,8 +208,7 @@ public class level_site_thread implements Runnable {
 								}
 							}
 							ls.comparisonType = 6;
-						}
-						else {
+						} else {
 							inequalityHolds = compare(ls);
 						}
 
@@ -222,7 +216,7 @@ public class level_site_thread implements Runnable {
 						System.out.println("Node level index:" + node_level_index);
 						System.out.println("n:" + n + " first node index:" + 2 * this.level_site_data.get_current_index() + " second node index:" + (2 * this.level_site_data.get_current_index() + 1));
 						if ((inequalityHolds) && ((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
-							equalsFound = true;	
+							equalsFound = true;
 							this.level_site_data.set_next_index(next_index);
 							System.out.println("New index:" + this.level_site_data.get_current_index());
 						}
@@ -233,36 +227,32 @@ public class level_site_thread implements Runnable {
 					System.out.println("Variable Name:" + ls.getVariableName() + " " + ls.comparisonType + ", " + ls.threshold);
 				}
 			}
-			
+
 			// Place -1 to break Protocol4 loop
 			toClient.writeInt(-1);
 			toClient.flush();
-			
+
 			if (terminalLeafFound) {
 				// Tell the client the value
 				toClient.writeBoolean(true);
 				toClient.writeObject(ls.getVariableName());
-			}
-			else {
+			} else {
 				toClient.writeBoolean(false);
 				// encrypt with AES, send to client which will send to next level-site
-				encrypted_next_index = crypto.encrypt(level_site_data.get_next_index() + "");
+				encrypted_next_index = crypto.encrypt(String.valueOf(this.level_site_data.get_next_index()));
 				iv = crypto.getIV();
 				toClient.writeObject(encrypted_next_index);
 				toClient.writeObject(iv);
 			}
-			closeClientConnection();
 		}
-        catch (IOException | ClassNotFoundException | InvalidKeyException | NoSuchAlgorithmException |
-			   NoSuchPaddingException | BadPaddingException | InvalidAlgorithmParameterException |
-			   IllegalBlockSizeException | HomomorphicException e) {
+        catch (Exception e) {
 			e.printStackTrace();
-		} finally {
+		}
+		finally {
 			try {
 				closeClientConnection();
-			}
-			catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException e) {
+				System.out.println("IO Exception in closing Level-Site Connection in Evaluation");
 			}
 		}
 	}

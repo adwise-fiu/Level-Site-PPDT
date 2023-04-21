@@ -1,12 +1,6 @@
 package weka.finito;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -26,7 +20,6 @@ import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
 
 
-
 public final class server_site implements Runnable {
 
 	private final String training_data;
@@ -36,66 +29,56 @@ public final class server_site implements Runnable {
 
     public static void main(String[] args) {
         int port = -1;
-        String training_data = null;
+        String training_data;
+		String data_set;
 
-        if(args.length < 2) {
-            //TODO: Print error message.
-            System.exit(1);
-        }
         String data_directory = System.getenv("PPDT_DATA_DIR");
         if(data_directory == null || data_directory.isEmpty()) {
-            //TODO: Print error message.
+            System.out.println("No data directory found");
             System.exit(1);
         }
 
         try {
             port = Integer.parseInt(System.getenv("LEVEL_SITE_PORT"));
         } catch (NumberFormatException e) {
-            //TODO: print error message.
+			System.out.println("No level site port provided");
             System.exit(1);
         }
         
         // Get data for training.
-        String FilePath = args[1];
-        try (BufferedReader br = new BufferedReader(new FileReader(FilePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String [] values = line.split(",");
-                String data_set = values[0];
-                String features = values[1];
-                //String expected_classification = values[2];
-                //String features_file = new File(data_directory, features).toString();
-                training_data = new File(data_directory, data_set).toString();
-                System.out.println(training_data);
-            }
-        } catch (FileNotFoundException e) {
-            //TODO: print error message.
-            System.exit(1);
-        } catch (IOException e) {
-            //TODO: print error message.
-            System.exit(1);
-        }
+		data_set = System.getenv("TRAINING");
+		if(data_set == null || data_set.isEmpty()) {
+			System.out.println("No training data set provided");
+			System.exit(1);
+		}
+		training_data = new File(data_directory, data_set).toString();
         
         // Pass data to level sites.
         String level_domains_str = System.getenv("LEVEL_SITE_DOMAINS");
         if(level_domains_str == null || level_domains_str.isEmpty()) {
-            //TODO: print error message.
+			System.out.println("No level site domains provided");
             System.exit(1);
         }
         String[] level_domains = level_domains_str.split(",");
+
+		// Want to see what level-sites look like with nursery...
+		List<level_order_site> all_level_sites = new ArrayList<>();
+		ClassifierTree ppdt;
+		try {
+			ppdt = train_decision_tree(training_data);
+			get_level_site_data(ppdt, all_level_sites);
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		for (int i = 0; i < all_level_sites.size(); i++) {
+			level_order_site current_level_site = all_level_sites.get(i);
+			// System.out.println(current_level_site.toString());
+		}
+
         // Create and run the server.
         server_site server = new server_site(training_data, level_domains, port);
-        new Thread(server).start();
-        boolean run = true;
-        while(run) {
-            try {
-                continue;
-            } catch (Exception e) {
-                System.out.println("Stopping...");
-                run = false;
-            }
-        }
-        //server.stop();
+        server.run();
     }
 
 	// For local host testing
@@ -117,6 +100,28 @@ public final class server_site implements Runnable {
 	// Build J48 as it uses C45?
 	// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
 	public static ClassifierTree train_decision_tree(String arff_file) throws Exception {
+		File training_file = new File(arff_file);
+		String base_name = training_file.getName().split("\\.")[0];
+		File output_image_file = new File("output", base_name + ".txt");
+		File output_model_file = new File("output", base_name + ".model");
+
+		File dir = new File("output");
+		if (!dir.exists()) {
+			if(!dir.mkdirs()) {
+				System.err.println("Error Creating output directory to store models and images!");
+				System.exit(1);
+			}
+		}
+
+		if (arff_file.endsWith(".model")) {
+			ClassifierTree j48 = (ClassifierTree) SerializationHelper.read(arff_file);
+			try (PrintWriter out = new PrintWriter(output_image_file)) {
+				out.println(j48.graph());
+			}
+			return j48;
+		}
+
+		// If this is a .arff file
 		Instances train = null;
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(arff_file))) {
@@ -136,10 +141,10 @@ public final class server_site implements Runnable {
 		ClassifierTree j48 = new C45PruneableClassifierTree(j48_model, true, (float) 0.25, true, true, true);
 
 	    j48.buildClassifier(train);
-	    try (PrintWriter out = new PrintWriter("dt-graph.txt")) {
+	    try (PrintWriter out = new PrintWriter(output_image_file)) {
 	        out.println(j48.graph());
 	    }
-		SerializationHelper.write("ppdt-j48.model", j48);
+		SerializationHelper.write(output_model_file.toString(), j48);
 	    return j48;
 	}
 
@@ -197,7 +202,6 @@ public final class server_site implements Runnable {
 								System.arraycopy(rightSideChar, 4, rightValue, 0, rightSideChar.length - 4);
 								String rightValueStr = new String(rightValue);
 								if (rightValueStr.equals("other")) {
-									type = 4;
 									threshold = 0;
 								}
 								if ((rightValueStr.equals("t"))||(rightValueStr.equals("f"))||(rightValueStr.equals("yes"))||(rightValueStr.equals("no"))) {
@@ -297,37 +301,34 @@ public final class server_site implements Runnable {
 			throw new RuntimeException(e);
 		}
 
-		Socket level_site = null;
-		ObjectOutputStream to_level_site = null;
-		try {
-			// Send the data to each level site, use data in-transit encryption
-			for (int i = 0; i < all_level_sites.size(); i++) {
-				System.out.println("i:" + i + " port:" + level_site_ports[i]);
-				level_order_site current_level_site = all_level_sites.get(i);
+		ObjectOutputStream to_level_site;
+		ObjectInputStream from_level_site;
+		int port_to_connect;
 
-				if (port == -1) {
-					level_site = new Socket(level_site_ips[i], level_site_ports[i]);
+		// Send the data to each level site, use data in-transit encryption
+		for (int i = 0; i < all_level_sites.size(); i++) {
+			level_order_site current_level_site = all_level_sites.get(i);
+
+			if (port == -1) {
+				port_to_connect = this.level_site_ports[i];
+			}
+			else {
+				port_to_connect = this.port;
+			}
+
+			try (Socket level_site = new Socket(level_site_ips[i], port_to_connect)) {
+				System.out.println("training level-site " + i + " on port:" + port_to_connect);
+				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+				from_level_site = new ObjectInputStream(level_site.getInputStream());
+				to_level_site.writeObject(current_level_site);
+				if(from_level_site.readBoolean()) {
+					System.out.println("Training Successful on port:" + port_to_connect);
 				}
 				else {
-					level_site = new Socket(level_site_ips[i], port);
+					System.out.println("Training NOT Successful on port:" + port_to_connect);
 				}
-				System.out.println(current_level_site.toString());
-
-				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-				to_level_site.writeObject(current_level_site);
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			try {
-				assert to_level_site != null;
-				to_level_site.close();
-				level_site.close();
-			}
-			catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException e2) {
+				e2.printStackTrace();
 			}
 		}
 	}
