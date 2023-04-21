@@ -39,7 +39,7 @@ public final class server_site implements Runnable {
         }
 
         try {
-            port = Integer.parseInt(System.getenv("LEVEL_SITE_PORT"));
+            port = Integer.parseInt(System.getenv("PORT_NUM"));
         } catch (NumberFormatException e) {
 			System.out.println("No level site port provided");
             System.exit(1);

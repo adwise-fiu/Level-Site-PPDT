@@ -62,7 +62,7 @@ public final class client implements Runnable {
         String[] level_domains = level_site_string.split(",");
 
         try {
-            port = Integer.parseInt(System.getenv("LEVEL_SITE_PORT"));
+            port = Integer.parseInt(System.getenv("PORT_NUM"));
         } catch (NumberFormatException e) {
             System.out.println("No port provided for the Level Sites.");
             System.exit(1);
