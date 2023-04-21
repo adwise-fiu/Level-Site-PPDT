@@ -75,6 +75,10 @@ data:
   aes-key: <SECRET_VALUE>>
 ```
 
+or you can use the command:
+
+    kubectl create secret generic ppdt-secrets --from-literal=aes-key=<SECRET_VALUE>
+
 #### Using Minikube
 You will need to start and configure minikube.
 
