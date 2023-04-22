@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'jacoco'
+    id 'application'
 }
 
 group 'weka.finito'
@@ -31,17 +32,23 @@ test {
 // This library was built for Java 8 so it can be imported into Android as well.
 // If you want to use a later version of Java, this should help point what to tweak.
 gradle.projectsEvaluated {
-    tasks.withType(JavaCompile){
-        options.compilerArgs << "-Xlint:deprecation"
+    tasks.withType(JavaCompile).tap {
+        configureEach {
+            options.compilerArgs << "-Xlint:deprecation,unchecked"
+        }
     }
 }
 
 
 jacocoTestReport {
     reports {
-        xml.enabled true
-        html.enabled false
+        xml.required=false
+        html.required=true
     }
 }
 
 check.dependsOn jacocoTestReport
+
+application {
+    mainClass.set(project.findProperty("chooseRole").toString())
+}

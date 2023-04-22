@@ -3,7 +3,6 @@ k8/level_sites/ppdt-secrets.yaml
 
 # Outputs from PPDT creation
 output
-gradle_user_home
 
 #Any IntelliJ stuff
 .idea

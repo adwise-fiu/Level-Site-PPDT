@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ppdt-level-site-06-service
+spec:
+  selector:
+    #app: assignment3-django-deploy
+    pod: ppdt-level-site-06-deploy
+  ports:
+  - protocol: TCP
+    port: 9000
+    targetPort: 9000
+  type: NodePort

@@ -3,6 +3,7 @@ import java.util.Properties;
 
 import org.junit.Before;
 import org.junit.Test;
+import weka.finito.AES;
 import weka.finito.client;
 import weka.finito.level_site_server;
 import weka.finito.server_site;
@@ -26,12 +27,15 @@ public final class PrivacyTest {
 		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
 		Properties config = new Properties();
-		try (FileReader in = new FileReader("data/config.properties")) {
+		try (FileReader in = new FileReader("config.properties")) {
 			config.load(in);
 		}
 		level_site_ports_string = config.getProperty("level-site-ports").split(",");
-		level_site_ips = config.getProperty("level-site-ips").split(",");
-		levels = Integer.parseInt(config.getProperty("levels"));
+		levels = level_site_ports_string.length;
+		level_site_ips = new String[levels];
+		for (int i = 0; i < levels; i++) {
+			level_site_ips[i] = "127.0.0.1";
+		}
 		key_size = Integer.parseInt(config.getProperty("key_size"));
 		precision = Integer.parseInt(config.getProperty("precision"));
 		data_directory = config.getProperty("data_directory");
@@ -39,8 +43,9 @@ public final class PrivacyTest {
 
 	@Test
 	public  void test_all() throws Exception {
+		String answer_path = new File(data_directory, "answers.csv").toString();
 		// Parse CSV file with various tests
-		try (BufferedReader br = new BufferedReader(new FileReader("data/answers.csv"))) {
+		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
 		    String line;
 		    while ((line = br.readLine()) != null) {
 		        String [] values = line.split(",");
@@ -62,29 +67,30 @@ public final class PrivacyTest {
 			throws InterruptedException {
 		
 		int [] level_site_ports = new int[levels];
-		
+
 		// Create Level sites
     	level_site_server [] level_sites = new level_site_server[levels];
     	for (int i = 0; i < level_sites.length; i++) {
     		level_site_ports[i] = Integer.parseInt(level_site_ports_string[i]);
-    		level_sites[i] = new level_site_server(level_site_ports[i], precision);
+    		level_sites[i] = new level_site_server(level_site_ports[i], precision, true,
+					new AES("AppSecSpring2023"));
         	new Thread(level_sites[i]).start();
     	}
-    	
-    	Thread.sleep(1000L * 10 * levels);
 
 		// Create the server
 		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports);
-    	new Thread(cloud).start();
-    	
-    	Thread.sleep(1000L * levels);
-    	
+		Thread server = new Thread(cloud);
+		server.start();
+		server.join();
+
 		// Create client
     	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
-    	new Thread(evaluate).start();
-    	
-    	Thread.sleep(1000L * 10 * levels);
-    	
+    	Thread client = new Thread(evaluate);
+		client.start();
+
+		// Programmatically wait until classification is done.
+		client.join();
+
     	// Close the Level Sites
 		for (level_site_server levelSite : level_sites) {
 			levelSite.stop();
@@ -92,3 +98,4 @@ public final class PrivacyTest {
     	return evaluate.getClassification();
 	}
 }
+
