@@ -39,4 +39,4 @@ spec:
               value: "levelsite01,levelsite02,levelsite03,levelsite04,levelsite05,levelsite06,levelsite07,levelsite08,levelsite09,levelsite10"
 
             - name: VALUES
-              value: "hypothyroid.arff"
+              value: "hypothyroid.values"
