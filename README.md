@@ -15,6 +15,7 @@ You need to install the following packages, to ensure everything works as expect
 ```bash
 sudo apt-get install -y default-jdk, default-jre
 pip3 install pyyaml
+pip3 install configobj
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install gradle

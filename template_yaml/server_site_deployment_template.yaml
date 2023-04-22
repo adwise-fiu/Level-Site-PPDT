@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ppdt-server-site-deploy
+  labels:
+    app: ppdt-server-site-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: ppdt-server-site-deploy
+  template:
+    metadata:
+      labels:
+        pod: ppdt-server-site-deploy
+    spec:
+      containers:
+        - name: ppdt-server-site-deploy
+          image: ppdt:experiment
+          ports:
+            - containerPort: 8000
+          env:
+            - name: TREE_ROLE
+              value: "SERVER" 
+
+            - name: PPDT_DATA_DIR
+              value: "/data/"
+
+            - name: PORT_NUM
+              value: "9000"
+
+            - name: LEVEL_SITE_DOMAINS
+              value: "ppdt-level-site-01-service,ppdt-level-site-02-service,ppdt-level-site-03-service,ppdt-level-site-04-service,ppdt-level-site-05-service,ppdt-level-site-06-service,ppdt-level-site-07-service,ppdt-level-site-08-service,ppdt-level-site-09-service,ppdt-level-site-10-service"
+
+            - name: TRAINING
+              value: "hypothyroid.arff"

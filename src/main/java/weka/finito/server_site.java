@@ -71,9 +71,9 @@ public final class server_site implements Runnable {
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		for (int i = 0; i < all_level_sites.size(); i++) {
-			level_order_site current_level_site = all_level_sites.get(i);
-			// System.out.println(current_level_site.toString());
+
+		for (level_order_site current_level_site : all_level_sites) {
+			System.out.println(current_level_site.toString());
 		}
 
         // Create and run the server.
