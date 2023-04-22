@@ -42,9 +42,9 @@ public class level_site_server implements Runnable {
             System.out.println("AES_PASS is empty.");
             System.exit(1);
         }
-        System.out.println("LEVEL SITE SERVER");
         level_site_server server = new level_site_server(our_port, our_precision, true, new AES(AES_Pass));
         new Thread(server).start();
+        System.out.println("LEVEL SITE SERVER STARTED!");
         while (true) {
         	try {
         	}

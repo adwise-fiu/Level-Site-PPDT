@@ -77,6 +77,7 @@ public final class server_site implements Runnable {
 		}
 
         // Create and run the server.
+        System.out.println("Server Initialized and started running");
         server_site server = new server_site(training_data, level_domains, port);
         server.run();
     }

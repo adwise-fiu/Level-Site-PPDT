@@ -12,9 +12,10 @@ download the ZIP file and import the weka.jar file**
 ## Installation
 You need to install the following packages, to ensure everything works as expected
 ```bash
-sudo apt-get install -y default-jdk, default-jre, gradle
+sudo apt-get install -y default-jdk, default-jre
 pip3 install pyyaml
 ```
+It is also a requirement to install [Grade](https://sdkman.io/install)
 
 Run the setup.sh script twice, WITHOUT sudo to install docker and minikube
 ```bash
@@ -82,7 +83,7 @@ or you can use the command:
 #### Using Minikube
 You will need to start and configure minikube.
 
-    minikube start --cpus 4 --memory 4096
+    minikube start --cpus 4 --memory 8192
     eval $(minikube docker-env)
 
 After starting minikube you will need to build the necessary Docker image using
@@ -98,10 +99,11 @@ command.
     kubectl apply -f k8/level_sites
 
 You will then need to wait until all the level sites are launched. To verify
-this, please run the following command.
+this, please run the following command. Be sure to run the logs command to confirm the level-sites are up.
 
     kubectl get pods
-
+    kubectl logs -f <LEVEL-SITE-POD>
+    
 All the pods that say level_site should have a status _running_.
 
 After verifying that all the pods are running properly, the next step is to
@@ -131,10 +133,9 @@ using the logs command for each pod.
     kubectl logs <pod_name> 
 
 If you want to re-run the experiment, run the following
-
-    minikube stop
-    minikube delete
     docker system prune --force
+    minikube delete
+
     
 ## Authors and Acknowledgement
 Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
