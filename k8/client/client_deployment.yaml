@@ -36,7 +36,7 @@ spec:
               value: "9000"
 
             - name: LEVEL_SITE_DOMAINS
-              value: "levelsite01,levelsite02,levelsite03,levelsite04,levelsite05,levelsite06,levelsite07,levelsite08,levelsite09,levelsite10"
+              value: "ppdt-level-site-01-service,ppdt-level-site-02-service,ppdt-level-site-03-service,ppdt-level-site-04-searvice,ppdt-level-site-05-service,ppdt-level-site-06-service,ppdt-level-site-07-service,ppdt-level-site-08-service,ppdt-level-site-09-service,ppdt-level-site-10-service"
 
             - name: VALUES
               value: "hypothyroid.values"
