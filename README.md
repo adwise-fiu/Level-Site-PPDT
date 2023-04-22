@@ -119,6 +119,7 @@ verify that the server site is finished running, use the following command and
 wait until the status of the server site pod says _completed_.
 
     kubectl get pods
+    kubectl logs -f <SERVER-SITE-POD>
 
 After the server site has completed successfully we are ready to run the client.
 To run the client, simply run the following command.
