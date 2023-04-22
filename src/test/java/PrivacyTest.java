@@ -1,12 +1,15 @@
-import java.io.*;
-import java.util.Properties;
-
 import org.junit.Before;
 import org.junit.Test;
 import weka.finito.AES;
 import weka.finito.client;
 import weka.finito.level_site_server;
 import weka.finito.server_site;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
