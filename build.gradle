@@ -47,10 +47,6 @@ jacocoTestReport {
 
 check.dependsOn jacocoTestReport
 
-ext {
-   javaMainClass = project.findProperty("chooseRole").toString()
-}
-
 application {
-    mainClassName = javaMainClass
+    mainClass.set(project.findProperty("chooseRole").toString())
 }

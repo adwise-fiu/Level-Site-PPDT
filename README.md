@@ -10,12 +10,15 @@ download the ZIP file and import the weka.jar file**
 ** To be confirmed/tested again...
 
 ## Installation
+It is a requirement to install [SDK](https://sdkman.io/install) to install Gradle.
 You need to install the following packages, to ensure everything works as expected
 ```bash
 sudo apt-get install -y default-jdk, default-jre
 pip3 install pyyaml
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+sdk install gradle
 ```
-It is also a requirement to install [Grade](https://sdkman.io/install)
 
 Run the setup.sh script twice, WITHOUT sudo to install docker and minikube
 ```bash
