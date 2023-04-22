@@ -136,10 +136,19 @@ using the logs command for each pod.
 
     kubectl logs <pod_name> 
 
-If you want to re-run the experiment, run the following
+### Clean up
+
+If you want to re-build everything in the experiment, run the following
+    
     docker system prune --force
     minikube delete
 
+Alternatively, if you want to only re-run the client, first update the variable to point to a different VALUES file.
+Then run the following commands:
+
+    kubectl delete pod <CLIENT-SITE>
+    kubectl apply -f k8/client
+    kubectl logs <NEW-CLIENT-SITE>
     
 ## Authors and Acknowledgement
 Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
