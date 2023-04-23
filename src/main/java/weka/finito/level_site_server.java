@@ -50,7 +50,7 @@ public class level_site_server implements Runnable {
         	}
         	catch (Exception e) {
         		break;
-        	}	
+        	}
         }
         server.stop();
     }

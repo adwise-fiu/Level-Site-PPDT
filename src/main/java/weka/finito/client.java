@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
@@ -12,7 +11,6 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.util.Hashtable;
 
-//For k8s deployment
 import java.lang.System;
 
 import security.DGK.DGKKeyPairGenerator;
@@ -23,6 +21,7 @@ import security.paillier.PaillierCipher;
 import security.paillier.PaillierKeyPairGenerator;
 import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
+import weka.Run;
 import weka.finito.structs.BigIntegers;
 
 public final class client implements Runnable {
@@ -192,21 +191,27 @@ public final class client implements Runnable {
 		to_level_site.flush();
 
 		// Work with the comparison
-		int comparison_type;
-		while(true) {
+		int comparison_type = Integer.MAX_VALUE;
+		while(comparison_type > 0) {
 			comparison_type = from_level_site.readInt();
-			if (comparison_type == -1) {
-				break;
-			}
-			else if (comparison_type == 0) {
-				client.setDGKMode(false);
-			}
-			else if (comparison_type == 1) {
-				client.setDGKMode(true);
+			switch (comparison_type) {
+				case -2:
+					classification_complete = true;
+					throw new RuntimeException("Level-Site doesn't have the data to complete evaluation");
+				case -1:
+					break;
+				case 0:
+					client.setDGKMode(false);
+					break;
+				case 1:
+					client.setDGKMode(true);
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + comparison_type);
 			}
 			client.Protocol4();
 		}
-
+		
 		// Get boolean from level-site:
 		// true - get leaf value
 		// false - get encrypted AES index for next round
@@ -256,6 +261,7 @@ public final class client implements Runnable {
 					break;
 				}
 				if (port == -1) {
+					assert level_site_ports != null;
 					connection_port = level_site_ports[i];
 					System.out.println("Local Test:" + level_site_ips[i] + " " + level_site_ports[i]);
 				}

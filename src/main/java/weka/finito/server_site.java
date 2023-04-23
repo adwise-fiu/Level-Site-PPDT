@@ -1,13 +1,19 @@
 package weka.finito;
 
-import java.io.*;
+import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-//For k8s deployment.
 import java.lang.System;
 
 import weka.classifiers.trees.j48.BinC45ModelSelection;
@@ -305,6 +311,13 @@ public final class server_site implements Runnable {
 		ObjectOutputStream to_level_site;
 		ObjectInputStream from_level_site;
 		int port_to_connect;
+
+		// There should be at least 1 IP Address for each level site
+		if(this.level_site_ips.length >= all_level_sites.size()) {
+			String error = String.format("Please create more level-sites for the " +
+					"decision tree trained from %s", training_data);
+			throw new RuntimeException(error);
+		}
 
 		// Send the data to each level site, use data in-transit encryption
 		for (int i = 0; i < all_level_sites.size(); i++) {
