@@ -18,7 +18,7 @@ public class level_site_server implements Runnable {
     protected level_order_site level_site_parameters = null;
     protected int precision;
 
-    protected AES crypto;// = new AES("AppSecSpring2023");
+    protected AES crypto;
     private final boolean time_methods;
 
     public static void main(String[] args) {

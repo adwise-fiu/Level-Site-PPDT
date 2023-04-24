@@ -54,12 +54,13 @@ public class level_site_thread implements Runnable {
 			if (x instanceof level_order_site) {
 				// Traffic from Server. Level-Site alone will manage closing this.
 				this.level_site_data = (level_order_site) x;
+				// System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
 				this.toClient.writeBoolean(true);
 				closeClientConnection();
 			} else if (x instanceof Hashtable) {
 				encrypted_features = (Hashtable<String, BigIntegers>) x;
+				// Have encrypted copy of thresholds if not done already for all nodes in level-site
 				this.level_site_data = level_site_data;
-				assert this.level_site_data != null;
 			} else {
 				System.out.println("Wrong Object Received: " + x.getClass().toString());
 				closeClientConnection();
@@ -157,8 +158,8 @@ public class level_site_thread implements Runnable {
 
 			if (this.level_site_data == null) {
 				toClient.writeInt(-2);
-				toClient.flush();
 				closeClientConnection();
+				return;
 			}
 
 			// Level Data is the Node Data...

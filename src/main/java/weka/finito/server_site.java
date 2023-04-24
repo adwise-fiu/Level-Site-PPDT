@@ -28,6 +28,8 @@ import weka.finito.structs.NodeInfo;
 
 public final class server_site implements Runnable {
 
+	private static final String os = System.getProperty("os.name").toLowerCase();
+
 	private final String training_data;
 	private final String [] level_site_ips;
 	private int [] level_site_ports = null;
@@ -102,6 +104,24 @@ public final class server_site implements Runnable {
 		this.port = port;
 	}
 
+	public static boolean isUnix(String os) {
+		return (os.contains("nix") || os.contains("nux") || os.contains("aix"));
+	}
+
+	public static void printTree(ClassifierTree j48, String base_name) throws Exception {
+		File output_dot_file = new File("output", base_name + ".dot");
+		File output_image_file = new File("output", base_name + ".png");
+
+		try (PrintWriter out = new PrintWriter(output_dot_file)) {
+			out.println(j48.graph());
+		}
+		if (isUnix(os)) {
+			String[] c = {"dot", "-Tpng", output_dot_file.toString(), "-o", output_image_file.toString()};
+			Process p = Runtime.getRuntime().exec(c);
+			p.waitFor();
+		}
+	}
+
 	// Reference:
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
 	// Build J48 as it uses C45?
@@ -109,7 +129,6 @@ public final class server_site implements Runnable {
 	public static ClassifierTree train_decision_tree(String arff_file) throws Exception {
 		File training_file = new File(arff_file);
 		String base_name = training_file.getName().split("\\.")[0];
-		File output_image_file = new File("output", base_name + ".txt");
 		File output_model_file = new File("output", base_name + ".model");
 
 		File dir = new File("output");
@@ -122,9 +141,7 @@ public final class server_site implements Runnable {
 
 		if (arff_file.endsWith(".model")) {
 			ClassifierTree j48 = (ClassifierTree) SerializationHelper.read(arff_file);
-			try (PrintWriter out = new PrintWriter(output_image_file)) {
-				out.println(j48.graph());
-			}
+			printTree(j48, base_name);
 			return j48;
 		}
 
@@ -148,10 +165,8 @@ public final class server_site implements Runnable {
 		ClassifierTree j48 = new C45PruneableClassifierTree(j48_model, true, (float) 0.25, true, true, true);
 
 	    j48.buildClassifier(train);
-	    try (PrintWriter out = new PrintWriter(output_image_file)) {
-	        out.println(j48.graph());
-	    }
 		SerializationHelper.write(output_model_file.toString(), j48);
+		printTree(j48, base_name);
 	    return j48;
 	}
 
@@ -313,7 +328,7 @@ public final class server_site implements Runnable {
 		int port_to_connect;
 
 		// There should be at least 1 IP Address for each level site
-		if(this.level_site_ips.length >= all_level_sites.size()) {
+		if(this.level_site_ips.length < all_level_sites.size()) {
 			String error = String.format("Please create more level-sites for the " +
 					"decision tree trained from %s", training_data);
 			throw new RuntimeException(error);

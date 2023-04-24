@@ -21,7 +21,6 @@ import security.paillier.PaillierCipher;
 import security.paillier.PaillierKeyPairGenerator;
 import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
-import weka.Run;
 import weka.finito.structs.BigIntegers;
 
 public final class client implements Runnable {
@@ -191,27 +190,26 @@ public final class client implements Runnable {
 		to_level_site.flush();
 
 		// Work with the comparison
-		int comparison_type = Integer.MAX_VALUE;
-		while(comparison_type > 0) {
+		int comparison_type;
+		while(true) {
 			comparison_type = from_level_site.readInt();
-			switch (comparison_type) {
-				case -2:
-					classification_complete = true;
-					throw new RuntimeException("Level-Site doesn't have the data to complete evaluation");
-				case -1:
-					break;
-				case 0:
-					client.setDGKMode(false);
-					break;
-				case 1:
-					client.setDGKMode(true);
-					break;
-				default:
-					throw new IllegalStateException("Unexpected value: " + comparison_type);
+			if (comparison_type == -2) {
+				System.out.println("LEVEL-SITE DOESN'T HAVE DATA!!!");
+				this.classification_complete = true;
+				return;
+			}
+			else if (comparison_type == -1) {
+				break;
+			}
+			else if (comparison_type == 0) {
+				client.setDGKMode(false);
+			}
+			else if (comparison_type == 1) {
+				client.setDGKMode(true);
 			}
 			client.Protocol4();
 		}
-		
+
 		// Get boolean from level-site:
 		// true - get leaf value
 		// false - get encrypted AES index for next round

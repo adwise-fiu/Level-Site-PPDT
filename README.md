@@ -13,7 +13,7 @@ download the ZIP file and import the weka.jar file**
 It is a requirement to install [SDK](https://sdkman.io/install) to install Gradle.
 You need to install the following packages, to ensure everything works as expected
 ```bash
-sudo apt-get install -y default-jdk, default-jre
+sudo apt-get install -y default-jdk, default-jre, graphviz
 pip3 install pyyaml
 pip3 install configobj
 curl -s "https://get.sdkman.io" | bash
