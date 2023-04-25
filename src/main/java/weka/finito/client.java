@@ -261,7 +261,7 @@ public final class client implements Runnable {
 				if (port == -1) {
 					assert level_site_ports != null;
 					connection_port = level_site_ports[i];
-					System.out.println("Local Test:" + level_site_ips[i] + " " + level_site_ports[i]);
+					System.out.println("Local Test: " + level_site_ips[i] + ":" + level_site_ports[i]);
 				}
 				else {
 					connection_port = port;
@@ -274,7 +274,8 @@ public final class client implements Runnable {
 			}
             long end_time = System.nanoTime();
 			System.out.println("The Classification is: " + classification);
-			double run_time = (double) ((end_time - start_time)/1000000);
+			double run_time = (double) (end_time - start_time);
+			run_time = run_time/1000000;
             System.out.printf("It took %f ms to classify\n", run_time);
 		}
 		catch (Exception e) {

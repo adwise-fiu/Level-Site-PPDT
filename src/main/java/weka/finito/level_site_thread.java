@@ -116,8 +116,9 @@ public class level_site_thread implements Runnable {
 		assert encrypted_client_value != null;
         long stop_time = System.nanoTime();
 
-		double run_time = (double) ((stop_time - start_time) / 1000000);
-		System.out.printf("Comparison took: %f\n", run_time);
+		double run_time = (double) (stop_time - start_time);
+		run_time = run_time / 1000000;
+		System.out.printf("Comparison took %f ms\n", run_time);
 		if (((ld.comparisonType == 1) && (ld.threshold == 0))
 				|| (ld.comparisonType == 4) || (ld.comparisonType == 5)) {
 			return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
