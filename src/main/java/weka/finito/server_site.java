@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Queue;
 
 import java.lang.System;
+import java.util.concurrent.TimeUnit;
 
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
@@ -117,8 +118,15 @@ public final class server_site implements Runnable {
 		}
 		if (isUnix(os)) {
 			String[] c = {"dot", "-Tpng", output_dot_file.toString(), "-o", output_image_file.toString()};
-			Process p = Runtime.getRuntime().exec(c);
-			p.waitFor();
+			try {
+				Process p = Runtime.getRuntime().exec(c);
+				if(!p.waitFor(5, TimeUnit.SECONDS)) {
+					p.destroy();
+				}
+			}
+			catch (IOException e) {
+				System.out.println("Can't generate image, so skip for now...");
+			}
 		}
 	}
 
