@@ -134,6 +134,7 @@ public class level_site_thread implements Runnable {
 		String previous_index = null;
 		String iv = null;
 		boolean get_previous_index;
+		long start_time = System.nanoTime();
 
 		try {
 			Niu = new alice(client_socket);
@@ -245,6 +246,10 @@ public class level_site_thread implements Runnable {
 				toClient.writeObject(encrypted_next_index);
 				toClient.writeObject(iv);
 			}
+			long stop_time = System.nanoTime();
+			double run_time = (double) (stop_time - start_time);
+			run_time = run_time / 1000000;
+			System.out.printf("Total run-time took %f ms\n", run_time);
 		}
         catch (Exception e) {
 			e.printStackTrace();
