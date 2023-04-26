@@ -14,9 +14,9 @@ def deep_key_update(dict_to_update: dict, key_path: list, value) -> dict:
 
 template_yaml_directory = 'template_yaml'
 k8_directory = '.'
-k8_client = os.path.join('k8s', 'client')
-k8_server = os.path.join('k8s', 'server_site')
-k8_level_site = os.path.join('k8s', 'level_sites')
+k8_client = os.path.join('k8', 'client')
+k8_server = os.path.join('k8', 'server_site')
+k8_level_site = os.path.join('k8', 'level_sites')
 
 level_sites = int(sys.argv[1])
 level_sites += 1
