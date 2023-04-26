@@ -232,7 +232,6 @@ public final class client implements Runnable {
 	}
 
 	public void run() {
-        long start_time = System.nanoTime();
 		// Generate Key Pairs
 		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
 		p.initialize(key_size, null);
@@ -253,6 +252,7 @@ public final class client implements Runnable {
 		}
 
 		int connection_port;
+		long start_time = System.nanoTime();
 		try {
 			for (int i = 0; i < level_site_ips.length; i++) {
 				if (classification_complete) {
