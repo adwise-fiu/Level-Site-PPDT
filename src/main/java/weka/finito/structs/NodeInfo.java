@@ -7,11 +7,11 @@ import java.io.Serializable;
  * This class contains all the information about a specific node in the DT
  */
 
-public final class NodeInfo implements Serializable {
+public final class NodeInfo implements Serializable, Comparable<NodeInfo> {
 
 	private static final long serialVersionUID = -3569139531917752891L;
-	public final boolean is_leaf;
-	public final String variable_name;
+	public boolean is_leaf;
+	public String variable_name;
 	public int comparisonType;
     public float threshold;
 
@@ -43,4 +43,17 @@ public final class NodeInfo implements Serializable {
     	output.append('\n');
     	return output.toString();
     }
+
+	public int compareTo(NodeInfo o) {
+		boolean leaf_match = this.is_leaf == o.isLeaf();
+		boolean variable_match = this.variable_name.equals(o.variable_name);
+		boolean comparison_match = this.comparisonType == o.comparisonType;
+		boolean threshold_match = this.threshold == o.threshold;
+		if (leaf_match && variable_match && comparison_match && threshold_match) {
+			return 0;
+		}
+		else {
+			return this.variable_name.compareTo(o.variable_name);
+		}
+	}
 }

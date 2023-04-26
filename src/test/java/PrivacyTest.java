@@ -76,7 +76,7 @@ public final class PrivacyTest {
     	for (int i = 0; i < level_sites.length; i++) {
 			String port_string = level_site_ports_string[i].replaceAll("[^0-9]", "");
     		level_site_ports[i] = Integer.parseInt(port_string);
-    		level_sites[i] = new level_site_server(level_site_ports[i], precision, true,
+    		level_sites[i] = new level_site_server(level_site_ports[i], precision,
 					new AES("AppSecSpring2023"));
         	new Thread(level_sites[i]).start();
     	}

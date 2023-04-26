@@ -86,11 +86,11 @@ public final class client implements Runnable {
             System.exit(1);
         }
 
-		values = System.getenv("VALUES");
-		if(values == null || values.isEmpty()) {
-			System.out.println("VALUES file is not provided.");
+		if (args.length != 1) {
+			System.out.println("Missing Testing Data set as an argument parameter");
 			System.exit(1);
 		}
+		values = args[0];
 		String full_values_path = new File(data_directory, values).toString();
 		client test = new client(key_size, full_values_path, level_domains, port, precision);
 		test.run();

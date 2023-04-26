@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ppdt-server-site-deploy
+spec:
+  template:
+    spec:
+      containers:
+      - name: ppdt-server-site-deploy
+        image: ppdt:experiment
+        command: ["/bin/sh"]
+        args: ["gradle", "-g", "gradle_user_home", "run", "-PchooseRole=weka.finito.server_site", "--args", "hypothyroid.arff"]
+      env:
+        - name: TREE_ROLE
+          value: "SERVER"
+
+        - name: PRECISION
+          value: "2"
+
+        - name: PPDT_DATA_DIR
+          value: "/data/"
+
+        - name: PORT_NUM
+          value: "9000"
+
+        - name: LEVEL_SITE_DOMAINS
+          value: "ppdt-level-site-01-service,ppdt-level-site-02-service,ppdt-level-site-03-service,ppdt-level-site-04-service,ppdt-level-site-05-service,ppdt-level-site-06-service,ppdt-level-site-07-service,ppdt-level-site-08-service,ppdt-level-site-09-service,ppdt-level-site-10-service"
+
+        - name: TRAINING
+          value: "hypothyroid.arff"
+
+      restartPolicy: Never
+  backoffLimit: 4

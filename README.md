@@ -102,9 +102,15 @@ before any other portion of the system. This can be done by using the following
 command.
 
     kubectl apply -f k8/level_sites
-    
-    NAME                                         READY   STATUS      RESTARTS        AGE
-ppdt-client-deploy-7d49ffdbc5-nthwf          1/1     Running     5 (2m39s ago)   16h
+
+You will then need to wait until all the level sites are launched. To verify
+this, please run the following command. All the pods that say level_site should have a status _running_.
+
+    kubectl get pods
+
+The output of `kubectl get pods` would look something like:
+```
+NAME                                         READY   STATUS      RESTARTS        AGE
 ppdt-level-site-01-deploy-7dbf5b4cdd-wz6q7   1/1     Running     1 (2m39s ago)   16h
 ppdt-level-site-02-deploy-69bb8fd5c6-wjjbs   1/1     Running     1 (2m39s ago)   16h
 ppdt-level-site-03-deploy-74f7d95768-r6tn8   1/1     Running     1 (16h ago)     16h
@@ -115,18 +121,13 @@ ppdt-level-site-07-deploy-6f57496cdd-hlggh   1/1     Running     1 (16h ago)    
 ppdt-level-site-08-deploy-6d596967b8-mh9hz   1/1     Running     1 (2m39s ago)   16h
 ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)     16h
 ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
-ppdt-server-site-deploy-6c899949f-jvq6t      0/1     Completed   6 (16h ago)     16h
-
-
-You will then need to wait until all the level sites are launched. To verify
-this, please run the following command. All the pods that say level_site should have a status _running_.
-
-    kubectl get pods
+```
 
 It does take time for the level-site to be able to accept connections. Run the following command on a level-site, 
-and wait for an output saying `Ready to accept connections`
+and wait for an output in standard output saying `Ready to accept connections`. Set `<LEVEL-SITE-POD-NAME>` 
+to one of the pod names from the output, e. g. `ppdt-level-site-01-deploy-7dbf5b4cdd-wz6q7`.
 
-    kubectl logs -f <LEVEL-SITE-POD>
+    kubectl logs -f <LEVEL-SITE-POD-NAME>
 
 After verifying that all the pods are running properly, the next step is to
 start the server site. To do this, run the following command.
@@ -137,7 +138,7 @@ To verify that the server site is finished running, use the following commands t
 and check the logs to confirm we see `Training Successful` for all the level-sites.
 
     kubectl get pods
-    kubectl logs -f <SERVER-SITE-POD>
+    kubectl logs -f <SERVER-SITE-POD-NAME>
 
 After the server site has completed successfully we are ready to run the client.
 To run the client, simply run the following command.
@@ -152,7 +153,7 @@ and from the client. To do this, first get all the pods.
 Then, for all level_sites and clients you can get the printout of stdout by
 using the logs command for each pod.
 
-    kubectl logs <pod_name> 
+    kubectl logs <POD-NAME> 
 
 ### Clean up
 

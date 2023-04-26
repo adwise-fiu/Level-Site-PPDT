@@ -9,7 +9,7 @@ import java.util.List;
  * This class contains all the necessary information for a Level-site to complete evaluation
  */
 
-public final class level_order_site implements Serializable {
+public final class level_order_site implements Serializable, Comparable<level_order_site> {
 
 	private static final long serialVersionUID = 575566807906351024L;
 	private int index = 0;
@@ -66,4 +66,24 @@ public final class level_order_site implements Serializable {
     	}
     	return output.toString();
     }
+
+	public int compareTo(level_order_site o) {
+		if (this.node_level_data.size() == o.node_level_data.size()) {
+			for (int i = 0; i < node_level_data.size(); i++) {
+				NodeInfo left = this.node_level_data.get(i);
+				NodeInfo right = o.node_level_data.get(i);
+				int comparison = left.compareTo(right);
+				if (comparison != 0) {
+					return comparison;
+				}
+			}
+			return 0;
+		}
+		else if (this.node_level_data.size() > o.node_level_data.size()) {
+			return 1;
+		}
+		else {
+			return -1;
+		}
+	}
 }

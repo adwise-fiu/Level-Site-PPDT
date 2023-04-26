@@ -36,14 +36,12 @@ public class level_site_thread implements Runnable {
 	private final int precision;
 	private Hashtable<String, BigIntegers> encrypted_features;
 	private final AES crypto;
-    private boolean time_methods;
 
 	public level_site_thread(Socket client_socket, level_order_site level_site_data,
-							 int precision, AES crypto, boolean time_methods) {
+							 int precision, AES crypto) {
 		this.client_socket = client_socket;
 		this.precision = precision;
 		this.crypto = crypto;
-		this.time_methods = time_methods;
 
 		Object x;
 		try {

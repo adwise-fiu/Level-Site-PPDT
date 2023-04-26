@@ -54,14 +54,6 @@ public final class server_site implements Runnable {
             System.exit(1);
         }
         
-        // Get data for training.
-		data_set = System.getenv("TRAINING");
-		if(data_set == null || data_set.isEmpty()) {
-			System.out.println("No training data set provided");
-			System.exit(1);
-		}
-		training_data = new File(data_directory, data_set).toString();
-        
         // Pass data to level sites.
         String level_domains_str = System.getenv("LEVEL_SITE_DOMAINS");
         if(level_domains_str == null || level_domains_str.isEmpty()) {
@@ -69,6 +61,14 @@ public final class server_site implements Runnable {
             System.exit(1);
         }
         String[] level_domains = level_domains_str.split(",");
+
+		// Get data for training.
+		if (args.length != 1) {
+			System.out.println("Missing Training Data set as an argument parameter");
+			System.exit(1);
+		}
+		data_set = args[0];
+		training_data = new File(data_directory, data_set).toString();
 
 		// Want to see what level-sites look like with nursery...
 		List<level_order_site> all_level_sites = new ArrayList<>();
