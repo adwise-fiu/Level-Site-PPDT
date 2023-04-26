@@ -85,9 +85,10 @@ or you can use the command:
     kubectl create secret generic ppdt-secrets --from-literal=aes-key=<SECRET_VALUE>
 
 #### Using Minikube
-You will need to start and configure minikube.
+You will need to start and configure minikube. When writing the paper, we provided 8 CPUs and 20 GB of memory, 
+but feel free to modify the arguments that fit your computer's specs.
 
-    minikube start --cpus 4 --memory 8192
+    minikube start --cpus 8 --memory 20000
     eval $(minikube docker-env)
 
 After starting minikube you will need to build the necessary Docker image using
@@ -103,21 +104,22 @@ command.
     kubectl apply -f k8/level_sites
 
 You will then need to wait until all the level sites are launched. To verify
-this, please run the following command. Be sure to run the logs command to confirm the level-sites are up.
+this, please run the following command. All the pods that say level_site should have a status _running_.
 
     kubectl get pods
+
+It does take time for the level-site to be able to accept connections. Run the following command on a level-site, 
+and wait for an output saying `Ready to accept connections`
+
     kubectl logs -f <LEVEL-SITE-POD>
-    
-All the pods that say level_site should have a status _running_.
 
 After verifying that all the pods are running properly, the next step is to
 start the server site. To do this, run the following command.
 
     kubectl apply -f k8/server_site
 
-Then, when it's finished working properly we are ready to launch the client. To
-verify that the server site is finished running, use the following command and
-wait until the status of the server site pod says _completed_.
+To verify that the server site is finished running, use the following commands to confirm the server_site is _running_ 
+and check the logs to confirm we see `Training Successful` for all the level-sites.
 
     kubectl get pods
     kubectl logs -f <SERVER-SITE-POD>
@@ -144,13 +146,6 @@ If you want to re-build everything in the experiment, run the following
     docker system prune --force
     minikube delete
 
-Alternatively, if you want to only re-run the client, first update the variable to point to a different VALUES file.
-Then run the following commands:
-
-    kubectl delete pod <CLIENT-SITE>
-    kubectl apply -f k8/client
-    kubectl logs <NEW-CLIENT-SITE>
-    
 ## Authors and Acknowledgement
 Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
 
@@ -158,4 +153,6 @@ Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
 [MIT](https://choosealicense.com/licenses/mit/)
 
 ## Project status
-Fully tested and completed
+Fully tested and completed. Future work currently includes:
+* Converting Server-site and client to Kubernetes jobs instead
+* See if I can run this on AWS EKS too
