@@ -102,6 +102,21 @@ before any other portion of the system. This can be done by using the following
 command.
 
     kubectl apply -f k8/level_sites
+    
+    NAME                                         READY   STATUS      RESTARTS        AGE
+ppdt-client-deploy-7d49ffdbc5-nthwf          1/1     Running     5 (2m39s ago)   16h
+ppdt-level-site-01-deploy-7dbf5b4cdd-wz6q7   1/1     Running     1 (2m39s ago)   16h
+ppdt-level-site-02-deploy-69bb8fd5c6-wjjbs   1/1     Running     1 (2m39s ago)   16h
+ppdt-level-site-03-deploy-74f7d95768-r6tn8   1/1     Running     1 (16h ago)     16h
+ppdt-level-site-04-deploy-6d99df8d7b-d6qlj   1/1     Running     1 (2m39s ago)   16h
+ppdt-level-site-05-deploy-855b649896-82hlm   1/1     Running     1 (2m39s ago)   16h
+ppdt-level-site-06-deploy-6578fc8c9b-ntzhn   1/1     Running     1 (16h ago)     16h
+ppdt-level-site-07-deploy-6f57496cdd-hlggh   1/1     Running     1 (16h ago)     16h
+ppdt-level-site-08-deploy-6d596967b8-mh9hz   1/1     Running     1 (2m39s ago)   16h
+ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)     16h
+ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
+ppdt-server-site-deploy-6c899949f-jvq6t      0/1     Completed   6 (16h ago)     16h
+
 
 You will then need to wait until all the level sites are launched. To verify
 this, please run the following command. All the pods that say level_site should have a status _running_.
