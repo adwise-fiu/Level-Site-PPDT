@@ -87,14 +87,13 @@ public class level_site_server implements Runnable {
             	this.level_site_parameters = new_data;
             }
             else {
-                // Didn't receive new level-site data in thread, so it is client evaluating...
-                if (new_data != null) {
-                    // Received new data from server-site, overwrite the existing copy if it is new
-                    if (this.level_site_parameters.compareTo(new_data) != 0) {
-                        this.level_site_parameters = new_data;
-                    }
+                // Received new data from server-site, overwrite the existing copy if it is new
+                if (this.level_site_parameters.compareTo(new_data) != 0) {
+                    this.level_site_parameters = new_data;
+                    // System.out.println("New Training Data received...Overwriting now...");
                 }
                 else {
+                    // System.out.println("Client evaluation starting...");
                     new Thread(current_level_site_class).start();
                 }
             }
