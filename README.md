@@ -13,7 +13,7 @@ download the ZIP file and import the weka.jar file**
 It is a requirement to install [SDK](https://sdkman.io/install) to install Gradle.
 You need to install the following packages, to ensure everything works as expected
 ```bash
-sudo apt-get install -y default-jdk, default-jre, graphviz
+sudo apt-get install -y default-jdk, default-jre, graphviz, curl, python3-pip
 pip3 install pyyaml
 pip3 install configobj
 curl -s "https://get.sdkman.io" | bash
@@ -21,7 +21,8 @@ source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install gradle
 ```
 
-Run the setup.sh script twice, WITHOUT sudo to install docker and minikube
+From the root of the repository, run the following command once to install docker.
+Reboot your machine, then re-run the command to install minikube.
 ```bash
 bash setup.sh
 ```
@@ -49,7 +50,7 @@ bash setup.sh
 
 To run the end-to-end test, run the following:
 ```bash
-gradlew build
+sh gradlew build
 ```
 
 When the testing is done, you will have an output directory containing both the DT model and a text file on how to draw 
