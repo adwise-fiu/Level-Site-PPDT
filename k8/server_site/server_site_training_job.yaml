@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: ppdt-server-site-deploy
-        image: 'ppdt:experiment'
+        image: ppdt:experiment
         command: ["/bin/sh"]
         args: ["gradle", "-g", "gradle_user_home", "run", "-PchooseRole=weka.finito.server_site", "--args", "/data/hypothyroid.arff"]
         env:

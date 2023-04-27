@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
         - name: ppdt-client-deploy
-          image: 'ppdt:experiment'
+          image: ppdt:experiment
           command: ["/bin/sh"]
           args: ["gradle", "-g", "gradle_user_home", "run", "-PchooseRole=weka.finito.client", "--args", "/data/hypothyroid.values"]
           env:
