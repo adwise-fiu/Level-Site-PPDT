@@ -41,12 +41,6 @@ public final class server_site implements Runnable {
         String training_data;
 		String data_set;
 
-        String data_directory = System.getenv("PPDT_DATA_DIR");
-        if(data_directory == null || data_directory.isEmpty()) {
-            System.out.println("No data directory found");
-            System.exit(1);
-        }
-
         try {
             port = Integer.parseInt(System.getenv("PORT_NUM"));
         } catch (NumberFormatException e) {
@@ -67,8 +61,7 @@ public final class server_site implements Runnable {
 			System.out.println("Missing Training Data set as an argument parameter");
 			System.exit(1);
 		}
-		data_set = args[0];
-		training_data = new File(data_directory, data_set).toString();
+		training_data = args[0];
 
 		// Want to see what level-sites look like with nursery...
 		List<level_order_site> all_level_sites = new ArrayList<>();

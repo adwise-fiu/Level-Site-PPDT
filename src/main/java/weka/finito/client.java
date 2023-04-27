@@ -80,18 +80,11 @@ public final class client implements Runnable {
             System.exit(1);
         }
 
-        data_directory = System.getenv("PPDT_DATA_DIR");
-        if(data_directory == null || data_directory.isEmpty()) {
-            System.out.println("Data directory not provided.");
-            System.exit(1);
-        }
-
 		if (args.length != 1) {
 			System.out.println("Missing Testing Data set as an argument parameter");
 			System.exit(1);
 		}
-		values = args[0];
-		String full_values_path = new File(data_directory, values).toString();
+		String full_values_path = args[0];
 		client test = new client(key_size, full_values_path, level_domains, port, precision);
 		test.run();
 
