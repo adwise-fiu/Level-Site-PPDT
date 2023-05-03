@@ -2,12 +2,14 @@ package weka.finito;
 
 import weka.finito.structs.level_order_site;
 
+import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 //For k8s implementation
 import java.lang.System;
+import java.security.NoSuchAlgorithmException;
 
 public class level_site_server implements Runnable {
 
@@ -20,7 +22,7 @@ public class level_site_server implements Runnable {
 
     protected AES crypto;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException {
         int our_port = 0;
         int our_precision = 0;
         String AES_Pass = System.getenv("AES_PASS");

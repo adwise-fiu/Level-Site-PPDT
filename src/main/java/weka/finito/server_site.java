@@ -9,10 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
+import weka.core.Attribute;
 import weka.core.Instances;
 
 import weka.core.SerializationHelper;
@@ -39,7 +37,36 @@ public final class server_site implements Runnable {
     public static void main(String[] args) {
         int port = -1;
         String training_data;
-		String data_set;
+
+		// Get data for training.
+		if (args.length != 1) {
+			System.out.println("Missing Training Data set as an argument parameter");
+			System.exit(1);
+		}
+		training_data = args[0];
+		List<level_order_site> all_level_sites = new ArrayList<>();
+		ClassifierTree ppdt;
+		try {
+			ppdt = train_decision_tree(training_data);
+			get_level_site_data(ppdt, all_level_sites);
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		Attribute classes = ppdt.getTrainingData().classAttribute();
+		List<Object> classes_values = Collections.list(classes.enumerateValues());
+		String [] class_array = new String [classes_values.size()];
+
+		for (int i = 0; i < class_array.length; i++) {
+			class_array[i] = classes_values.get(i).toString();
+		}
+
+		// TODO: Send classes to client..., Maybe send map of Hash...
+
+		for (level_order_site current_level_site : all_level_sites) {
+			System.out.println(current_level_site.toString());
+		}
 
         try {
             port = Integer.parseInt(System.getenv("PORT_NUM"));
@@ -55,28 +82,6 @@ public final class server_site implements Runnable {
             System.exit(1);
         }
         String[] level_domains = level_domains_str.split(",");
-
-		// Get data for training.
-		if (args.length != 1) {
-			System.out.println("Missing Training Data set as an argument parameter");
-			System.exit(1);
-		}
-		training_data = args[0];
-
-		// Want to see what level-sites look like with nursery...
-		List<level_order_site> all_level_sites = new ArrayList<>();
-		ClassifierTree ppdt;
-		try {
-			ppdt = train_decision_tree(training_data);
-			get_level_site_data(ppdt, all_level_sites);
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-
-		for (level_order_site current_level_site : all_level_sites) {
-			System.out.println(current_level_site.toString());
-		}
 
         // Create and run the server.
         System.out.println("Server Initialized and started running");
@@ -195,6 +200,7 @@ public final class server_site implements Runnable {
 				assert p != null;
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
+					// TODO: Set to hash of classification
 					node_info = new NodeInfo(true, variable);
 					Level_Order_S.append_data(node_info);
 				}
@@ -273,6 +279,7 @@ public final class server_site implements Runnable {
 
 						node_info = new NodeInfo(false, leftSide);
 						node_info.comparisonType = type;
+						//TODO: Encrypt Threshold
 						node_info.threshold = threshold;
 						q.add(p.getSons()[i]);
 					}
@@ -301,12 +308,13 @@ public final class server_site implements Runnable {
 							additionalNode.comparisonType = 1;
 						}
 						additionalNode.threshold = node_info.threshold;
+						// TODO: Encrypt threshold
 						Level_Order_S.append_data(additionalNode);
 					}
 					Level_Order_S.append_data(node_info);
 				}// else
 				n--;
-			} // While n > 0 (nodes > 0?)
+			} // While n > 0 (nodes > 0)
 			all_level_sites.add(Level_Order_S);
 			Level_Order_S.set_level(level);
 			++level;

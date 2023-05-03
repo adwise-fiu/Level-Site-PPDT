@@ -193,14 +193,16 @@ public class level_site_thread implements Runnable {
 					node_level_index++;
 					n += 2;
 					System.out.println("Variable:" + ls.getVariableName());
-				} else {
+				}
+				else {
 					if ((i==0)||((n==2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
 						if (ls.comparisonType == 6) {
 							ls.comparisonType = 3;
 							boolean firstInequalityHolds = compare(ls);
 							if (firstInequalityHolds) {
 								inequalityHolds = true;
-							} else {
+							}
+							else {
 								ls.comparisonType = 5;
 								boolean secondInequalityHolds = compare(ls);
 								if (secondInequalityHolds) {
@@ -208,7 +210,8 @@ public class level_site_thread implements Runnable {
 								}
 							}
 							ls.comparisonType = 6;
-						} else {
+						}
+						else {
 							inequalityHolds = compare(ls);
 						}
 
@@ -236,7 +239,8 @@ public class level_site_thread implements Runnable {
 				// Tell the client the value
 				toClient.writeBoolean(true);
 				toClient.writeObject(ls.getVariableName());
-			} else {
+			}
+			else {
 				toClient.writeBoolean(false);
 				// encrypt with AES, send to client which will send to next level-site
 				encrypted_next_index = crypto.encrypt(String.valueOf(this.level_site_data.get_next_index()));

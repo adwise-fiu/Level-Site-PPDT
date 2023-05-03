@@ -5,10 +5,12 @@ import weka.finito.client;
 import weka.finito.level_site_server;
 import weka.finito.server_site;
 
+import javax.crypto.NoSuchPaddingException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -66,8 +68,8 @@ public final class PrivacyTest {
 	}
 
 	public static String test_case(String training_data, String features_file, int levels, int key_size, int precision,
-			String [] level_site_ips, String [] level_site_ports_string) 
-			throws InterruptedException {
+			String [] level_site_ips, String [] level_site_ports_string)
+			throws InterruptedException, NoSuchPaddingException, NoSuchAlgorithmException {
 		
 		int [] level_site_ports = new int[levels];
 
