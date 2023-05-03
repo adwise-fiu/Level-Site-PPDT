@@ -141,8 +141,6 @@ public class level_site_thread implements Runnable {
 			dgk_public_key = Niu.getDGKPublicKey();
 			paillier_public_key = Niu.getPaillierPublicKey();
 
-			int i = this.level_site_data.getLevel();
-			// System.out.println("level= " + i);
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
 
 			get_previous_index = fromClient.readBoolean();
@@ -165,15 +163,10 @@ public class level_site_thread implements Runnable {
 			}
 
 			// Level Data is the Node Data...
-			int bound;
-			if (i == 0) {
-				this.level_site_data.set_current_index(0);
-				bound = 2;
-			} else {
-				assert previous_index != null;
+			if (previous_index != null) {
 				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
-				bound = node_level_data.size();
 			}
+			int bound = node_level_data.size();
 
 			boolean equalsFound = false;
 			boolean inequalityHolds = false;
@@ -192,11 +185,10 @@ public class level_site_thread implements Runnable {
 						terminalLeafFound = true;
 						System.out.println("Terminal leaf:" + ls.getVariableName());
 					}
-					node_level_index++;
 					n += 2;
-					System.out.println("Variable:" + ls.getVariableName());
-				} else {
-					if ((i==0)||((n==2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
+				}
+				else {
+					if ((n==2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1)) {
 						if (ls.comparisonType == 6) {
 							ls.comparisonType = 3;
 							boolean firstInequalityHolds = compare(ls);
@@ -214,10 +206,7 @@ public class level_site_thread implements Runnable {
 							inequalityHolds = compare(ls);
 						}
 
-						System.out.println("Inequality Holds:" + inequalityHolds);
-						System.out.println("Node level index:" + node_level_index);
-						System.out.println("n:" + n + " first node index:" + 2 * this.level_site_data.get_current_index() + " second node index:" + (2 * this.level_site_data.get_current_index() + 1));
-						if ((inequalityHolds) && ((n == 2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1))) {
+						if (inequalityHolds) {
 							equalsFound = true;
 							this.level_site_data.set_next_index(next_index);
 							System.out.println("New index:" + this.level_site_data.get_current_index());
@@ -225,9 +214,9 @@ public class level_site_thread implements Runnable {
 					}
 					n++;
 					next_index++;
-					node_level_index++;
-					System.out.println("Variable Name:" + ls.getVariableName() + " " + ls.comparisonType + ", " + ls.threshold);
+					//System.out.println("Variable Name:" + ls.getVariableName() + " " + ls.comparisonType + ", " + ls.threshold);
 				}
+				node_level_index++;
 			}
 
 			// Place -1 to break Protocol4 loop
@@ -249,7 +238,7 @@ public class level_site_thread implements Runnable {
 			long stop_time = System.nanoTime();
 			double run_time = (double) (stop_time - start_time);
 			run_time = run_time / 1000000;
-			System.out.printf("Total run-time took %f ms\n", run_time);
+			System.out.printf("Total Level-Site run-time took %f ms\n", run_time);
 		}
         catch (Exception e) {
 			e.printStackTrace();
