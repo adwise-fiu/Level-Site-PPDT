@@ -166,7 +166,6 @@ public class level_site_thread implements Runnable {
 			if (previous_index != null) {
 				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
 			}
-			int bound = node_level_data.size();
 
 			boolean equalsFound = false;
 			boolean inequalityHolds = false;
@@ -177,7 +176,7 @@ public class level_site_thread implements Runnable {
 			NodeInfo ls = null;
 			String encrypted_next_index;
 
-			while (node_level_index < bound && (!equalsFound) && (!terminalLeafFound)) {
+			while ((!equalsFound) && (!terminalLeafFound)) {
 				ls = node_level_data.get(node_level_index);
 				System.out.println("j=" + node_level_index);
 				if (ls.isLeaf()) {
@@ -214,7 +213,6 @@ public class level_site_thread implements Runnable {
 					}
 					n++;
 					next_index++;
-					//System.out.println("Variable Name:" + ls.getVariableName() + " " + ls.comparisonType + ", " + ls.threshold);
 				}
 				node_level_index++;
 			}
