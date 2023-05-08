@@ -1,6 +1,13 @@
 package weka.finito.structs;
 
+import security.DGK.DGKOperations;
+import security.DGK.DGKPublicKey;
+import security.misc.HomomorphicException;
+import security.paillier.PaillierCipher;
+import security.paillier.PaillierPublicKey;
+
 import java.io.Serializable;
+import java.math.BigInteger;
 
 /**
  * @author Andrew Quijano
@@ -10,15 +17,47 @@ import java.io.Serializable;
 public final class NodeInfo implements Serializable, Comparable<NodeInfo> {
 
 	private static final long serialVersionUID = -3569139531917752891L;
-	public boolean is_leaf;
-	public String variable_name;
-	public int comparisonType;
-    public float threshold;
+	public final boolean is_leaf;
+	public final String variable_name;
+	public final int comparisonType;
+    public final float threshold;
 
-    public NodeInfo(boolean is_leaf, String variable_name) {
+	private BigInteger paillier;
+	private BigInteger dgk;
+
+    public NodeInfo(boolean is_leaf, String variable_name, int comparisonType) {
     	this.is_leaf = is_leaf;
     	this.variable_name = variable_name;
+		this.comparisonType = comparisonType;
+		this.threshold = 0;
     }
+
+	public void encrypt(float threshold, int precision,
+						PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key)
+			throws HomomorphicException {
+		BigInteger encrypted_thresh;
+		int intermediateInteger = (int) (threshold * Math.pow(10, precision));
+		encrypted_thresh = BigInteger.valueOf(intermediateInteger);
+		this.setPaillier(PaillierCipher.encrypt(encrypted_thresh, paillier_public_key));
+		this.setDGK(DGKOperations.encrypt(encrypted_thresh, dgk_public_key));
+	}
+
+	public void setDGK(BigInteger dgk){
+		this.dgk = dgk;
+	}
+
+	public BigInteger getDGK() {
+		return this.dgk;
+	}
+
+	public void setPaillier(BigInteger paillier) {
+		this.paillier = paillier;
+	}
+
+	public BigInteger getPaillier() {
+		return this.paillier;
+	}
+
     
     public boolean isLeaf() {
     	return this.is_leaf;

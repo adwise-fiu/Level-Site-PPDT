@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-//For k8s implementation
 import java.lang.System;
 import java.security.NoSuchAlgorithmException;
 
@@ -68,6 +67,7 @@ public class level_site_server implements Runnable {
             this.runningThread = Thread.currentThread();
         }
         openServerSocket();
+
         while(! isStopped()) {
             Socket clientSocket;
             try {
@@ -82,7 +82,7 @@ public class level_site_server implements Runnable {
                 throw new RuntimeException("Error accepting client connection", e);
             }
             level_site_thread current_level_site_class = new level_site_thread(clientSocket,
-                    this.level_site_parameters, this.precision, this.crypto);
+                    this.level_site_parameters, this.crypto);
 
             level_order_site new_data = current_level_site_class.getLevelSiteParameters();
             if (this.level_site_parameters == null) {

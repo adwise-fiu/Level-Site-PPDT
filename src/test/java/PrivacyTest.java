@@ -47,7 +47,7 @@ public final class PrivacyTest {
 	}
 
 	@Test
-	public  void test_all() throws Exception {
+	public void test_all() throws Exception {
 		String answer_path = new File(data_directory, "answers.csv").toString();
 		// Parse CSV file with various tests
 		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
@@ -62,12 +62,14 @@ public final class PrivacyTest {
 				System.out.println(full_data_set_path);
 				String classification = test_case(full_data_set_path, full_feature_path, levels, key_size, precision,
 		        		level_site_ips, level_site_ports_string);
-		        assertEquals(expected_classification, classification);
+				System.out.println(expected_classification + " =!= " + classification);
+				assertEquals(expected_classification, classification);
 		    }
 		}
 	}
 
-	public static String test_case(String training_data, String features_file, int levels, int key_size, int precision,
+	public static String test_case(String training_data, String features_file, int levels,
+								   int key_size, int precision,
 			String [] level_site_ips, String [] level_site_ports_string)
 			throws InterruptedException, NoSuchPaddingException, NoSuchAlgorithmException {
 		
@@ -84,17 +86,17 @@ public final class PrivacyTest {
     	}
 
 		// Create the server
-		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports);
+		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports, precision);
 		Thread server = new Thread(cloud);
 		server.start();
-		server.join();
 
 		// Create client
-    	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision);
+    	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision, true);
     	Thread client = new Thread(evaluate);
 		client.start();
 
 		// Programmatically wait until classification is done.
+		server.join();
 		client.join();
 
     	// Close the Level Sites

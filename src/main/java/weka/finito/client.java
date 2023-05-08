@@ -2,13 +2,17 @@ package weka.finito;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 import java.lang.System;
@@ -40,6 +44,12 @@ public final class client implements Runnable {
 	private String next_index = null;
 	private String iv = null;
 	private boolean classification_complete = false;
+	private String [] classes;
+
+	private DGKPublicKey dgk_public_key;
+	private PaillierPublicKey paillier_public_key;
+	private final HashMap<String, String> hashed_classification = new HashMap<>();
+	private boolean talk_to_server_site = true;
 
     //For k8s deployment.
     public static void main(String[] args) {
@@ -47,8 +57,6 @@ public final class client implements Runnable {
         int key_size = -1;
         int precision = -1;
         String level_site_string;
-		String data_directory;
-		String values;
         int port = -1;
 
         // Read in our environment variables.
@@ -80,41 +88,93 @@ public final class client implements Runnable {
             System.exit(1);
         }
 
-		if (args.length != 1) {
+		client test = null;
+		if (args.length == 1) {
+			test = new client(key_size, args[0], level_domains, port, precision, true);
+		}
+		else if (args.length == 2) {
+			test = new client(key_size, args[0], level_domains, port, precision, false);
+		}
+		else {
 			System.out.println("Missing Testing Data set as an argument parameter");
 			System.exit(1);
 		}
-		String full_values_path = args[0];
-		client test = new client(key_size, full_values_path, level_domains, port, precision);
+
+
 		test.run();
 
         System.exit(0);
     }
 
 	// For local host testing
-	public client(int key_size, String features_file, String [] level_site_ips, int [] level_site_ports, int precision) {
+	public client(int key_size, String features_file, String [] level_site_ips, int [] level_site_ports,
+				  int precision, boolean talk_to_server_site) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
 		this.precision = precision;
 		this.port = -1;
+		this.talk_to_server_site = talk_to_server_site;
 	}
 
-	public client(int key_size, String features_file, String [] level_site_ips, int port, int precision) {
+	public client(int key_size, String features_file, String [] level_site_ips, int port,
+				  int precision, boolean talk_to_server_site) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = null;
 		this.precision = precision;
 		this.port = port;
+		this.talk_to_server_site = talk_to_server_site;
 	}
 
+	public void generate_keys() {
+		// Generate Key Pairs
+		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
+		p.initialize(key_size, null);
+		dgk = p.generateKeyPair();
+
+		PaillierKeyPairGenerator pa = new PaillierKeyPairGenerator();
+		p.initialize(key_size, null);
+		paillier = pa.generateKeyPair();
+
+		dgk_public_key = (DGKPublicKey) dgk.getPublic();
+		paillier_public_key = (PaillierPublicKey) paillier.getPublic();
+	}
+
+	public static String hash(String text) throws NoSuchAlgorithmException {
+		MessageDigest digest = MessageDigest.getInstance("SHA-256");
+		byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
+		return Base64.getEncoder().encodeToString(hash);
+	}
+
+	// Used for set-up
+	private void communicate_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
+			throws IOException, ClassNotFoundException {
+		try (Socket server_site = new Socket("127.0.0.1", 10000)) {
+			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
+			ObjectInputStream from_server_site = new ObjectInputStream(server_site.getInputStream());
+
+			// Receive a message from the client to get their keys
+			to_server_site.writeObject(paillier);
+			to_server_site.writeObject(dgk);
+			to_server_site.flush();
+
+			// Get leaves from Server-site
+			Object o = from_server_site.readObject();
+			classes = (String []) o;
+		}
+	}
+
+	// Get Classification after Evaluation
 	public String getClassification() {
 		return this.classification;
 	}
 
-	public Hashtable<String, BigIntegers> read_features(String path,
+
+	// Evaluation
+	private Hashtable<String, BigIntegers> read_features(String path,
 														PaillierPublicKey paillier_public_key,
 														DGKPublicKey dgk_public_key,
 														int precision)
@@ -152,7 +212,8 @@ public final class client implements Runnable {
 		}
 	}
 
-	public void communicate_with_level_site(Socket level_site)
+	// Function used to Evaluate
+	private void communicate_with_level_site(Socket level_site)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
 		Object o;
@@ -211,6 +272,7 @@ public final class client implements Runnable {
 		if (classification_complete) {
 			if (o instanceof String) {
 				classification = (String) o;
+				classification = hashed_classification.get(classification);
 			}
 		}
 		else {
@@ -224,29 +286,37 @@ public final class client implements Runnable {
 		}
 	}
 
+	// Function used to Evaluate
 	public void run() {
-		// Generate Key Pairs
-		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
-		p.initialize(key_size, null);
-		dgk = p.generateKeyPair();
-		DGKPublicKey dgk_public_key = (DGKPublicKey) dgk.getPublic();
 
-		PaillierKeyPairGenerator pa = new PaillierKeyPairGenerator();
-		p.initialize(key_size, null);
-		paillier = pa.generateKeyPair();
-		PaillierPublicKey paillier_public_key = (PaillierPublicKey) paillier.getPublic();
-
-		// Read the Features
 		try {
+			// Don't regenerate keys if you are just using a different VALUES file
+			if (talk_to_server_site) {
+				generate_keys();
+			}
+
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
+
+			// Client needs to give server-site public key (to give to level-sites)
+			// Client needs to know all possible classes...
+			if (talk_to_server_site) {
+				// Don't send keys to server-site to ask for classes since now it is assumed level-sites are up
+				communicate_with_server_site(paillier_public_key, dgk_public_key);
+				for (String aClass : classes) {
+					hashed_classification.put(hash(aClass), aClass);
+				}
+				// Make sure level-sites got everything...
+				Thread.sleep(2000);
+			}
 		}
-		catch (IOException | HomomorphicException e1) {
-			e1.printStackTrace();
+		catch (Exception e) {
+			e.printStackTrace();
 		}
 
 		int connection_port;
 		long start_time = System.nanoTime();
 		try {
+
 			for (int i = 0; i < level_site_ips.length; i++) {
 				if (classification_complete) {
 					break;

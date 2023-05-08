@@ -8,16 +8,21 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
 
+import security.DGK.DGKPublicKey;
+import security.paillier.PaillierPublicKey;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
-import weka.core.Attribute;
 import weka.core.Instances;
 
 import weka.core.SerializationHelper;
@@ -28,14 +33,19 @@ import weka.finito.structs.NodeInfo;
 public final class server_site implements Runnable {
 
 	private static final String os = System.getProperty("os.name").toLowerCase();
-
 	private final String training_data;
 	private final String [] level_site_ips;
 	private int [] level_site_ports = null;
 	private int port = -1;
-
-    public static void main(String[] args) {
-        int port = -1;
+	private PaillierPublicKey paillier_public;
+	private DGKPublicKey dgk_public;
+	private final int precision;
+	private ClassifierTree ppdt;
+	private final List<String> leaves = new ArrayList<>();
+	private final List<level_order_site> all_level_sites = new ArrayList<>();
+    public static void main(String[] args) throws Exception {
+        int port = 0;
+		int precision = 0;
         String training_data;
 
 		// Get data for training.
@@ -45,28 +55,7 @@ public final class server_site implements Runnable {
 		}
 		training_data = args[0];
 		List<level_order_site> all_level_sites = new ArrayList<>();
-		ClassifierTree ppdt;
-		try {
-			ppdt = train_decision_tree(training_data);
-			get_level_site_data(ppdt, all_level_sites);
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-
-		Attribute classes = ppdt.getTrainingData().classAttribute();
-		List<Object> classes_values = Collections.list(classes.enumerateValues());
-		String [] class_array = new String [classes_values.size()];
-
-		for (int i = 0; i < class_array.length; i++) {
-			class_array[i] = classes_values.get(i).toString();
-		}
-
-		// TODO: Send classes to client..., Maybe send map of Hash...
-
-		for (level_order_site current_level_site : all_level_sites) {
-			System.out.println(current_level_site.toString());
-		}
+		ClassifierTree ppdt = train_decision_tree(training_data);
 
         try {
             port = Integer.parseInt(System.getenv("PORT_NUM"));
@@ -74,6 +63,13 @@ public final class server_site implements Runnable {
 			System.out.println("No level site port provided");
             System.exit(1);
         }
+
+		try {
+			precision = Integer.parseInt(System.getenv("PRECISION"));
+		} catch (NumberFormatException e) {
+			System.out.println("Precision is not defined.");
+			System.exit(1);
+		}
         
         // Pass data to level sites.
         String level_domains_str = System.getenv("LEVEL_SITE_DOMAINS");
@@ -85,36 +81,82 @@ public final class server_site implements Runnable {
 
         // Create and run the server.
         System.out.println("Server Initialized and started running");
-        server_site server = new server_site(training_data, level_domains, port);
-        server.run();
+        server_site server = new server_site(training_data, level_domains, port, precision);
+		// Talk with Client first...
+		server.client_communication();
+		// Train
+		server.get_level_site_data(ppdt, all_level_sites);
+		for (level_order_site current_level_site : all_level_sites) {
+			System.out.println(current_level_site.toString());
+		}
+		server.run();
     }
 
 	// For local host testing
-	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports) {
+	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports, int precision) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
+		this.precision = precision;
+
+		try {
+			ppdt = train_decision_tree(this.training_data);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	// For Cloud environment?
-	public server_site(String training_data, String [] level_site_domains, int port) {
+	// For Cloud environment
+	public server_site(String training_data, String [] level_site_domains, int port, int precision) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
 		this.port = port;
+		this.precision = precision;
 	}
 
-	public static boolean isUnix(String os) {
-		return (os.contains("nix") || os.contains("nux") || os.contains("aix"));
+	private static String hash(String text) throws NoSuchAlgorithmException {
+		MessageDigest digest = MessageDigest.getInstance("SHA-256");
+		byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
+		return Base64.getEncoder().encodeToString(hash);
 	}
 
-	public static void printTree(ClassifierTree j48, String base_name) throws Exception {
+	private void client_communication() throws Exception {
+		ServerSocket serverSocket = new ServerSocket(10000);
+
+		try (Socket client_site = serverSocket.accept()) {
+			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
+			ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
+
+			// Receive a message from the client to get their keys
+			Object o = from_client_site.readObject();
+			this.paillier_public = (PaillierPublicKey) o;
+
+			o = from_client_site.readObject();
+			this.dgk_public = (DGKPublicKey) o;
+
+			// Train level-sites
+			get_level_site_data(ppdt, all_level_sites);
+
+			// Now I know the leaves to send back to the client
+			String [] leaf_array = leaves.toArray(new String[0]);
+			to_client_site.writeObject(leaf_array);
+		}
+		serverSocket.close();
+	}
+
+	private static boolean isUnix() {
+		return (server_site.os.contains("nix") || server_site.os.contains("nux") || server_site.os.contains("aix"));
+	}
+
+	private static void printTree(ClassifierTree j48, String base_name)
+			throws Exception {
 		File output_dot_file = new File("output", base_name + ".dot");
 		File output_image_file = new File("output", base_name + ".png");
 
 		try (PrintWriter out = new PrintWriter(output_dot_file)) {
 			out.println(j48.graph());
 		}
-		if (isUnix(os)) {
+		if (isUnix()) {
 			String[] c = {"dot", "-Tpng", output_dot_file.toString(), "-o", output_image_file.toString()};
 			try {
 				Process p = Runtime.getRuntime().exec(c);
@@ -132,7 +174,8 @@ public final class server_site implements Runnable {
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
 	// Build J48 as it uses C45?
 	// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
-	public static ClassifierTree train_decision_tree(String arff_file) throws Exception {
+	private static ClassifierTree train_decision_tree(String arff_file)
+			throws Exception {
 		File training_file = new File(arff_file);
 		String base_name = training_file.getName().split("\\.")[0];
 		File output_model_file = new File("output", base_name + ".model");
@@ -177,7 +220,8 @@ public final class server_site implements Runnable {
 	}
 
 	// Given a Plain-text Decision Tree, split the data up for each level site.
-	public static void get_level_site_data(ClassifierTree root, List<level_order_site> all_level_sites) throws Exception {
+	private void get_level_site_data(ClassifierTree root, List<level_order_site> all_level_sites)
+			throws Exception {
 
 		if (root == null) {
 			return;
@@ -188,7 +232,7 @@ public final class server_site implements Runnable {
 		int level = 0;
 
 		while (!q.isEmpty()) {
-			level_order_site Level_Order_S = new level_order_site();
+			level_order_site Level_Order_S = new level_order_site(level, paillier_public, dgk_public);
 			int n = q.size();
 
 			while (n > 0) {
@@ -200,8 +244,8 @@ public final class server_site implements Runnable {
 				assert p != null;
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
-					// TODO: Set to hash of classification
-					node_info = new NodeInfo(true, variable);
+					leaves.add(variable);
+					node_info = new NodeInfo(true, hash(variable), 0);
 					Level_Order_S.append_data(node_info);
 				}
 				else {
@@ -276,39 +320,34 @@ public final class server_site implements Runnable {
 								threshold = Float.parseFloat(rightValueStr);
 							}
 						}
-
-						node_info = new NodeInfo(false, leftSide);
-						node_info.comparisonType = type;
-						//TODO: Encrypt Threshold
-						node_info.threshold = threshold;
+						node_info = new NodeInfo(false, leftSide, type);
+						node_info.encrypt(threshold, precision, paillier_public, dgk_public);
 						q.add(p.getSons()[i]);
 					}
 
 					assert node_info != null;
 					if (!node_info.is_leaf){
-
-						NodeInfo additionalNode = new NodeInfo(false, node_info.getVariableName());
-
+						NodeInfo additionalNode = null;
 						if (node_info.comparisonType == 1) {
-							additionalNode.comparisonType = 6;
+							additionalNode = new NodeInfo(false, node_info.getVariableName(), 6);
 						}
 						else if (node_info.comparisonType == 2) {
-							additionalNode.comparisonType = 5;
+							additionalNode = new NodeInfo(false, node_info.getVariableName(), 5);
 						}
 						else if (node_info.comparisonType == 3) {
-							additionalNode.comparisonType = 4;
+							additionalNode = new NodeInfo(false, node_info.getVariableName(), 4);
 						}
 						else if (node_info.comparisonType == 4) {
-							additionalNode.comparisonType = 3;
+							additionalNode = new NodeInfo(false, node_info.getVariableName(), 3);
 						}
 						else if (node_info.comparisonType == 5) {
-							additionalNode.comparisonType = 2;
+							additionalNode = new NodeInfo(false, node_info.getVariableName(), 2);
 						}
 						else if (node_info.comparisonType == 6) {
-							additionalNode.comparisonType = 1;
+							additionalNode = new NodeInfo(false, node_info.getVariableName(), 1);
 						}
-						additionalNode.threshold = node_info.threshold;
-						// TODO: Encrypt threshold
+						assert additionalNode != null;
+						additionalNode.encrypt(threshold, precision, paillier_public, dgk_public);
 						Level_Order_S.append_data(additionalNode);
 					}
 					Level_Order_S.append_data(node_info);
@@ -316,17 +355,15 @@ public final class server_site implements Runnable {
 				n--;
 			} // While n > 0 (nodes > 0)
 			all_level_sites.add(Level_Order_S);
-			Level_Order_S.set_level(level);
 			++level;
 		} // While Tree Not Empty
 	}
 
 	public void run() {
-		List<level_order_site> all_level_sites = new ArrayList<>();
-		ClassifierTree ppdt;
+		// Client sends Public Keys and expects the classes...
 		try {
-			ppdt = train_decision_tree(this.training_data);
-			get_level_site_data(ppdt, all_level_sites);
+			// Got Public Keys from Client, train level-sites
+			client_communication();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);

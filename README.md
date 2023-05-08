@@ -4,8 +4,8 @@ Implementation of the PPDT in the paper "Privacy Preserving Decision Trees in a 
 
 ## Libraries
 * crypto.jar library is from this [repository](https://github.com/AndrewQuijano/Homomorphic_Encryption)
-* weka.jar library is from [SourceForge](https://sourceforge.net/projects/weka/files/weka-3-9/3.9.5/), 
-download the ZIP file and import the weka.jar file**
+* weka.jar library is from [SourceForge](https://sourceforge.net/projects/weka/files/weka-3-9/3.9.5/),
+  download the ZIP file and import the weka.jar file**
 
 ** To be confirmed/tested again...
 
@@ -21,8 +21,8 @@ source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install gradle
 ```
 
-From the root of the repository, run the following command once to install docker.
-Reboot your machine, then re-run the command to install minikube.
+Run this command and all future commands from `the repository root`, run the following command once to install docker.
+**Reboot your machine, then re-run the command to install minikube.**
 ```bash
 bash setup.sh
 ```
@@ -36,25 +36,25 @@ bash setup.sh
       1. If you modify this, provide a comma separated string of all the ports for each level-site.
       2. Currently, it assumes ports 9000 - 9009 will be used.
    2. key_size corresponds to the key size of both DGK and Paillier keys.
-   3. precision controls how accurate to measure thresholds that are decimals. If a value was 100.1, then a precision of 
-   1 would set this value to 1001.
+   3. precision controls how accurate to measure thresholds that are decimals. If a value was 100.1, then a precision of
+      1 would set this value to 1001.
    4. The data would point to the directory with the `answer.csv` file and all the training and testing data.
-2. Currently, the [test file](src/test/java/PrivacyTest.java) will read from the `data/answers.csv` file. 
-   1. The first column is the training data set, 
-   it is required to be a .arff file to be compatible with Weka.
-   Alternatively, you can pass a .model file, which is a pre-trained Weka model. 
-   It is assumed this is a J48 classifier tree model.
+2. Currently, the [test file](src/test/java/PrivacyTest.java) will read from the `data/answers.csv` file.
+   1. The first column is the training data set,
+      it is required to be a .arff file to be compatible with Weka.
+      Alternatively, you can pass a .model file, which is a pre-trained Weka model.
+      It is assumed this is a J48 classifier tree model.
    2. The second column would the name of an input file that is tab separated with the feature name and value
-   3. The third column would be the expected classification given the input from the second column. 
-   If there is a mismatch, there will be an assert error.
+   3. The third column would be the expected classification given the input from the second column.
+      If there is a mismatch, there will be an assert error.
 
 To run the end-to-end test, run the following:
 ```bash
 sh gradlew build
 ```
 
-When the testing is done, you will have an output directory containing both the DT model and a text file on how to draw 
-your tree. Input the contents of the text file into the website [here](https://dreampuf.github.io/GraphvizOnline/) to get a 
+When the testing is done, you will have an output directory containing both the DT model and a text file on how to draw
+your tree. Input the contents of the text file into the website [here](https://dreampuf.github.io/GraphvizOnline/) to get a
 drawing of what the DT looks like.
 
 ### Running on a Kubernetes Cluster
@@ -86,7 +86,7 @@ or you can use the command:
     kubectl create secret generic ppdt-secrets --from-literal=aes-key=<SECRET_VALUE>
 
 #### Using Minikube
-You will need to start and configure minikube. When writing the paper, we provided 8 CPUs and 20 GB of memory, 
+You will need to start and configure minikube. When writing the paper, we provided 8 CPUs and 20 GB of memory,
 but feel free to modify the arguments that fit your computer's specs.
 
     minikube start --cpus 8 --memory 20000
@@ -124,8 +124,8 @@ ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)    
 ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
 ```
 
-It does take time for the level-site to be able to accept connections. Run the following command on a level-site, 
-and wait for an output in standard output saying `Ready to accept connections`. Set `<LEVEL-SITE-POD-NAME>` 
+It does take time for the level-site to be able to accept connections. Run the following command on a level-site,
+and wait for an output in standard output saying `Ready to accept connections`. Set `<LEVEL-SITE-POD-NAME>`
 to one of the pod names from the output, e. g. `ppdt-level-site-01-deploy-7dbf5b4cdd-wz6q7`.
 
     kubectl logs -f <LEVEL-SITE-POD-NAME>
@@ -135,7 +135,7 @@ start the server site. To do this, run the following command.
 
     kubectl apply -f k8/server_site
 
-To verify that the server site is finished running, use the following commands to confirm the server_site is _running_ 
+To verify that the server site is finished running, use the following commands to confirm the server_site is _running_
 and check the logs to confirm we see `Training Successful` for all the level-sites.
 
     kubectl get pods
@@ -159,7 +159,7 @@ using the logs command for each pod.
 ### Clean up
 
 If you want to re-build everything in the experiment, run the following
-    
+
     docker system prune --force
     minikube delete
 
