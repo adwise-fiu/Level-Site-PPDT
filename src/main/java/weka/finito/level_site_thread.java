@@ -214,7 +214,7 @@ public class level_site_thread implements Runnable {
 			long stop_time = System.nanoTime();
 			double run_time = (double) (stop_time - start_time);
 			run_time = run_time / 1000000;
-			System.out.printf("Total run-time took %f ms\n", run_time);
+			System.out.printf("Total Level-Site run-time took %f ms\n", run_time);
 		}
         catch (Exception e) {
 			e.printStackTrace();
