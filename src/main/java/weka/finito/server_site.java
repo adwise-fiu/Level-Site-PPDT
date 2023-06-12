@@ -82,7 +82,7 @@ public final class server_site implements Runnable {
         String[] level_domains = level_domains_str.split(",");
 
 		try {
-			server_port = Integer.parseInt(System.getenv("SERVER_NU<"));
+			server_port = Integer.parseInt(System.getenv("SERVER_NUM"));
 		} catch (NumberFormatException e) {
 			System.out.println("Server Port is not defined.");
 			System.exit(1);
