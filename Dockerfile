@@ -5,13 +5,11 @@ ENV PATH="/scripts:${PATH}"
 RUN mkdir /code
 RUN mkdir /scripts
 RUN mkdir /data
-RUN mkdir /keys
 
 ADD . /code/
 
 RUN mv /code/scripts/* /scripts/
-RUN mv /code/data/* /data/ 
-RUN mv /code/keys/* /keys/
+RUN mv /code/data/* /data/
 RUN chmod +x /scripts/*
 WORKDIR /code
 
