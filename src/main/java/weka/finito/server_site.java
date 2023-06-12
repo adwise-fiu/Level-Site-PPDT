@@ -122,6 +122,7 @@ public final class server_site implements Runnable {
 
 	private void client_communication() throws Exception {
 		ServerSocket serverSocket = new ServerSocket(10000);
+		System.out.println("Server-site ready to get public keys from client-site");
 
 		try (Socket client_site = serverSocket.accept()) {
 			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
@@ -134,12 +135,18 @@ public final class server_site implements Runnable {
 			o = from_client_site.readObject();
 			this.dgk_public = (DGKPublicKey) o;
 
+			System.out.println("Server-site collected keys from client");
+
 			// Train level-sites
 			get_level_site_data(ppdt, all_level_sites);
+
+			System.out.println("Server-site trained DT and created level-sites");
 
 			// Now I know the leaves to send back to the client
 			String [] leaf_array = leaves.toArray(new String[0]);
 			to_client_site.writeObject(leaf_array);
+
+			System.out.println("Server-site sent the leaves back to the client");
 		}
 		serverSocket.close();
 	}
