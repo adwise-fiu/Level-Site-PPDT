@@ -43,9 +43,11 @@ public final class server_site implements Runnable {
 	private ClassifierTree ppdt;
 	private final List<String> leaves = new ArrayList<>();
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
+	private final int server_port;
     public static void main(String[] args) throws Exception {
         int port = 0;
 		int precision = 0;
+		int server_port = 0;
         String training_data;
 
 		// Get data for training.
@@ -79,9 +81,16 @@ public final class server_site implements Runnable {
         }
         String[] level_domains = level_domains_str.split(",");
 
-        // Create and run the server.
+		try {
+			server_port = Integer.parseInt(System.getenv("SERVER_NU<"));
+		} catch (NumberFormatException e) {
+			System.out.println("Server Port is not defined.");
+			System.exit(1);
+		}
+
+		// Create and run the server.
         System.out.println("Server Initialized and started running");
-        server_site server = new server_site(training_data, level_domains, port, precision);
+        server_site server = new server_site(training_data, level_domains, port, precision, server_port);
 		// Talk with Client first...
 		server.client_communication();
 		// Train
@@ -93,11 +102,13 @@ public final class server_site implements Runnable {
     }
 
 	// For local host testing
-	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports, int precision) {
+	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
+					   int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
 		this.precision = precision;
+		this.server_port = server_port;
 
 		try {
 			ppdt = train_decision_tree(this.training_data);
@@ -107,11 +118,12 @@ public final class server_site implements Runnable {
 	}
 
 	// For Cloud environment
-	public server_site(String training_data, String [] level_site_domains, int port, int precision) {
+	public server_site(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
 		this.port = port;
 		this.precision = precision;
+		this.server_port = server_port;
 	}
 
 	private static String hash(String text) throws NoSuchAlgorithmException {
@@ -121,7 +133,7 @@ public final class server_site implements Runnable {
 	}
 
 	private void client_communication() throws Exception {
-		ServerSocket serverSocket = new ServerSocket(10000);
+		ServerSocket serverSocket = new ServerSocket(server_port);
 		System.out.println("Server-site ready to get public keys from client-site");
 
 		try (Socket client_site = serverSocket.accept()) {

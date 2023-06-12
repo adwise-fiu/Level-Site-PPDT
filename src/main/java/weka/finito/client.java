@@ -49,7 +49,9 @@ public final class client implements Runnable {
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
-	private boolean talk_to_server_site = true;
+	private final boolean talk_to_server_site;
+	private final String server_ip;
+	private final int server_port;
 
     //For k8s deployment.
     public static void main(String[] args) {
@@ -58,6 +60,8 @@ public final class client implements Runnable {
         int precision = -1;
         String level_site_string;
         int port = -1;
+		String server_ip;
+		int server_port = 0;
 
         // Read in our environment variables.
         level_site_string = System.getenv("LEVEL_SITE_DOMAINS");
@@ -88,12 +92,25 @@ public final class client implements Runnable {
             System.exit(1);
         }
 
+		try {
+			server_port = Integer.parseInt(System.getenv("SERVER_NUM"));
+		} catch (NumberFormatException e) {
+			System.out.println("No port provided for the Server Site.");
+			System.exit(1);
+		}
+
+		server_ip = System.getenv("SERVER");
+		if(server_ip == null || server_ip.isEmpty()) {
+			System.out.println("No server site domain provided.");
+			System.exit(1);
+		}
+
 		client test = null;
 		if (args.length == 1) {
-			test = new client(key_size, args[0], level_domains, port, precision, true);
+			test = new client(key_size, args[0], level_domains, port, precision, server_ip, server_port, true);
 		}
 		else if (args.length == 2) {
-			test = new client(key_size, args[0], level_domains, port, precision, false);
+			test = new client(key_size, args[0], level_domains, port, precision,server_ip, server_port,  false);
 		}
 		else {
 			System.out.println("Missing Testing Data set as an argument parameter");
@@ -108,24 +125,28 @@ public final class client implements Runnable {
 
 	// For local host testing
 	public client(int key_size, String features_file, String [] level_site_ips, int [] level_site_ports,
-				  int precision, boolean talk_to_server_site) {
+				  int precision, String server_ip, int server_port, boolean talk_to_server_site) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
 		this.precision = precision;
 		this.port = -1;
+		this.server_ip = server_ip;
+		this.server_port = server_port;
 		this.talk_to_server_site = talk_to_server_site;
 	}
 
 	public client(int key_size, String features_file, String [] level_site_ips, int port,
-				  int precision, boolean talk_to_server_site) {
+				  int precision, String server_ip, int server_port,  boolean talk_to_server_site) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = null;
 		this.precision = precision;
 		this.port = port;
+		this.server_ip = server_ip;
+		this.server_port = server_port;
 		this.talk_to_server_site = talk_to_server_site;
 	}
 
@@ -152,7 +173,7 @@ public final class client implements Runnable {
 	// Used for set-up
 	private void communicate_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
-		try (Socket server_site = new Socket("127.0.0.1", 10000)) {
+		try (Socket server_site = new Socket(server_ip, server_port)) {
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
 			ObjectInputStream from_server_site = new ObjectInputStream(server_site.getInputStream());
 

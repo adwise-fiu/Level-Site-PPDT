@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ppdt-server-site-service
+spec:
+  selector:
+    pod: ppdt-server-site-deploy
+  ports:
+  - protocol: TCP
+    port: 10000
+    targetPort: 10000
+  type: NodePort

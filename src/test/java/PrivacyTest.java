@@ -24,6 +24,8 @@ public final class PrivacyTest {
 	private int key_size;
 	private int precision;
 	private String data_directory;
+	private int server_port;
+	private String server_ip;
 
 	@Before
 	public void read_properties() throws IOException {
@@ -44,6 +46,8 @@ public final class PrivacyTest {
 		key_size = Integer.parseInt(config.getProperty("key_size"));
 		precision = Integer.parseInt(config.getProperty("precision"));
 		data_directory = config.getProperty("data_directory");
+		server_ip = config.getProperty("server-ip");
+		server_port = Integer.parseInt(config.getProperty("server-port"));
 	}
 
 	@Test
@@ -61,7 +65,7 @@ public final class PrivacyTest {
 				String full_data_set_path = new File(data_directory, data_set).toString();
 				System.out.println(full_data_set_path);
 				String classification = test_case(full_data_set_path, full_feature_path, levels, key_size, precision,
-		        		level_site_ips, level_site_ports_string);
+		        		level_site_ips, level_site_ports_string, server_ip, server_port);
 				System.out.println(expected_classification + " =!= " + classification);
 				assertEquals(expected_classification, classification);
 		    }
@@ -70,7 +74,7 @@ public final class PrivacyTest {
 
 	public static String test_case(String training_data, String features_file, int levels,
 								   int key_size, int precision,
-			String [] level_site_ips, String [] level_site_ports_string)
+			String [] level_site_ips, String [] level_site_ports_string, String server_ip, int server_port)
 			throws InterruptedException, NoSuchPaddingException, NoSuchAlgorithmException {
 		
 		int [] level_site_ports = new int[levels];
@@ -86,12 +90,13 @@ public final class PrivacyTest {
     	}
 
 		// Create the server
-		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports, precision);
+		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports, precision, server_port);
 		Thread server = new Thread(cloud);
 		server.start();
 
 		// Create client
-    	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision, true);
+    	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision,
+				server_ip, server_port, true);
     	Thread client = new Thread(evaluate);
 		client.start();
 
