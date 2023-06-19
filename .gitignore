@@ -1,3 +1,6 @@
+# No Binaries
+bin
+
 # No attaching Kubernetes secrets
 k8/level_sites/ppdt-secrets.yaml
 

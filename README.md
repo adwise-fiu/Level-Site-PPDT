@@ -156,12 +156,53 @@ using the logs command for each pod.
 
     kubectl logs <POD-NAME> 
 
-### Clean up
+#### Clean up
 
 If you want to re-build everything in the experiment, run the following
 
     docker system prune --force
     minikube delete
+
+### Running it on an EKS Cluster
+
+#### Installation
+1. First install [eksctl](https://eksctl.io/introduction/#installation)
+
+2. Create a user. Using Access analyzer, the customer inline policy needed is listed here:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+3. Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
+
+4. run `aws configure` to input the access id and credential.
+
+5. Run the following command to create the cluster
+```bash
+eksctl create cluster --config-file eks-config/config.yaml
+```
+
+5. Confirm the EKS cluster exists using the following
+```bash
+eksctl get clusters --region us-east-2
+```
+
+#### Running the experiment
+
+#### Clean up
+Destroy the EKS cluster using the following:
+```bash
+eksctl delete cluster --config-file eks-config/config.yaml --wait
+```
 
 ## Authors and Acknowledgement
 Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
