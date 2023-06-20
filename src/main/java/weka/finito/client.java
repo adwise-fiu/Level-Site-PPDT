@@ -1,10 +1,6 @@
 package weka.finito;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -117,7 +113,7 @@ public final class client implements Runnable {
 			System.out.println("Missing Testing Data set as an argument parameter");
 			System.exit(1);
 		}
-
+		test.read_keys();
 		test.run();
         System.exit(0);
     }
@@ -164,16 +160,23 @@ public final class client implements Runnable {
 		dgk_private_key = (DGKPrivateKey) dgk.getPrivate();
 		paillier_private_key = (PaillierPrivateKey) paillier.getPrivate();
 
-		dgk_public_key.writeKey("dgk.pub");
-		paillier_public_key.writeKey("paillier.pub");
-		dgk_private_key.writeKey("dgk");
-		paillier_private_key.writeKey("paillier");
+		//dgk_public_key.writeKey("dgk.pub");
+		//paillier_public_key.writeKey("paillier.pub");
+		//dgk_private_key.writeKey("dgk");
+		//paillier_private_key.writeKey("paillier");
 	}
 
 	public static String hash(String text) throws NoSuchAlgorithmException {
 		MessageDigest digest = MessageDigest.getInstance("SHA-256");
 		byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
 		return Base64.getEncoder().encodeToString(hash);
+	}
+
+	private void read_keys() {
+		dgk_public_key = DGKPublicKey.readKey("dgk.pub");
+		paillier_public_key = PaillierPublicKey.readKey("paillier.pub");
+		dgk_private_key = DGKPrivateKey.readKey("dgk");
+		paillier_private_key = PaillierPrivateKey.readKey("paillier");
 	}
 
 	// Used for set-up
@@ -321,13 +324,6 @@ public final class client implements Runnable {
 			// Don't regenerate keys if you are just using a different VALUES file
 			if (talk_to_server_site) {
 				generate_keys();
-			}
-			else {
-				// Read Keys on the pod...
-				dgk_public_key = DGKPublicKey.readKey("dgk.pub");
-				paillier_public_key = PaillierPublicKey.readKey("paillier.pub");
-				dgk_private_key = DGKPrivateKey.readKey("dgk");
-				paillier_private_key = PaillierPrivateKey.readKey("paillier");
 			}
 
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
