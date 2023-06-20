@@ -63,11 +63,10 @@ To make it easier for deploying on the cloud, we also provided a method to expor
 This would assume one execution rather than multiple executions.
 
 #### Set Training and testing files
-First, you need to edit the environment variables:
-1. In the `client_deployment.yaml` file, you need to change the value of `VALUES` to point to the input vector to evaluate
-2. In the `server_site_deployment.yaml` file, you need to change the value of the `TRAINING` to point to the file with the training data.
+First, you need to edit the job files:
+1. In the `client_testing_job.yaml` file, you need to change the first argument to point to the right VALUES file
+2. In the `server_site_training_job.yaml` file, you need to change the first argument to point to the right ARFF file
 
-*To be updated with converting to jobs*
 #### Creating a Kubernetes Secret
 You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites` folder.
 In the yaml file, you will need to replace <SECRET_VALUE> with a random string encoded in Base64.
@@ -127,7 +126,7 @@ ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)  
 ```
 
 It does take time for the level-site to be able to accept connections. Run the following command on a level-site,
-and wait for an output in standard output saying `Ready to accept connections`. Set `<LEVEL-SITE-POD-NAME>`
+and wait for an output in standard output saying `Ready to accept connections at: 9000`. Set `<LEVEL-SITE-POD-NAME>`
 to one of the pod names from the output, e. g. `ppdt-level-site-01-deploy-7dbf5b4cdd-wz6q7`.
 
     kubectl logs -f <LEVEL-SITE-POD-NAME>
@@ -137,27 +136,43 @@ start the server site. To do this, run the following command.
 
     kubectl apply -f k8/server_site
 
-To verify that the server site is finished running, use the following commands to confirm the server_site is _running_
-and check the logs to confirm we see `Training Successful` for all the level-sites.
+To verify that the server site is ready, use the following commands to confirm the server_site is _running_
+and check the logs to confirm we see `Server-site ready to get public keys from client-site` so we can run the client.
 
     kubectl get pods
     kubectl logs -f <SERVER-SITE-POD-NAME>
 
-After the server site has completed successfully we are ready to run the client.
+After the server site is ready we are ready to run the client.
 To run the client, simply run the following command.
 
     kubectl apply -f k8/client
 
-To get results, all you need to do is print the stdout of each of the level_sites
-and from the client. To do this, first get all the pods.
+To get the results, access the logs as described in the previous steps for both the client and level-sites.
 
-    kubectl get pods
+#### Re-running with different experiments
+- *Case 1: Re-run with different testing set*  
+First, you need to edit the `client_testing_job.yaml` file to point to both the new VALUES file.  
+Also, you should set the environment variable `TEST_AGAIN` to `1`.
+```bash
+# Delete job and re-run evaluation
+kubectl delete -f k8/client
+kubectl apply -f k8/client
+```
+- *Case 2: Train level-sites with new DT and new testing set*  
+First, you need to edit the `client_testing_job.yaml` file to point to a new VALUES file.  
+Also, you need to edit the `server_site_training_job.yaml` file to point to a new ARFF file.  
+Finally, make sure that `TEST_AGAIN` is NOT set to `1`.
+```bash
+# Delete job
+kubectl delete -f k8/server-site
+kubectl delete -f k8/client
 
-Then, for all level_sites and clients you can get the printout of stdout by
-using the logs command for each pod.
-
-    kubectl logs <POD-NAME> 
-
+# Re-apply the jobs
+kubectl apply -f k8/server-site
+# Wait a few seconds to for server-site to be ready to get the client key...
+# Or just check the server-site being ready as shown in the previous section
+kubectl apply -f k8/client
+```
 #### Clean up
 
 If you want to re-build everything in the experiment, run the following

@@ -400,8 +400,9 @@ public final class server_site implements Runnable {
 				else {
 					System.out.println("Training NOT Successful on port:" + port_to_connect);
 				}
-			} catch (IOException e2) {
-				e2.printStackTrace();
+			}
+			catch (IOException e) {
+				throw new RuntimeException(e);
 			}
 		}
 	}

@@ -6,13 +6,13 @@ spec:
   template:
     spec:
       subdomain: ppdt-server-site-service # has to match Service name
-      restartPolicy: Never
+      restartPolicy: OnFailure
 
       containers:
       - name: ppdt-server-site-deploy
         image: ppdt:experiment
         command: ["/bin/sh"]
-        args: ["-c", "gradle -g gradle_user_home run -PchooseRole=weka.finito.server_site --args /data/hypothyroid.arff"]
+        args: ["-c", "gradle run -PchooseRole=weka.finito.server_site --args /data/hypothyroid.arff"]
         env:
           - name: TREE_ROLE
             value: "SERVER"

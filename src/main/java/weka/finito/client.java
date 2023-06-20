@@ -19,10 +19,12 @@ import java.lang.System;
 
 import security.DGK.DGKKeyPairGenerator;
 import security.DGK.DGKOperations;
+import security.DGK.DGKPrivateKey;
 import security.DGK.DGKPublicKey;
 import security.misc.HomomorphicException;
 import security.paillier.PaillierCipher;
 import security.paillier.PaillierKeyPairGenerator;
+import security.paillier.PaillierPrivateKey;
 import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
 import weka.finito.structs.BigIntegers;
@@ -48,6 +50,8 @@ public final class client implements Runnable {
 
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
+	private DGKPrivateKey dgk_private_key;
+	private PaillierPrivateKey paillier_private_key;
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final boolean talk_to_server_site;
 	private final String server_ip;
@@ -58,8 +62,9 @@ public final class client implements Runnable {
         // Declare variables needed.
         int key_size = -1;
         int precision = -1;
+		int port = -1;
+		int test_again = -1;
         String level_site_string;
-        int port = -1;
 		String server_ip;
 
         // Read in our environment variables.
@@ -97,12 +102,16 @@ public final class client implements Runnable {
 			System.exit(1);
 		}
 
+		try {
+			test_again = Integer.parseInt(System.getenv("TEST_AGAIN"));
+		} catch (NumberFormatException e) {
+			System.out.println("No integer value for repeat provided.");
+			System.exit(1);
+		}
+
 		client test = null;
 		if (args.length == 1) {
-			test = new client(key_size, args[0], level_domains, port, precision, server_ip, port, true);
-		}
-		else if (args.length == 2) {
-			test = new client(key_size, args[0], level_domains, port, precision,server_ip, port,  false);
+			test = new client(key_size, args[0], level_domains, port, precision,server_ip, port, test_again == 1);
 		}
 		else {
 			System.out.println("Missing Testing Data set as an argument parameter");
@@ -147,11 +156,18 @@ public final class client implements Runnable {
 		dgk = p.generateKeyPair();
 
 		PaillierKeyPairGenerator pa = new PaillierKeyPairGenerator();
-		p.initialize(key_size, null);
+		pa.initialize(key_size, null);
 		paillier = pa.generateKeyPair();
 
 		dgk_public_key = (DGKPublicKey) dgk.getPublic();
 		paillier_public_key = (PaillierPublicKey) paillier.getPublic();
+		dgk_private_key = (DGKPrivateKey) dgk.getPrivate();
+		paillier_private_key = (PaillierPrivateKey) paillier.getPrivate();
+
+		dgk_public_key.writeKey("dgk.pub");
+		paillier_public_key.writeKey("paillier.pub");
+		dgk_private_key.writeKey("dgk");
+		paillier_private_key.writeKey("paillier");
 	}
 
 	public static String hash(String text) throws NoSuchAlgorithmException {
@@ -306,6 +322,13 @@ public final class client implements Runnable {
 			if (talk_to_server_site) {
 				generate_keys();
 			}
+			else {
+				// Read Keys on the pod...
+				dgk_public_key = DGKPublicKey.readKey("dgk.pub");
+				paillier_public_key = PaillierPublicKey.readKey("paillier.pub");
+				dgk_private_key = DGKPrivateKey.readKey("dgk");
+				paillier_private_key = PaillierPrivateKey.readKey("paillier");
+			}
 
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
 
@@ -320,9 +343,13 @@ public final class client implements Runnable {
 				// Make sure level-sites got everything...
 				Thread.sleep(2000);
 			}
+			else {
+				System.out.println("Not contacting server-site. Seems you just want to test on the" +
+						" same PPDT but different VALUES");
+			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 
 		int connection_port;
@@ -354,7 +381,7 @@ public final class client implements Runnable {
             System.out.printf("It took %f ms to classify\n", run_time);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 }
