@@ -49,7 +49,7 @@ public final class client implements Runnable {
 	private DGKPrivateKey dgk_private_key;
 	private PaillierPrivateKey paillier_private_key;
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
-	private final boolean talk_to_server_site;
+	private boolean talk_to_server_site;
 	private final String server_ip;
 	private final int server_port;
 
@@ -59,7 +59,6 @@ public final class client implements Runnable {
         int key_size = -1;
         int precision = -1;
 		int port = -1;
-		int test_again = -1;
         String level_site_string;
 		String server_ip;
 
@@ -98,29 +97,21 @@ public final class client implements Runnable {
 			System.exit(1);
 		}
 
-		try {
-			test_again = Integer.parseInt(System.getenv("TEST_AGAIN"));
-		} catch (NumberFormatException e) {
-			System.out.println("No integer value for repeat provided.");
-			System.exit(1);
-		}
-
 		client test = null;
 		if (args.length == 1) {
-			test = new client(key_size, args[0], level_domains, port, precision,server_ip, port, test_again == 1);
+			test = new client(key_size, args[0], level_domains, port, precision,server_ip, port);
 		}
 		else {
 			System.out.println("Missing Testing Data set as an argument parameter");
 			System.exit(1);
 		}
-		test.read_keys();
 		test.run();
         System.exit(0);
     }
 
-	// For local host testing
+	// For local host testing with GitHub Actions
 	public client(int key_size, String features_file, String [] level_site_ips, int [] level_site_ports,
-				  int precision, String server_ip, int server_port, boolean talk_to_server_site) {
+				  int precision, String server_ip, int server_port) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
@@ -129,11 +120,11 @@ public final class client implements Runnable {
 		this.port = -1;
 		this.server_ip = server_ip;
 		this.server_port = server_port;
-		this.talk_to_server_site = talk_to_server_site;
 	}
 
+	// Testing using Kubernetes
 	public client(int key_size, String features_file, String [] level_site_ips, int port,
-				  int precision, String server_ip, int server_port,  boolean talk_to_server_site) {
+				  int precision, String server_ip, int server_port) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
@@ -142,7 +133,6 @@ public final class client implements Runnable {
 		this.port = port;
 		this.server_ip = server_ip;
 		this.server_port = server_port;
-		this.talk_to_server_site = talk_to_server_site;
 	}
 
 	public void generate_keys() {
@@ -159,11 +149,6 @@ public final class client implements Runnable {
 		paillier_public_key = (PaillierPublicKey) paillier.getPublic();
 		dgk_private_key = (DGKPrivateKey) dgk.getPrivate();
 		paillier_private_key = (PaillierPrivateKey) paillier.getPrivate();
-
-		//dgk_public_key.writeKey("dgk.pub");
-		//paillier_public_key.writeKey("paillier.pub");
-		//dgk_private_key.writeKey("dgk");
-		//paillier_private_key.writeKey("paillier");
 	}
 
 	public static String hash(String text) throws NoSuchAlgorithmException {
@@ -172,11 +157,17 @@ public final class client implements Runnable {
 		return Base64.getEncoder().encodeToString(hash);
 	}
 
-	private void read_keys() {
-		dgk_public_key = DGKPublicKey.readKey("dgk.pub");
-		paillier_public_key = PaillierPublicKey.readKey("paillier.pub");
-		dgk_private_key = DGKPrivateKey.readKey("dgk");
-		paillier_private_key = PaillierPrivateKey.readKey("paillier");
+	private boolean need_keys() {
+		try {
+			dgk_public_key = DGKPublicKey.readKey("dgk.pub");
+			paillier_public_key = PaillierPublicKey.readKey("paillier.pub");
+			dgk_private_key = DGKPrivateKey.readKey("dgk");
+			paillier_private_key = PaillierPrivateKey.readKey("paillier");
+			return false;
+		}
+		catch (RuntimeException e) {
+			return true;
+		}
 	}
 
 	// Used for set-up
@@ -319,11 +310,16 @@ public final class client implements Runnable {
 
 	// Function used to Evaluate
 	public void run() {
+		this.talk_to_server_site = this.need_keys();
 
 		try {
 			// Don't regenerate keys if you are just using a different VALUES file
 			if (talk_to_server_site) {
+				System.out.println("Need to generate keys...");
 				generate_keys();
+			}
+			else {
+				System.out.println("I already read the keys from a file made from a previous run...");
 			}
 
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
@@ -379,5 +375,11 @@ public final class client implements Runnable {
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+
+		// At the end, write your keys...
+		dgk_public_key.writeKey("dgk.pub");
+		paillier_public_key.writeKey("paillier.pub");
+		dgk_private_key.writeKey("dgk");
+		paillier_private_key.writeKey("paillier");
 	}
 }

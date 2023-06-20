@@ -32,9 +32,6 @@ spec:
             - name: SERVER
               value: "ppdt-server-site-service"
 
-            - name: TEST_AGAIN
-              value: "0"
-
             - name: GRADLE_USER_HOME
               value: "gradle_user_home"
 

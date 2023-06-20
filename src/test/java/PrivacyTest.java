@@ -26,7 +26,7 @@ public final class PrivacyTest {
 	private String data_directory;
 	private int server_port;
 	private String server_ip;
-
+	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub"};
 	@Before
 	public void read_properties() throws IOException {
 		// Arguments:
@@ -96,7 +96,7 @@ public final class PrivacyTest {
 
 		// Create client
     	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision,
-				server_ip, server_port, true);
+				server_ip, server_port);
     	Thread client = new Thread(evaluate);
 		client.start();
 
@@ -108,7 +108,21 @@ public final class PrivacyTest {
 		for (level_site_server levelSite : level_sites) {
 			levelSite.stop();
 		}
+		// Be sure to delete any keys you made...
+		for (String file: delete_files) {
+			delete_file(file);
+		}
+
     	return evaluate.getClassification();
+	}
+
+	public static void delete_file(String file_name){
+		File myObj = new File(file_name);
+		if (myObj.delete()) {
+			System.out.println("Deleted the file: " + myObj.getName());
+		} else {
+			System.out.println("Failed to delete the file.");
+		}
 	}
 }
 

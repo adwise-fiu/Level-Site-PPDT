@@ -151,12 +151,9 @@ To get the results, access the logs as described in the previous steps for both 
 
 #### Re-running with different experiments
 - *Case 1: Re-run with different testing set*  
-First, you need to edit the `client_testing_job.yaml` file to point to both the new VALUES file.  
-Also, you should set the environment variable `TEST_AGAIN` to `1`.
+As the job created the pod, you would connect to the pod and run the modified gradle command with the other VALUES file.
 ```bash
-# Delete job and re-run evaluation
-kubectl delete -f k8/client
-kubectl apply -f k8/client
+kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE>"
 ```
 - *Case 2: Train level-sites with new DT and new testing set*  
 First, you need to edit the `client_testing_job.yaml` file to point to a new VALUES file.  
