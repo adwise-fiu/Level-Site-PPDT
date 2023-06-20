@@ -58,16 +58,16 @@ When the testing is done, you will have an output directory containing both the 
 your tree. Input the contents of the text file into the website [here](https://dreampuf.github.io/GraphvizOnline/) to get a
 drawing of what the DT looks like.
 
-### Running on a Kubernetes Cluster
+### Running on local host Kubernetes Cluster
 To make it easier for deploying on the cloud, we also provided a method to export our system into Kubernetes.
 This would assume one execution rather than multiple executions.
 
-#### Updating Environment Variables
-
+#### Set Training and testing files
 First, you need to edit the environment variables:
 1. In the `client_deployment.yaml` file, you need to change the value of `VALUES` to point to the input vector to evaluate
 2. In the `server_site_deployment.yaml` file, you need to change the value of the `TRAINING` to point to the file with the training data.
 
+*To be updated with converting to jobs*
 #### Creating a Kubernetes Secret
 You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites` folder.
 In the yaml file, you will need to replace <SECRET_VALUE> with a random string encoded in Base64.
@@ -93,6 +93,7 @@ but feel free to modify the arguments that fit your computer's specs.
     minikube start --cpus 8 --memory 20000
     eval $(minikube docker-env)
 
+#### Running Kubernetes Commands
 After starting minikube you will need to build the necessary Docker image using
 the docker build command. The resulting image needs to have a specific label,
 ppdt:experiment. You can build this image using the following command.
@@ -157,12 +158,86 @@ using the logs command for each pod.
 
     kubectl logs <POD-NAME> 
 
-### Clean up
+#### Clean up
 
 If you want to re-build everything in the experiment, run the following
 
     docker system prune --force
     minikube delete
+
+### Running it on an EKS Cluster
+
+#### Installation
+1. First install [eksctl](https://eksctl.io/introduction/#installation)
+
+2. Create a user. Using Access analyzer, the customer inline policy needed is listed here:
+* still undergoing more testing
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "cloudformation:*",
+                "ec2:RunInstances",
+                "iam:AttachRolePolicy",
+                "iam:PutRolePolicy",
+                "ec2:DescribeSecurityGroups",
+                "ec2:AssociateRouteTable",
+                "iam:DetachRolePolicy",
+                "ec2:CreateLaunchTemplate",
+                "ec2:DescribeInstanceTypeOfferings",
+                "iam:DeleteRolePolicy",
+                "iam:ListAttachedRolePolicies",
+                "ec2:DescribeVpcs",
+                "ec2:CreateRoute",
+                "iam:GetOpenIDConnectProvider",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeKeyPairs",
+                "iam:GetRolePolicy"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+3. Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
+
+4. run `aws configure` to input the access id and credential.
+
+5. Run the following command to create the cluster
+```bash
+eksctl create cluster --config-file eks-config/config.yaml
+```
+
+5. Confirm the EKS cluster exists using the following
+```bash
+eksctl get clusters --region us-east-2
+```
+
+#### Running the experiment
+1. Once you confirm the cluster is created, you need to register the cluster with kubectl:
+```bash
+aws eks update-kubeconfig --name ppdt --region us-east-2
+```
+
+2. Run the same commands as shown in [here](#running-kubernetes-commands)
+
+3. Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.
+
+#### Clean up
+Destroy the EKS cluster using the following:
+```bash
+eksctl delete cluster --config-file eks-config/config.yaml --wait
+docker system prune --force
+```
 
 ## Authors and Acknowledgement
 Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
