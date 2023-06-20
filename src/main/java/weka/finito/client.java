@@ -109,9 +109,7 @@ public final class client implements Runnable {
 			System.exit(1);
 		}
 
-
 		test.run();
-
         System.exit(0);
     }
 
