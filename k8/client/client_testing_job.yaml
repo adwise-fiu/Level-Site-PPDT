@@ -5,7 +5,7 @@ metadata:
 spec:
   template:
     spec:
-      subdomain: ppdt-server-site-service # has to match Service name
+      subdomain: ppdt-client-service # has to match Service name
       restartPolicy: OnFailure
 
       containers:
