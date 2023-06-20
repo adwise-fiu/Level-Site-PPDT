@@ -46,10 +46,9 @@ public final class server_site implements Runnable {
 
 	private final int server_port;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         int port = 0;
 		int precision = 0;
-        String training_data;
 
 		// Get data for training.
 		if (args.length != 1) {
