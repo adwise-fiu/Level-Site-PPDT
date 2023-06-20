@@ -5,6 +5,9 @@ metadata:
 spec:
   template:
     spec:
+      subdomain: ppdt-server-site-service # has to match Service name
+      restartPolicy: Never
+
       containers:
         - name: ppdt-client-deploy
           image: ppdt:experiment
@@ -29,5 +32,4 @@ spec:
             - name: SERVER
               value: "ppdt-server-site-service"
 
-      restartPolicy: Never
   backoffLimit: 4
