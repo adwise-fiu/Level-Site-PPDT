@@ -35,11 +35,15 @@ public final class NodeInfo implements Serializable, Comparable<NodeInfo> {
 	public void encrypt(float threshold, int precision,
 						PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key)
 			throws HomomorphicException {
-		BigInteger encrypted_thresh;
+
 		int intermediateInteger = (int) (threshold * Math.pow(10, precision));
-		encrypted_thresh = BigInteger.valueOf(intermediateInteger);
-		this.setPaillier(PaillierCipher.encrypt(encrypted_thresh, paillier_public_key));
-		this.setDGK(DGKOperations.encrypt(encrypted_thresh, dgk_public_key));
+		BigInteger temp_thresh = BigInteger.valueOf(intermediateInteger);
+		if (paillier_public_key != null) {
+			this.setPaillier(PaillierCipher.encrypt(temp_thresh, paillier_public_key));
+		}
+		if (dgk_public_key != null) {
+			this.setDGK(DGKOperations.encrypt(temp_thresh, dgk_public_key));
+		}
 	}
 
 	public void setDGK(BigInteger dgk){

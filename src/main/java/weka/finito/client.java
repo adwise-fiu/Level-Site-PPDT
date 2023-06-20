@@ -61,7 +61,6 @@ public final class client implements Runnable {
         String level_site_string;
         int port = -1;
 		String server_ip;
-		int server_port = 0;
 
         // Read in our environment variables.
         level_site_string = System.getenv("LEVEL_SITE_DOMAINS");
@@ -92,13 +91,6 @@ public final class client implements Runnable {
             System.exit(1);
         }
 
-		try {
-			server_port = Integer.parseInt(System.getenv("SERVER_NUM"));
-		} catch (NumberFormatException e) {
-			System.out.println("No port provided for the Server Site.");
-			System.exit(1);
-		}
-
 		server_ip = System.getenv("SERVER");
 		if(server_ip == null || server_ip.isEmpty()) {
 			System.out.println("No server site domain provided.");
@@ -107,10 +99,10 @@ public final class client implements Runnable {
 
 		client test = null;
 		if (args.length == 1) {
-			test = new client(key_size, args[0], level_domains, port, precision, server_ip, server_port, true);
+			test = new client(key_size, args[0], level_domains, port, precision, server_ip, port, true);
 		}
 		else if (args.length == 2) {
-			test = new client(key_size, args[0], level_domains, port, precision,server_ip, server_port,  false);
+			test = new client(key_size, args[0], level_domains, port, precision,server_ip, port,  false);
 		}
 		else {
 			System.out.println("Missing Testing Data set as an argument parameter");
@@ -173,6 +165,7 @@ public final class client implements Runnable {
 	// Used for set-up
 	private void communicate_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
+		System.out.println("Connecting to " + server_ip + ":" + server_port);
 		try (Socket server_site = new Socket(server_ip, server_port)) {
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
 			ObjectInputStream from_server_site = new ObjectInputStream(server_site.getInputStream());

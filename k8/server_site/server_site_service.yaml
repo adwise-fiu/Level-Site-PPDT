@@ -7,6 +7,6 @@ spec:
     pod: ppdt-server-site-deploy
   ports:
   - protocol: TCP
-    port: 10000
-    targetPort: 10000
+    port: 9000
+    targetPort: 9000
   type: NodePort

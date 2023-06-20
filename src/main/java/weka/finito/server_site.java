@@ -43,11 +43,12 @@ public final class server_site implements Runnable {
 	private ClassifierTree ppdt;
 	private final List<String> leaves = new ArrayList<>();
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
+
 	private final int server_port;
+
     public static void main(String[] args) throws Exception {
         int port = 0;
 		int precision = 0;
-		int server_port = 0;
         String training_data;
 
 		// Get data for training.
@@ -55,9 +56,6 @@ public final class server_site implements Runnable {
 			System.out.println("Missing Training Data set as an argument parameter");
 			System.exit(1);
 		}
-		training_data = args[0];
-		List<level_order_site> all_level_sites = new ArrayList<>();
-		ClassifierTree ppdt = train_decision_tree(training_data);
 
         try {
             port = Integer.parseInt(System.getenv("PORT_NUM"));
@@ -81,27 +79,13 @@ public final class server_site implements Runnable {
         }
         String[] level_domains = level_domains_str.split(",");
 
-		try {
-			server_port = Integer.parseInt(System.getenv("SERVER_NUM"));
-		} catch (NumberFormatException e) {
-			System.out.println("Server Port is not defined.");
-			System.exit(1);
-		}
-
 		// Create and run the server.
         System.out.println("Server Initialized and started running");
-        server_site server = new server_site(training_data, level_domains, port, precision, server_port);
-		// Talk with Client first...
-		server.client_communication();
-		// Train
-		server.get_level_site_data(ppdt, all_level_sites);
-		for (level_order_site current_level_site : all_level_sites) {
-			System.out.println(current_level_site.toString());
-		}
+        server_site server = new server_site(args[0], level_domains, port, precision, port);
 		server.run();
     }
 
-	// For local host testing
+	// For local host testing, (GitHub Actions CI, on PrivacyTest.java)
 	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
 					   int server_port) {
 		this.training_data = training_data;
@@ -109,15 +93,9 @@ public final class server_site implements Runnable {
 		this.level_site_ports = level_site_ports;
 		this.precision = precision;
 		this.server_port = server_port;
-
-		try {
-			ppdt = train_decision_tree(this.training_data);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
-	// For Cloud environment
+	// For Cloud environment, (Testing with Kubernetes)
 	public server_site(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
@@ -379,9 +357,11 @@ public final class server_site implements Runnable {
 	}
 
 	public void run() {
-		// Client sends Public Keys and expects the classes...
+
 		try {
-			// Got Public Keys from Client, train level-sites
+			// Train the DT
+			ppdt = train_decision_tree(this.training_data);
+			// Get Public Keys from Client AND train level-sites
 			client_communication();
 		}
 		catch (Exception e) {

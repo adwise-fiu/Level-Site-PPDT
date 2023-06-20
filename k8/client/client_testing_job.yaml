@@ -26,9 +26,6 @@ spec:
             - name: PPDT_KEY_SIZE
               value: "1024"
 
-            - name: SERVER_NUM
-              value: "10000"
-
             - name: SERVER
               value: "ppdt-server-site-service"
 
