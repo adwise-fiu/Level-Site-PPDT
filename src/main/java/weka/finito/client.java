@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -26,6 +27,7 @@ import security.socialistmillionaire.bob;
 import weka.finito.structs.BigIntegers;
 
 public final class client implements Runnable {
+	private final String classes_file = "classes.txt";
 	private final String features_file;
 	private final int key_size;
 	private final int precision;
@@ -165,11 +167,36 @@ public final class client implements Runnable {
 			paillier_private_key = PaillierPrivateKey.readKey("paillier");
 			dgk = new KeyPair(dgk_public_key, dgk_private_key);
 			paillier = new KeyPair(paillier_public_key, paillier_private_key);
+			classes = read_classes();
+			for (String aClass : classes) {
+				hashed_classification.put(hash(aClass), aClass);
+			}
 			return false;
 		}
 		catch (RuntimeException e) {
 			return true;
 		}
+		catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private String [] read_classes() {
+		// Don't forget to remember the classes of DT as well
+		StringBuilder content = new StringBuilder();
+		String line;
+
+		try (BufferedReader reader =
+					 new BufferedReader(new FileReader(classes_file))) {
+			while ((line = reader.readLine()) != null) {
+				content.append(line);
+				content.append(System.lineSeparator());
+			}
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return content.toString().split(System.lineSeparator());
 	}
 
 	// Used for set-up
@@ -383,5 +410,16 @@ public final class client implements Runnable {
 		paillier_public_key.writeKey("paillier.pub");
 		dgk_private_key.writeKey("dgk");
 		paillier_private_key.writeKey("paillier");
+
+		// Remember the classes as well too...
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(classes_file, true))) {
+			for (String aClass: classes) {
+				writer.write(aClass);
+				writer.write("\n");
+			}
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

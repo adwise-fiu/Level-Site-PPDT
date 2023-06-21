@@ -26,7 +26,7 @@ public final class PrivacyTest {
 	private String data_directory;
 	private int server_port;
 	private String server_ip;
-	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub"};
+	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub", "classes.txt"};
 	@Before
 	public void read_properties() throws IOException {
 		// Arguments:
