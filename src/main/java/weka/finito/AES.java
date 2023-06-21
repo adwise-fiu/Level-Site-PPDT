@@ -10,7 +10,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -30,9 +29,9 @@ public final class AES {
 	private byte [] iv_bytes = new byte[16];
 	private IvParameterSpec ivspec = null;  
 	private String iv_string = null;
-	
-	// TODO: Kubernetes, secret salt and password?
-	public AES(String password) {
+	private final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
+	public AES(String password) throws NoSuchPaddingException, NoSuchAlgorithmException {
 		try {
 			getKeyFromPassword(password);
 		}
@@ -41,7 +40,7 @@ public final class AES {
 		}
 	}
 
-	public AES(String password, int iterations, int key_length) {
+	public AES(String password, int iterations, int key_length) throws NoSuchPaddingException, NoSuchAlgorithmException {
 		this(password);
 		this.iterations = iterations;
 		this.key_length = key_length;
@@ -60,8 +59,8 @@ public final class AES {
 	
 	public String encrypt(String strToEncrypt)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, 
-			IllegalBlockSizeException, BadPaddingException, InvalidKeyException, 
-			UnsupportedEncodingException, InvalidAlgorithmParameterException {
+			IllegalBlockSizeException, BadPaddingException, InvalidKeyException,
+			InvalidAlgorithmParameterException {
 		
 		// Generate new IV
 		random.nextBytes(iv_bytes);
@@ -69,7 +68,6 @@ public final class AES {
 		iv_string = Base64.getEncoder().encodeToString(iv_bytes);
 		
 		// Run Encryption
-	    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");  
 	    cipher.init(Cipher.ENCRYPT_MODE, this.key, ivspec);
 		byte [] output = cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8));
 		return Base64.getEncoder().encodeToString(output);
@@ -84,7 +82,6 @@ public final class AES {
 		ivspec = new IvParameterSpec(iv_bytes);
 		
 		// Decrypt the value
-		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");  
 	    cipher.init(Cipher.DECRYPT_MODE, this.key, ivspec);
 		byte [] output = cipher.doFinal(Base64.getDecoder().decode(strToDecrypt));
 		return new String(output);

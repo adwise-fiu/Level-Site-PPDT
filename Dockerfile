@@ -9,7 +9,7 @@ RUN mkdir /data
 ADD . /code/
 
 RUN mv /code/scripts/* /scripts/
-RUN mv /code/data/* /data/ 
+RUN mv /code/data/* /data/
 RUN chmod +x /scripts/*
 WORKDIR /code
 

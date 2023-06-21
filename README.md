@@ -1,5 +1,6 @@
 # MPC-PPDT
 [![Build Gradle project](https://github.com/AndrewQuijano/MPC-PPDT/actions/workflows/build-gradle-project.yml/badge.svg)](https://github.com/AndrewQuijano/MPC-PPDT/actions/workflows/build-gradle-project.yml)  
+[![codecov](https://codecov.io/gh/AndrewQuijano/MPC-PPDT/branch/main/graph/badge.svg?token=eEtEvBZYu9)](https://codecov.io/gh/AndrewQuijano/MPC-PPDT)  
 Implementation of the PPDT in the paper "Privacy Preserving Decision Trees in a Multi-Party Setting: a Level-Based Approach"
 
 ## Libraries
@@ -61,12 +62,9 @@ drawing of what the DT looks like.
 To make it easier for deploying on the cloud, we also provided a method to export our system into Kubernetes.
 This would assume one execution rather than multiple executions.
 
-#### Set Training and testing files
-First, you need to edit the environment variables:
-1. In the `client_deployment.yaml` file, you need to change the value of `VALUES` to point to the input vector to evaluate
-2. In the `server_site_deployment.yaml` file, you need to change the value of the `TRAINING` to point to the file with the training data.
+#### Set Training data set
+In the `server_site_training_job.yaml` file, you need to change the first argument to point to the right ARFF file.
 
-*To be updated with converting to jobs*
 #### Creating a Kubernetes Secret
 You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites` folder.
 In the yaml file, you will need to replace <SECRET_VALUE> with a random string encoded in Base64.
@@ -126,7 +124,7 @@ ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)  
 ```
 
 It does take time for the level-site to be able to accept connections. Run the following command on a level-site,
-and wait for an output in standard output saying `Ready to accept connections`. Set `<LEVEL-SITE-POD-NAME>`
+and wait for an output in standard output saying `Ready to accept connections at: 9000`. Set `<LEVEL-SITE-POD-NAME>`
 to one of the pod names from the output, e. g. `ppdt-level-site-01-deploy-7dbf5b4cdd-wz6q7`.
 
     kubectl logs -f <LEVEL-SITE-POD-NAME>
@@ -136,27 +134,42 @@ start the server site. To do this, run the following command.
 
     kubectl apply -f k8/server_site
 
-To verify that the server site is finished running, use the following commands to confirm the server_site is _running_
-and check the logs to confirm we see `Training Successful` for all the level-sites.
+To verify that the server site is ready, use the following commands to confirm the server_site is _running_
+and check the logs to confirm we see `Server-site ready to get public keys from client-site` so we can run the client.
 
     kubectl get pods
     kubectl logs -f <SERVER-SITE-POD-NAME>
 
-After the server site has completed successfully we are ready to run the client.
+After the server site is ready we are ready to run the client.
 To run the client, simply run the following command.
+To run a classification, you need to pass a command to the client too.
 
     kubectl apply -f k8/client
+    kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 
-To get results, all you need to do is print the stdout of each of the level_sites
-and from the client. To do this, first get all the pods.
 
-    kubectl get pods
+To get the results, access the logs as described in the previous steps for both the client and level-sites.
 
-Then, for all level_sites and clients you can get the printout of stdout by
-using the logs command for each pod.
+#### Re-running with different experiments
+- *Case 1: Re-run with different testing set*  
+As the job created the pod, you would connect to the pod and run the modified gradle command with the other VALUES file.
+```bash
+    kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE>"
+```
+- *Case 2: Train level-sites with new DT and new testing set*  
+You need to edit the `server_site_training_job.yaml` file to point to a new ARFF file.
+```bash
+# Delete job
+kubectl delete -f k8/server-site
+kubectl delete -f k8/client
 
-    kubectl logs <POD-NAME> 
-
+# Re-apply the jobs
+kubectl apply -f k8/server-site
+# Wait a few seconds to for server-site to be ready to get the client key...
+# Or just check the server-site being ready as shown in the previous section
+kubectl apply -f k8/client
+kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+```
 #### Clean up
 
 If you want to re-build everything in the experiment, run the following
@@ -167,9 +180,9 @@ If you want to re-build everything in the experiment, run the following
 ### Running it on an EKS Cluster
 
 #### Installation
-1. First install [eksctl](https://eksctl.io/introduction/#installation)
+- First install [eksctl](https://eksctl.io/introduction/#installation)
 
-2. Create a user. Using Access analyzer, the customer inline policy needed is listed here:
+- Create a user. Using Access analyzer, the customer inline policy needed is listed here:
 * still undergoing more testing
 ```json
 {
@@ -206,30 +219,28 @@ If you want to re-build everything in the experiment, run the following
     ]
 }
 ```
+- Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
 
-3. Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
+- run `aws configure` to input the access id and credential.
 
-4. run `aws configure` to input the access id and credential.
-
-5. Run the following command to create the cluster
+- Run the following command to create the cluster
 ```bash
 eksctl create cluster --config-file eks-config/config.yaml
 ```
 
-5. Confirm the EKS cluster exists using the following
+- Confirm the EKS cluster exists using the following
 ```bash
 eksctl get clusters --region us-east-2
 ```
 
 #### Running the experiment
-1. Once you confirm the cluster is created, you need to register the cluster with kubectl:
+- Once you confirm the cluster is created, you need to register the cluster with kubectl:
 ```bash
 aws eks update-kubeconfig --name ppdt --region us-east-2
 ```
 
-2. Run the same commands as shown in [here](#running-kubernetes-commands)
-
-3. Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.
+- Run the same commands as shown in [here](#running-kubernetes-commands)
+- Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.
 
 #### Clean up
 Destroy the EKS cluster using the following:

@@ -4,7 +4,6 @@ metadata:
   name: ppdt-level-site-01-service
 spec:
   selector:
-    #app: assignment3-django-deploy
     pod: ppdt-level-site-01-deploy
   ports:
   - protocol: TCP

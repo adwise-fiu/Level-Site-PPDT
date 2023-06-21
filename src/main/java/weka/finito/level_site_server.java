@@ -2,12 +2,13 @@ package weka.finito;
 
 import weka.finito.structs.level_order_site;
 
+import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-//For k8s implementation
 import java.lang.System;
+import java.security.NoSuchAlgorithmException;
 
 public class level_site_server implements Runnable {
 
@@ -19,9 +20,8 @@ public class level_site_server implements Runnable {
     protected int precision;
 
     protected AES crypto;
-    private final boolean time_methods;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException {
         int our_port = 0;
         int our_precision = 0;
         String AES_Pass = System.getenv("AES_PASS");
@@ -42,7 +42,7 @@ public class level_site_server implements Runnable {
             System.out.println("AES_PASS is empty.");
             System.exit(1);
         }
-        level_site_server server = new level_site_server(our_port, our_precision, true, new AES(AES_Pass));
+        level_site_server server = new level_site_server(our_port, our_precision, new AES(AES_Pass));
         new Thread(server).start();
         System.out.println("LEVEL SITE SERVER STARTED!");
         while (true) {
@@ -55,10 +55,9 @@ public class level_site_server implements Runnable {
         server.stop();
     }
     
-    public level_site_server (int port, int precision, boolean time_methods, AES crypto) {
+    public level_site_server (int port, int precision, AES crypto) {
         this.serverPort = port;
         this.precision = precision;
-        this.time_methods = time_methods;
         this.crypto = crypto;
     }
 
@@ -68,6 +67,7 @@ public class level_site_server implements Runnable {
             this.runningThread = Thread.currentThread();
         }
         openServerSocket();
+
         while(! isStopped()) {
             Socket clientSocket;
             try {
@@ -82,20 +82,28 @@ public class level_site_server implements Runnable {
                 throw new RuntimeException("Error accepting client connection", e);
             }
             level_site_thread current_level_site_class = new level_site_thread(clientSocket,
-                    this.level_site_parameters, this.precision, this.crypto, this.time_methods);
+                    this.level_site_parameters, this.crypto);
+
+            level_order_site new_data = current_level_site_class.getLevelSiteParameters();
             if (this.level_site_parameters == null) {
-            	this.level_site_parameters = current_level_site_class.getLevelSiteParameters();
+            	this.level_site_parameters = new_data;
             }
             else {
-            	new Thread(current_level_site_class).start();
+                // Received new data from server-site, overwrite the existing copy if it is new
+                if (this.level_site_parameters.compareTo(new_data) != 0) {
+                    this.level_site_parameters = new_data;
+                    // System.out.println("New Training Data received...Overwriting now...");
+                }
+                else {
+                    // System.out.println("Client evaluation starting...");
+                    new Thread(current_level_site_class).start();
+                }
             }
         }
         System.out.println("Server Stopped on port: " + this.serverPort) ;
         long stop_time = System.nanoTime();
-        if(this.time_methods) {
-            double run_time = (double) (stop_time - start_time)/1000000;
-            System.out.printf("Time to start up: %f\n", run_time);
-        }
+        double run_time = (double) (stop_time - start_time)/1000000;
+        System.out.printf("Time to start up: %f\n", run_time);
     }
 
     private synchronized boolean isStopped() {

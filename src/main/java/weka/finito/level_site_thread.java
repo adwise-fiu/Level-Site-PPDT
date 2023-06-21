@@ -1,13 +1,8 @@
 package weka.finito;
 
-//For k8 implementation
 import java.lang.System;
 
-import security.DGK.DGKOperations;
-import security.DGK.DGKPublicKey;
 import security.misc.HomomorphicException;
-import security.paillier.PaillierCipher;
-import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.alice;
 import weka.finito.structs.BigIntegers;
 import weka.finito.structs.NodeInfo;
@@ -29,21 +24,14 @@ public class level_site_thread implements Runnable {
 
 	private level_order_site level_site_data = null;
 
-	private DGKPublicKey dgk_public_key;
-	private PaillierPublicKey paillier_public_key;
-
 	private alice Niu = null;
-	private final int precision;
+
 	private Hashtable<String, BigIntegers> encrypted_features;
 	private final AES crypto;
-    private boolean time_methods;
 
-	public level_site_thread(Socket client_socket, level_order_site level_site_data,
-							 int precision, AES crypto, boolean time_methods) {
+	public level_site_thread(Socket client_socket, level_order_site level_site_data, AES crypto) {
 		this.client_socket = client_socket;
-		this.precision = precision;
 		this.crypto = crypto;
-		this.time_methods = time_methods;
 
 		Object x;
 		try {
@@ -83,31 +71,24 @@ public class level_site_thread implements Runnable {
 	}
 
 	// a - from CLIENT, should already be encrypted...
-	private boolean compare(NodeInfo ld)
+	private boolean compare(NodeInfo ld, int comparisonType)
 			throws HomomorphicException, ClassNotFoundException, IOException {
 
         long start_time = System.nanoTime();
 
 		BigIntegers encrypted_values = this.encrypted_features.get(ld.variable_name);
 		BigInteger encrypted_client_value = null;
-
-		// Convert threshold into BigInteger. Note we know threshold is always a float.
-		BigInteger encrypted_thresh;
-		int intermediateInteger = (int) (ld.threshold * Math.pow(10, precision));
-		encrypted_thresh = BigInteger.valueOf(intermediateInteger);
-
-        //System.out.println("Comparison type: " + ld.comparisonType);
-        //System.out.println("plain-text value: " + encrypted_thresh);
+		BigInteger encrypted_thresh = null;
 
         // Encrypt the thresh-hold correctly
-        if ((ld.comparisonType == 1) || (ld.comparisonType == 2) || (ld.comparisonType == 4)) {
-			encrypted_thresh = PaillierCipher.encrypt(encrypted_thresh, this.paillier_public_key);
+        if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
+			encrypted_thresh = ld.getPaillier();
 			encrypted_client_value = encrypted_values.getIntegerValuePaillier();
             toClient.writeInt(0);
             Niu.setDGKMode(false);
         }
-        else if ((ld.comparisonType == 3) || (ld.comparisonType == 5)) {
-			encrypted_thresh = DGKOperations.encrypt(encrypted_thresh, this.dgk_public_key);
+        else if ((comparisonType == 3) || (comparisonType == 5)) {
+			encrypted_thresh = ld.getDGK();
 			encrypted_client_value = encrypted_values.getIntegerValueDGK();
             toClient.writeInt(1);
             Niu.setDGKMode(true);
@@ -119,8 +100,8 @@ public class level_site_thread implements Runnable {
 		double run_time = (double) (stop_time - start_time);
 		run_time = run_time / 1000000;
 		System.out.printf("Comparison took %f ms\n", run_time);
-		if (((ld.comparisonType == 1) && (ld.threshold == 0))
-				|| (ld.comparisonType == 4) || (ld.comparisonType == 5)) {
+		if (((comparisonType == 1) && (ld.threshold == 0))
+				|| (comparisonType == 4) || (comparisonType == 5)) {
 			return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
         }
         else {
@@ -138,10 +119,15 @@ public class level_site_thread implements Runnable {
 
 		try {
 			Niu = new alice(client_socket);
-			dgk_public_key = Niu.getDGKPublicKey();
-			paillier_public_key = Niu.getPaillierPublicKey();
+			if (this.level_site_data == null) {
+				toClient.writeInt(-2);
+				closeClientConnection();
+				return;
+			}
 
 			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
+			Niu.setDGKPublicKey(this.level_site_data.dgk_public_key);
+			Niu.setPaillierPublicKey(this.level_site_data.paillier_public_key);
 
 			get_previous_index = fromClient.readBoolean();
 			if (get_previous_index) {
@@ -154,12 +140,6 @@ public class level_site_thread implements Runnable {
 					iv = (String) o;
 				}
 				previous_index = crypto.decrypt(previous_index, iv);
-			}
-
-			if (this.level_site_data == null) {
-				toClient.writeInt(-2);
-				closeClientConnection();
-				return;
 			}
 
 			// Level Data is the Node Data...
@@ -189,20 +169,17 @@ public class level_site_thread implements Runnable {
 				else {
 					if ((n==2 * this.level_site_data.get_current_index() || n == 2 * this.level_site_data.get_current_index() + 1)) {
 						if (ls.comparisonType == 6) {
-							ls.comparisonType = 3;
-							boolean firstInequalityHolds = compare(ls);
+							boolean firstInequalityHolds = compare(ls, 3);
 							if (firstInequalityHolds) {
 								inequalityHolds = true;
 							} else {
-								ls.comparisonType = 5;
-								boolean secondInequalityHolds = compare(ls);
+								boolean secondInequalityHolds = compare(ls, 5);
 								if (secondInequalityHolds) {
 									inequalityHolds = true;
 								}
 							}
-							ls.comparisonType = 6;
 						} else {
-							inequalityHolds = compare(ls);
+							inequalityHolds = compare(ls, ls.comparisonType);
 						}
 
 						if (inequalityHolds) {
@@ -225,7 +202,8 @@ public class level_site_thread implements Runnable {
 				// Tell the client the value
 				toClient.writeBoolean(true);
 				toClient.writeObject(ls.getVariableName());
-			} else {
+			}
+			else {
 				toClient.writeBoolean(false);
 				// encrypt with AES, send to client which will send to next level-site
 				encrypted_next_index = crypto.encrypt(String.valueOf(this.level_site_data.get_next_index()));

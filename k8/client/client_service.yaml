@@ -4,10 +4,9 @@ metadata:
   name: ppdt-client-service
 spec:
   selector:
-    #app: assignment3-django-deploy
     pod: ppdt-client-deploy
   ports:
-  - protocol: TCP
-    port: 9000
-    targetPort: 9000
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
   type: NodePort
