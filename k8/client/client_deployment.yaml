@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        pod: ppdt-level-site-01-deploy
+        pod: ppdt-client-deploy
     spec:
       containers:
         - name: ppdt-client-deploy
