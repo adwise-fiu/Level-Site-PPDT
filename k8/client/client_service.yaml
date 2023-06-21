@@ -3,10 +3,10 @@ apiVersion: v1
 metadata:
   name: ppdt-client-service
 spec:
-  clusterIP: None # clusterIP must be None to create a headless service
   selector:
-    job-name: ppdt-client-deploy # must match Job name
+    pod: ppdt-client-deploy
   ports:
     - protocol: TCP
       port: 9000
       targetPort: 9000
+  type: NodePort

@@ -18,6 +18,7 @@ elif [[ $ROLE == "LEVEL_SITE" ]]; then
 elif [[ $ROLE == "CLIENT" ]]; then
     echo "Role: client"
     # gradle -g gradle_user_home run -PchooseRole=weka.finito.client
+    while :; do sleep 5 ; done
 else
     echo "Sorry, this is not a valid MPC-PPDT role. Please try again."
     exit

@@ -62,10 +62,8 @@ drawing of what the DT looks like.
 To make it easier for deploying on the cloud, we also provided a method to export our system into Kubernetes.
 This would assume one execution rather than multiple executions.
 
-#### Set Training and testing files
-First, you need to edit the job files:
-1. In the `client_testing_job.yaml` file, you need to change the first argument to point to the right VALUES file
-2. In the `server_site_training_job.yaml` file, you need to change the first argument to point to the right ARFF file
+#### Set Training data set
+In the `server_site_training_job.yaml` file, you need to change the first argument to point to the right ARFF file.
 
 #### Creating a Kubernetes Secret
 You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites` folder.
@@ -144,8 +142,11 @@ and check the logs to confirm we see `Server-site ready to get public keys from 
 
 After the server site is ready we are ready to run the client.
 To run the client, simply run the following command.
+To run a classification, you need to pass a command to the client too.
 
     kubectl apply -f k8/client
+    kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+
 
 To get the results, access the logs as described in the previous steps for both the client and level-sites.
 
@@ -153,12 +154,10 @@ To get the results, access the logs as described in the previous steps for both 
 - *Case 1: Re-run with different testing set*  
 As the job created the pod, you would connect to the pod and run the modified gradle command with the other VALUES file.
 ```bash
-kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE>"
+    kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE>"
 ```
 - *Case 2: Train level-sites with new DT and new testing set*  
-First, you need to edit the `client_testing_job.yaml` file to point to a new VALUES file.  
-Also, you need to edit the `server_site_training_job.yaml` file to point to a new ARFF file.  
-Finally, make sure that `TEST_AGAIN` is NOT set to `1`.
+You need to edit the `server_site_training_job.yaml` file to point to a new ARFF file.
 ```bash
 # Delete job
 kubectl delete -f k8/server-site
@@ -169,6 +168,7 @@ kubectl apply -f k8/server-site
 # Wait a few seconds to for server-site to be ready to get the client key...
 # Or just check the server-site being ready as shown in the previous section
 kubectl apply -f k8/client
+kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 ```
 #### Clean up
 
@@ -180,9 +180,9 @@ If you want to re-build everything in the experiment, run the following
 ### Running it on an EKS Cluster
 
 #### Installation
-1. First install [eksctl](https://eksctl.io/introduction/#installation)
+- First install [eksctl](https://eksctl.io/introduction/#installation)
 
-2. Create a user. Using Access analyzer, the customer inline policy needed is listed here:
+- Create a user. Using Access analyzer, the customer inline policy needed is listed here:
 * still undergoing more testing
 ```json
 {
@@ -219,30 +219,28 @@ If you want to re-build everything in the experiment, run the following
     ]
 }
 ```
+- Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
 
-3. Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
+- run `aws configure` to input the access id and credential.
 
-4. run `aws configure` to input the access id and credential.
-
-5. Run the following command to create the cluster
+- Run the following command to create the cluster
 ```bash
 eksctl create cluster --config-file eks-config/config.yaml
 ```
 
-5. Confirm the EKS cluster exists using the following
+- Confirm the EKS cluster exists using the following
 ```bash
 eksctl get clusters --region us-east-2
 ```
 
 #### Running the experiment
-1. Once you confirm the cluster is created, you need to register the cluster with kubectl:
+- Once you confirm the cluster is created, you need to register the cluster with kubectl:
 ```bash
 aws eks update-kubeconfig --name ppdt --region us-east-2
 ```
 
-2. Run the same commands as shown in [here](#running-kubernetes-commands)
-
-3. Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.
+- Run the same commands as shown in [here](#running-kubernetes-commands)
+- Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.
 
 #### Clean up
 Destroy the EKS cluster using the following:
