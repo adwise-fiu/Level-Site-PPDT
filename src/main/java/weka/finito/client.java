@@ -163,6 +163,8 @@ public final class client implements Runnable {
 			paillier_public_key = PaillierPublicKey.readKey("paillier.pub");
 			dgk_private_key = DGKPrivateKey.readKey("dgk");
 			paillier_private_key = PaillierPrivateKey.readKey("paillier");
+			dgk = new KeyPair(dgk_public_key, dgk_private_key);
+			paillier = new KeyPair(paillier_public_key, paillier_private_key);
 			return false;
 		}
 		catch (RuntimeException e) {
