@@ -9,7 +9,7 @@ authors:
 - family-names: "Gallagher"
   given-names: "Kevin"
 - family-names: "Samaras"
-  given-names: "Nikolaous"
+  given-names: "Nikolaos"
 title: "Privacy Preserving Decision Trees in a Multi-Party Setting: a Level-Based Approach"
 version: 2.0.0
 doi: TBD
@@ -26,7 +26,7 @@ preferred-citation:
   - family-names: "Gallagher"
     given-names: "Kevin"
   - family-names: "Samaras"
-    given-names: "Nikolaous"
+    given-names: "Nikolaos"
   journal: "ACM CCS '23 Computer and Communications Security"
   month: 07
   start: 1 # First page number

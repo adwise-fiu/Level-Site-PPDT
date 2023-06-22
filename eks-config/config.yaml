@@ -5,10 +5,29 @@ metadata:
   name: ppdt
   region: us-east-2
   version: "1.27"
+
+# Managed Node Groups show up on AWS console
 managedNodeGroups:
-- name: primary
-  instanceType: m5.large
-  desiredCapacity: 12
-  minSize: 12
+- name: level-sites
+  instanceType: t2.large
+  labels: { role: level-site }
+  minSize: 10
   maxSize: 15
-  spot: true
+  desiredCapacity: 10
+  maxPodsPerNode: 1
+
+- name: client
+  instanceType: t2.large
+  labels: { role: client }
+  minSize: 1
+  maxSize: 1
+  desiredCapacity: 1
+  maxPodsPerNode: 1
+
+- name: server
+  instanceType: t2.large
+  labels: { role: server-site }
+  minSize: 1
+  maxSize: 1
+  desiredCapacity: 1
+  maxPodsPerNode: 1
