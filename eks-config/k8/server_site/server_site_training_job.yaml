@@ -10,7 +10,7 @@ spec:
 
       containers:
       - name: ppdt-server-site-deploy
-        image: ppdt:experiment
+        image: andrewquijano92/ppdt
         imagePullPolicy: IfNotPresent
         command: ["/bin/sh"]
         args: ["-c", "gradle run -PchooseRole=weka.finito.server_site --args /data/hypothyroid.arff"]

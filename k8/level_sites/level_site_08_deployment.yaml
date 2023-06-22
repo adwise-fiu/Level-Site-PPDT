@@ -17,6 +17,7 @@ spec:
       containers:
         - name: ppdt-level-site-08-deploy
           image: ppdt:experiment
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000
           env:

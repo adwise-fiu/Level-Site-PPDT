@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ppdt-level-site-04-service
+spec:
+  selector:
+    pod: ppdt-level-site-04-deploy
+  ports:
+  - protocol: TCP
+    port: 9000
+    targetPort: 9000
+  type: NodePort

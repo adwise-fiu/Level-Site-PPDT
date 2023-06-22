@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ppdt-level-site-09-deploy
+  name: ppdt-level-site-02-deploy
   labels:
-    app: ppdt-level-site-09-deploy
+    app: ppdt-level-site-02-deploy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      pod: ppdt-level-site-09-deploy
+      pod: ppdt-level-site-02-deploy
   template:
     metadata:
       labels:
-        pod: ppdt-level-site-09-deploy
+        pod: ppdt-level-site-02-deploy
     spec:
       containers:
-        - name: ppdt-level-site-09-deploy
-          image: ppdt:experiment
+        - name: ppdt-level-site-02-deploy
+          image: andrewquijano92/ppdt
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000
@@ -35,7 +35,7 @@ spec:
 
             - name: LEVEL_SITE_DOMAINS
               value: "ppdt-level-site-01-service,ppdt-level-site-02-service,ppdt-level-site-03-service,ppdt-level-site-04-service,ppdt-level-site-05-service,ppdt-level-site-06-service,ppdt-level-site-07-service,ppdt-level-site-08-service,ppdt-level-site-09-service,ppdt-level-site-10-service"
-
+            
             - name: TIME_METHODS
               value: "true"
 

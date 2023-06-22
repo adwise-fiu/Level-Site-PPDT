@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ppdt-level-site-09-deploy
+  name: ppdt-level-site-04-deploy
   labels:
-    app: ppdt-level-site-09-deploy
+    app: ppdt-level-site-04-deploy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      pod: ppdt-level-site-09-deploy
+      pod: ppdt-level-site-04-deploy
   template:
     metadata:
       labels:
-        pod: ppdt-level-site-09-deploy
+        pod: ppdt-level-site-04-deploy
     spec:
       containers:
-        - name: ppdt-level-site-09-deploy
-          image: ppdt:experiment
+        - name: ppdt-level-site-04-deploy
+          image: andrewquijano92/ppdt
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000
           env:
             - name: TREE_ROLE
-              value: "LEVEL_SITE" 
+              value: "LEVEL_SITE"
 
             - name: PPDT_DATA_DIR
               value: "/data/"
