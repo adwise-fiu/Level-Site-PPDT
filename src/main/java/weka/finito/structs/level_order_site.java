@@ -1,13 +1,9 @@
 package weka.finito.structs;
 
-import security.DGK.DGKOperations;
 import security.DGK.DGKPublicKey;
-import security.misc.HomomorphicException;
-import security.paillier.PaillierCipher;
 import security.paillier.PaillierPublicKey;
 
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,15 +1,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ppdt-server-site-deploy
+  name: ppdt-server-deploy
 spec:
   template:
     spec:
-      subdomain: ppdt-server-site-service # has to match Service name
+      subdomain: ppdt-server-service # has to match Service name
       restartPolicy: OnFailure
 
       containers:
-      - name: ppdt-server-site-deploy
+      - name: ppdt-server-deploy
         image: ppdt:experiment
         imagePullPolicy: IfNotPresent
         command: ["/bin/sh"]

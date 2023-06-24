@@ -32,12 +32,6 @@ public class level_site_server implements Runnable {
             System.out.println("Port is not defined.");
             System.exit(1);
         }
-        try {
-            our_precision = Integer.parseInt(System.getenv("PRECISION"));
-        } catch (NumberFormatException e) {
-            System.out.println("Precision is not defined.");
-            System.exit(1);
-        }
         if(AES_Pass == null || AES_Pass.isEmpty()) {
             System.out.println("AES_PASS is empty.");
             System.exit(1);

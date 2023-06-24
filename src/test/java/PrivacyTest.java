@@ -3,7 +3,7 @@ import org.junit.Test;
 import weka.finito.AES;
 import weka.finito.client;
 import weka.finito.level_site_server;
-import weka.finito.server_site;
+import weka.finito.server;
 
 import javax.crypto.NoSuchPaddingException;
 import java.io.BufferedReader;
@@ -90,7 +90,7 @@ public final class PrivacyTest {
     	}
 
 		// Create the server
-		server_site cloud = new server_site(training_data, level_site_ips, level_site_ports, precision, server_port);
+		server cloud = new server(training_data, level_site_ips, level_site_ports, precision, server_port);
 		Thread server = new Thread(cloud);
 		server.start();
 

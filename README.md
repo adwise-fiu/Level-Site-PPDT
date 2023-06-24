@@ -242,10 +242,10 @@ aws eks update-kubeconfig --name ppdt --region us-east-2
 - Run the same commands as shown below. It is similar to [the previous section](#running-kubernetes-commands), but we point to different yaml files since it is pulling the container image from dockerhub.
 ```bash
 # Make sure you aren't running these too early!
-kubectl apply -f eks-config/k8/level_sites 
-kubectl apply -f eks-config/k8/server_site
+kubectl apply -f eks-config/k8/level_sites
+kubectl apply -f eks-config/k8/server -l role=server
 
-kubectl apply -f eks-config/k8/client
+kubectl apply -f eks-config/k8/client -l role=client
 kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 ```
 - Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.

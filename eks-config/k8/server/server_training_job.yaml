@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ppdt-server-site-deploy
+  name: ppdt-server-deploy
 spec:
   template:
     spec:
@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
 
       containers:
-      - name: ppdt-server-site-deploy
+      - name: ppdt-server-deploy
         image: andrewquijano92/ppdt
         imagePullPolicy: IfNotPresent
         command: ["/bin/sh"]

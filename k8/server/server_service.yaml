@@ -1,11 +1,11 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: ppdt-server-site-service
+  name: ppdt-server-service
 spec:
   clusterIP: None # clusterIP must be None to create a headless service
   selector:
-    job-name: ppdt-server-site-deploy # must match Job name
+    job-name: ppdt-server-deploy # must match Job name
   ports:
     - protocol: TCP
       port: 9000

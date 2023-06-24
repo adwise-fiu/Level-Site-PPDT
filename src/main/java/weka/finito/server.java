@@ -30,7 +30,7 @@ import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
 
 
-public final class server_site implements Runnable {
+public final class server implements Runnable {
 
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	private final String training_data;
@@ -80,12 +80,12 @@ public final class server_site implements Runnable {
 
 		// Create and run the server.
         System.out.println("Server Initialized and started running");
-        server_site server = new server_site(args[0], level_domains, port, precision, port);
+        server server = new server(args[0], level_domains, port, precision, port);
 		server.run();
     }
 
 	// For local host testing, (GitHub Actions CI, on PrivacyTest.java)
-	public server_site(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
+	public server(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
 					   int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_ips;
@@ -95,7 +95,7 @@ public final class server_site implements Runnable {
 	}
 
 	// For Cloud environment, (Testing with Kubernetes)
-	public server_site(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
+	public server(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
 		this.port = port;
@@ -111,7 +111,7 @@ public final class server_site implements Runnable {
 
 	private void client_communication() throws Exception {
 		ServerSocket serverSocket = new ServerSocket(server_port);
-		System.out.println("Server-site ready to get public keys from client-site");
+		System.out.println("Server ready to get public keys from client");
 
 		try (Socket client_site = serverSocket.accept()) {
 			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
@@ -124,24 +124,24 @@ public final class server_site implements Runnable {
 			o = from_client_site.readObject();
 			this.dgk_public = (DGKPublicKey) o;
 
-			System.out.println("Server-site collected keys from client");
+			System.out.println("Server collected keys from client");
 
 			// Train level-sites
 			get_level_site_data(ppdt, all_level_sites);
 
-			System.out.println("Server-site trained DT and created level-sites");
+			System.out.println("Server trained DT and created level-sites");
 
 			// Now I know the leaves to send back to the client
 			String [] leaf_array = leaves.toArray(new String[0]);
 			to_client_site.writeObject(leaf_array);
 
-			System.out.println("Server-site sent the leaves back to the client");
+			System.out.println("Server sent the leaves back to the client");
 		}
 		serverSocket.close();
 	}
 
 	private static boolean isUnix() {
-		return (server_site.os.contains("nix") || server_site.os.contains("nux") || server_site.os.contains("aix"));
+		return (server.os.contains("nix") || server.os.contains("nux") || server.os.contains("aix"));
 	}
 
 	private static void printTree(ClassifierTree j48, String base_name)
