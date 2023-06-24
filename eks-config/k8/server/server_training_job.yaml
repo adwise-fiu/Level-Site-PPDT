@@ -13,7 +13,7 @@ spec:
         image: andrewquijano92/ppdt
         imagePullPolicy: IfNotPresent
         command: ["/bin/sh"]
-        args: ["-c", "gradle run -PchooseRole=weka.finito.server_site --args /data/hypothyroid.arff"]
+        args: ["-c", "gradle run -PchooseRole=weka.finito.server --args /data/hypothyroid.arff"]
         env:
           - name: TREE_ROLE
             value: "SERVER"
