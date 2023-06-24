@@ -5,13 +5,12 @@ metadata:
 spec:
   template:
     spec:
-      subdomain: ppdt-server-site-service # has to match Service name
+      subdomain: ppdt-server-service # has to match Service name
       restartPolicy: OnFailure
 
       containers:
       - name: ppdt-server-deploy
         image: andrewquijano92/ppdt
-        imagePullPolicy: IfNotPresent
         command: ["/bin/sh"]
         args: ["-c", "gradle run -PchooseRole=weka.finito.server --args /data/hypothyroid.arff"]
         env:
