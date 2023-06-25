@@ -126,7 +126,7 @@ and wait for an output in standard output saying `Ready to accept connections at
 After verifying that the level-sites are ready, the next step is to
 start the server site. To do this, run the following command.
 
-    kubectl apply -f k8/server_site
+    kubectl apply -f k8/server
 
 To verify that the server site is ready, use the following command to confirm the server_site is _running_
 and check the logs to confirm we see `Server ready to get public keys from client-site` so we can exit and run the client.
