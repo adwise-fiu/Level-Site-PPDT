@@ -91,12 +91,6 @@ but feel free to modify the arguments that fit your computer's specs.
     eval $(minikube docker-env)
 
 #### Running Kubernetes Commands
-After starting minikube you will need to build the necessary Docker image using
-the docker build command. The resulting image needs to have a specific label,
-ppdt:experiment. You can build this image using the following command.
-
-    docker build -t ppdt:experiment .
-
 The next step is to deploy the level sites. The level sites need to be deployed
 before any other portion of the system. This can be done by using the following
 command.
@@ -182,43 +176,8 @@ If you want to re-build everything in the experiment, run the following
 #### Installation
 - First install [eksctl](https://eksctl.io/introduction/#installation)
 
-- Create a user. Using Access analyzer, the customer inline policy needed is listed here:
-* still undergoing more testing
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "VisualEditor0",
-            "Effect": "Allow",
-            "Action": [
-                "iam:GetRole",
-                "ec2:AuthorizeSecurityGroupIngress",
-                "iam:CreateRole",
-                "iam:DeleteRole",
-                "cloudformation:*",
-                "ec2:RunInstances",
-                "iam:AttachRolePolicy",
-                "iam:PutRolePolicy",
-                "ec2:DescribeSecurityGroups",
-                "ec2:AssociateRouteTable",
-                "iam:DetachRolePolicy",
-                "ec2:CreateLaunchTemplate",
-                "ec2:DescribeInstanceTypeOfferings",
-                "iam:DeleteRolePolicy",
-                "iam:ListAttachedRolePolicies",
-                "ec2:DescribeVpcs",
-                "ec2:CreateRoute",
-                "iam:GetOpenIDConnectProvider",
-                "ec2:DescribeSubnets",
-                "ec2:DescribeKeyPairs",
-                "iam:GetRolePolicy"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
+- Create a user with sufficient permissions
+
 - Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
 
 - run `aws configure` to input the access id and credential.
@@ -243,10 +202,12 @@ aws eks update-kubeconfig --name ppdt --region us-east-2
 ```bash
 # Make sure you aren't running these too early!
 kubectl apply -f eks-config/k8/level_sites
-kubectl apply -f eks-config/k8/server -l role=server
+kubectl apply -f eks-config/k8/server
 
-kubectl apply -f eks-config/k8/client -l role=client
+kubectl apply -f eks-config/k8/client
 kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+
+kubectl exec ppdt-client-deploy-5795dcd946-bctkd -- bash -c "gradle run -PchooseRole=weka.finito.client --args /data/hypothyroid.values"
 ```
 - Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.
 

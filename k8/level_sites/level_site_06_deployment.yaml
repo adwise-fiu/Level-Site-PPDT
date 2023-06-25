@@ -4,6 +4,7 @@ metadata:
   name: ppdt-level-site-06-deploy
   labels:
     app: ppdt-level-site-06-deploy
+    role: level-site
 spec:
   replicas: 1
   selector:
@@ -16,8 +17,7 @@ spec:
     spec:
       containers:
         - name: ppdt-level-site-06-deploy
-          image: ppdt:experiment
-          imagePullPolicy: IfNotPresent
+          image: andrewquijano92/ppdt
           ports:
             - containerPort: 9000
           env:

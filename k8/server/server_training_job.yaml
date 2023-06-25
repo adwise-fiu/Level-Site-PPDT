@@ -2,6 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: ppdt-server-deploy
+  role: server
 spec:
   template:
     spec:
@@ -10,8 +11,7 @@ spec:
 
       containers:
       - name: ppdt-server-deploy
-        image: ppdt:experiment
-        imagePullPolicy: IfNotPresent
+        image: andrewquijano92/ppdt
         command: ["/bin/sh"]
         args: ["-c", "gradle run -PchooseRole=weka.finito.server --args /data/hypothyroid.arff"]
         env:

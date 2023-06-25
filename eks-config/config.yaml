@@ -6,14 +6,43 @@ metadata:
   region: us-east-2
   version: "1.27"
 
-# Managed Node Groups show up on AWS console
+# Node Groups show up on AWS console
 # Label is necessary so I can target where the pods go with kubectl apply
 # For best performance, I am isolating each level-site pod to its own node.
 managedNodeGroups:
-# Currently I have 10 level-sites
 - name: level-sites
-  instanceType: t2.large
-  labels: { role: level-site }
+  instanceType: t2.medium
+  # Create 10 EC2 Instances, 1 pod per instance
   minSize: 12
   maxSize: 15
   desiredCapacity: 12
+  maxPodsPerNode: 1
+
+  # Allow to communicate with other node groups.
+  # If you have multiple node groups you need this to be true
+  privateNetworking: true
+  
+  # Information to tag this specific node group for tasks
+  labels: { role: level-site }
+  tags:
+    nodegroup-role: level-site
+  
+# You should only need 1 client to run evaluations
+#- name: client
+#  labels: { role: client }
+#  instanceType: t2.medium
+#  minSize: 1
+#  maxSize: 1
+#  desiredCapacity: 1
+#  maxPodsPerNode: 1
+#  privateNetworking: true
+
+# You should only need 1 server to run training job
+#- name: server
+#  labels: { role: server }
+#  instanceType: t2.medium
+#  minSize: 1
+#  maxSize: 1
+#  desiredCapacity: 1
+#  maxPodsPerNode: 1
+#  privateNetworking: true

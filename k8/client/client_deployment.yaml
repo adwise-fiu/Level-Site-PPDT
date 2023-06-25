@@ -4,6 +4,7 @@ metadata:
   name: ppdt-client-deploy
   labels:
     app: ppdt-client-deploy
+    role: client
 spec:
   replicas: 1
   selector:
@@ -16,8 +17,7 @@ spec:
     spec:
       containers:
         - name: ppdt-client-deploy
-          image: ppdt:experiment
-          imagePullPolicy: IfNotPresent
+          image: andrewquijano92/ppdt
           ports:
             - containerPort: 9000
           env:
@@ -34,7 +34,7 @@ spec:
               value: "ppdt-level-site-01-service,ppdt-level-site-02-service,ppdt-level-site-03-service,ppdt-level-site-04-service,ppdt-level-site-05-service,ppdt-level-site-06-service,ppdt-level-site-07-service,ppdt-level-site-08-service,ppdt-level-site-09-service,ppdt-level-site-10-service"
 
             - name: PPDT_KEY_SIZE
-              value: "1024"
+              value: "2048"
 
             - name: SERVER
               value: "ppdt-server-service"
