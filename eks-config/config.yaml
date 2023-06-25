@@ -20,12 +20,12 @@ managedNodeGroups:
 
   # Allow to communicate with other node groups.
   # If you have multiple node groups you need this to be true
-  privateNetworking: true
+#  privateNetworking: true
   
   # Information to tag this specific node group for tasks
-  labels: { role: level-site }
-  tags:
-    nodegroup-role: level-site
+#  labels: { role: level-site }
+#  tags:
+#    nodegroup-role: level-site
   
 # You should only need 1 client to run evaluations
 #- name: client

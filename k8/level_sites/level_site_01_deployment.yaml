@@ -4,6 +4,7 @@ metadata:
   name: ppdt-level-site-01-deploy
   labels:
     app: ppdt-level-site-01-deploy
+    role: level-site
 spec:
   replicas: 1
   selector:
