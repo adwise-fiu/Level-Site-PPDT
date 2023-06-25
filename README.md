@@ -117,29 +117,27 @@ ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)    
 ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
 ```
 
-It does take time for the level-site to be able to accept connections. Run the following command on a level-site,
-and wait for an output in standard output saying `Ready to accept connections at: 9000`. Set `<LEVEL-SITE-POD-NAME>`
-to one of the pod names from the output, e. g. `ppdt-level-site-01-deploy-7dbf5b4cdd-wz6q7`.
+It does take time for the level-site to be able to accept connections. Run the following command on the first level-site,
+and wait for an output in standard output saying `Ready to accept connections at: 9000`. Use CTRL+C to exit the pod.
 
-    kubectl logs -f <LEVEL-SITE-POD-NAME>
+    kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-01-deploy" -o name)
 
-After verifying that all the pods are running properly, the next step is to
+
+After verifying that the level-sites are ready, the next step is to
 start the server site. To do this, run the following command.
 
     kubectl apply -f k8/server_site
 
-To verify that the server site is ready, use the following commands to confirm the server_site is _running_
-and check the logs to confirm we see `Server-site ready to get public keys from client-site` so we can run the client.
+To verify that the server site is ready, use the following command to confirm the server_site is _running_
+and check the logs to confirm we see `Server ready to get public keys from client-site` so we can exit and run the client.
 
-    kubectl get pods
-    kubectl logs -f <SERVER-SITE-POD-NAME>
+    kubectl logs -f $(kubectl get pod -l job-name=ppdt-server-deploy -o name)
 
-After the server site is ready we are ready to run the client.
-To run the client, simply run the following command.
-To run a classification, you need to pass a command to the client too.
+To run the client, simply run the following commands to start the client and run an evaluation, 
+you would point values to something like `/data/hypothyroid.values`
 
     kubectl apply -f k8/client
-    kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 
 
 To get the results, access the logs as described in the previous steps for both the client and level-sites.
@@ -148,7 +146,7 @@ To get the results, access the logs as described in the previous steps for both 
 - *Case 1: Re-run with different testing set*  
 As the job created the pod, you would connect to the pod and run the modified gradle command with the other VALUES file.
 ```bash
-    kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE>"
+kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 ```
 - *Case 2: Train level-sites with new DT and new testing set*  
 You need to edit the `server_site_training_job.yaml` file to point to a new ARFF file.
@@ -162,7 +160,7 @@ kubectl apply -f k8/server-site
 # Wait a few seconds to for server-site to be ready to get the client key...
 # Or just check the server-site being ready as shown in the previous section
 kubectl apply -f k8/client
-kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name)-- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 ```
 #### Clean up
 
