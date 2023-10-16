@@ -25,6 +25,8 @@ import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
 import weka.finito.structs.BigIntegers;
 
+import static weka.finito.utils.Shared.hash;
+
 public final class client implements Runnable {
 	private final String classes_file = "classes.txt";
 	private final String features_file;
@@ -177,12 +179,6 @@ public final class client implements Runnable {
 		paillier_public_key = (PaillierPublicKey) paillier.getPublic();
 		dgk_private_key = (DGKPrivateKey) dgk.getPrivate();
 		paillier_private_key = (PaillierPrivateKey) paillier.getPrivate();
-	}
-
-	public static String hash(String text) throws NoSuchAlgorithmException {
-		MessageDigest digest = MessageDigest.getInstance("SHA-256");
-		byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-		return Base64.getEncoder().encodeToString(hash);
 	}
 
 	private boolean need_keys() {

@@ -11,9 +11,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -33,6 +30,8 @@ import weka.core.SerializationHelper;
 import weka.finito.structs.BigIntegers;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
+
+import static weka.finito.utils.Shared.hash;
 
 
 public final class server implements Runnable {
@@ -201,12 +200,15 @@ public final class server implements Runnable {
 			Niu.setDGKPublicKey(dgk_public);
 
 			List<NodeInfo> node_level_data;
-			NodeInfo ls;
+			NodeInfo ls = null;
 			long start_time = System.nanoTime();
+			int previous_index = 0;
 
 			// Traverse DT until you hit a leaf, the client has to track the index...
             for (level_order_site level_site_data : all_level_sites) {
                 node_level_data = level_site_data.get_node_data();
+
+				level_site_data.set_current_index(previous_index);
 
                 // Handle at a level...
                 int node_level_index = 0;
@@ -214,6 +216,7 @@ public final class server implements Runnable {
                 int next_index = 0;
 				boolean equalsFound = false;
 				boolean inequalityHolds = false;
+				boolean terminalLeafFound = false;
 
                 while (!equalsFound) {
                     ls = node_level_data.get(node_level_index);
@@ -221,14 +224,8 @@ public final class server implements Runnable {
                     if (ls.isLeaf()) {
                         if (n == 2 * level_site_data.get_current_index()
                                 || n == 2 * level_site_data.get_current_index() + 1) {
-							// Tell the client the value
-							to_client_site.writeInt(-1);
-							to_client_site.writeObject(ls.getVariableName());
-							to_client_site.flush();
-							long stop_time = System.nanoTime();
-							double run_time = (double) (stop_time - start_time);
-							run_time = run_time / 1000000;
-							System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
+							terminalLeafFound = true;
+							System.out.println("Terminal leaf:" + ls.getVariableName());
 							break;
                         }
                         n += 2;
@@ -263,17 +260,27 @@ public final class server implements Runnable {
                     }
                     node_level_index++;
                 }
+
+				if (terminalLeafFound) {
+					// Tell the client the value
+					to_client_site.writeInt(-1);
+					to_client_site.writeObject(ls.getVariableName());
+					to_client_site.flush();
+					long stop_time = System.nanoTime();
+					double run_time = (double) (stop_time - start_time);
+					run_time = run_time / 1000000;
+					System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
+					break;
+				}
+				else {
+					// Remember this for next loop...
+					previous_index = next_index;
+				}
             }
 		} catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
         serverSocket.close();
-	}
-
-	private static String hash(String text) throws NoSuchAlgorithmException {
-		MessageDigest digest = MessageDigest.getInstance("SHA-256");
-		byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-		return Base64.getEncoder().encodeToString(hash);
 	}
 
 	private void client_communication() throws Exception {

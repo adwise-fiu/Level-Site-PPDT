@@ -143,6 +143,7 @@ public class level_site_thread implements Runnable {
 			}
 
 			// Level Data is the Node Data...
+			// it is set to 0 by default...
 			if (previous_index != null) {
 				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
 			}
