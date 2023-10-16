@@ -3,11 +3,8 @@ package weka.finito;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Hashtable;
 
@@ -25,7 +22,7 @@ import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
 import weka.finito.structs.BigIntegers;
 
-import static weka.finito.utils.Shared.hash;
+import static weka.finito.utils.shared.hash;
 
 public final class client implements Runnable {
 	private final String classes_file = "classes.txt";

@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -31,7 +30,7 @@ import weka.finito.structs.BigIntegers;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
 
-import static weka.finito.utils.Shared.hash;
+import static weka.finito.utils.shared.*;
 
 
 public final class server implements Runnable {
@@ -137,46 +136,6 @@ public final class server implements Runnable {
 		this.use_level_sites = false;
 	}
 
-	private boolean compare(NodeInfo ld, int comparisonType,
-							Hashtable<String, BigIntegers> encrypted_features,
-							ObjectOutputStream toClient, alice Niu)
-			throws ClassNotFoundException, HomomorphicException, IOException {
-
-		long start_time = System.nanoTime();
-
-		BigIntegers encrypted_values = encrypted_features.get(ld.variable_name);
-		BigInteger encrypted_client_value = null;
-		BigInteger encrypted_thresh = null;
-
-		// Encrypt the thresh-hold correctly
-		if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
-			encrypted_thresh = ld.getPaillier();
-			encrypted_client_value = encrypted_values.getIntegerValuePaillier();
-			toClient.writeInt(0);
-			Niu.setDGKMode(false);
-		}
-		else if ((comparisonType == 3) || (comparisonType == 5)) {
-			encrypted_thresh = ld.getDGK();
-			encrypted_client_value = encrypted_values.getIntegerValueDGK();
-			toClient.writeInt(1);
-			Niu.setDGKMode(true);
-		}
-		toClient.flush();
-		assert encrypted_client_value != null;
-		long stop_time = System.nanoTime();
-
-		double run_time = (double) (stop_time - start_time);
-		run_time = run_time / 1000000;
-		System.out.printf("Comparison took %f ms\n", run_time);
-		if (((comparisonType == 1) && (ld.threshold == 0))
-				|| (comparisonType == 4) || (comparisonType == 5)) {
-			return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
-		}
-		else {
-			return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
-		}
-	}
-
 	private void evaluate(int server_port) throws IOException, HomomorphicException {
 		ServerSocket serverSocket = new ServerSocket(server_port);
 		System.out.println("Server will be waiting for direct evaluation from client");
@@ -200,32 +159,36 @@ public final class server implements Runnable {
 			Niu.setDGKPublicKey(dgk_public);
 
 			List<NodeInfo> node_level_data;
-			NodeInfo ls = null;
+			NodeInfo ls;
 			long start_time = System.nanoTime();
 			int previous_index = 0;
 
 			// Traverse DT until you hit a leaf, the client has to track the index...
             for (level_order_site level_site_data : all_level_sites) {
                 node_level_data = level_site_data.get_node_data();
-
 				level_site_data.set_current_index(previous_index);
 
                 // Handle at a level...
                 int node_level_index = 0;
                 int n = 0;
                 int next_index = 0;
-				boolean equalsFound = false;
 				boolean inequalityHolds = false;
-				boolean terminalLeafFound = false;
 
-                while (!equalsFound) {
+                while (true) {
                     ls = node_level_data.get(node_level_index);
                     System.out.println("j=" + node_level_index);
                     if (ls.isLeaf()) {
                         if (n == 2 * level_site_data.get_current_index()
                                 || n == 2 * level_site_data.get_current_index() + 1) {
-							terminalLeafFound = true;
 							System.out.println("Terminal leaf:" + ls.getVariableName());
+							// Tell the client the value
+							to_client_site.writeInt(-1);
+							to_client_site.writeObject(ls.getVariableName());
+							to_client_site.flush();
+							long stop_time = System.nanoTime();
+							double run_time = (double) (stop_time - start_time);
+							run_time = run_time / 1000000;
+							System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
 							break;
                         }
                         n += 2;
@@ -250,9 +213,11 @@ public final class server implements Runnable {
                             }
 
                             if (inequalityHolds) {
-                                equalsFound = true;
                                 level_site_data.set_next_index(next_index);
-                                System.out.println("New index:" + level_site_data.get_current_index());
+                                System.out.println("Next index:" + next_index);
+								// Remember this for next loop...
+								previous_index = next_index;
+								break;
                             }
                         }
                         n++;
@@ -260,22 +225,6 @@ public final class server implements Runnable {
                     }
                     node_level_index++;
                 }
-
-				if (terminalLeafFound) {
-					// Tell the client the value
-					to_client_site.writeInt(-1);
-					to_client_site.writeObject(ls.getVariableName());
-					to_client_site.flush();
-					long stop_time = System.nanoTime();
-					double run_time = (double) (stop_time - start_time);
-					run_time = run_time / 1000000;
-					System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
-					break;
-				}
-				else {
-					// Remember this for next loop...
-					previous_index = next_index;
-				}
             }
 		} catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
