@@ -8,17 +8,21 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
 
 import security.DGK.DGKPublicKey;
+import security.misc.HomomorphicException;
+import security.socialistmillionaire.alice;
 import security.paillier.PaillierPublicKey;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
@@ -26,6 +30,7 @@ import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
 
 import weka.core.SerializationHelper;
+import weka.finito.structs.BigIntegers;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
 
@@ -45,13 +50,23 @@ public final class server implements Runnable {
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
 
 	private final int server_port;
+	private final boolean use_level_sites;
 
     public static void main(String[] args) {
         int port = 0;
 		int precision = 0;
+		String training_data = null;
+		boolean use_level_sites = false;
 
 		// Get data for training.
-		if (args.length != 1) {
+		if (args.length == 1) {
+			training_data = args[0];
+		}
+		else if (args.length == 2){
+			training_data = args[0];
+			use_level_sites = args[1].equalsIgnoreCase("--client");
+		}
+		else {
 			System.out.println("Missing Training Data set as an argument parameter");
 			System.exit(1);
 		}
@@ -80,11 +95,20 @@ public final class server implements Runnable {
 
 		// Create and run the server.
         System.out.println("Server Initialized and started running");
-        server server = new server(args[0], level_domains, port, precision, port);
-		server.run();
-    }
 
-	// For local host testing, (GitHub Actions CI, on PrivacyTest.java)
+		server server;
+		// Pick either Level-Sites or no Level-site
+		if (use_level_sites) {
+			server = new server(training_data, level_domains, port, precision, port);
+
+		}
+		else {
+			server = new server(training_data, precision, port);
+		}
+		server.run();
+	}
+
+	// For local host testing, (GitHub Actions CI, on PrivacyTest.java, for level-sites)
 	public server(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
 					   int server_port) {
 		this.training_data = training_data;
@@ -92,15 +116,158 @@ public final class server implements Runnable {
 		this.level_site_ports = level_site_ports;
 		this.precision = precision;
 		this.server_port = server_port;
+		this.use_level_sites = true;
 	}
 
-	// For Cloud environment, (Testing with Kubernetes)
+	// For Cloud environment, (Testing with Kubernetes, for level-sites)
 	public server(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
 		this.port = port;
 		this.precision = precision;
 		this.server_port = server_port;
+		this.use_level_sites = true;
+	}
+
+	// For testing, but having just a client and server
+	public server(String training_data, int precision, int server_port) {
+		this.training_data = training_data;
+		this.level_site_ips = null;
+		this.precision = precision;
+		this.server_port = server_port;
+		this.use_level_sites = false;
+	}
+
+	private boolean compare(NodeInfo ld, int comparisonType,
+							Hashtable<String, BigIntegers> encrypted_features,
+							ObjectOutputStream toClient, alice Niu)
+			throws ClassNotFoundException, HomomorphicException, IOException {
+
+		long start_time = System.nanoTime();
+
+		BigIntegers encrypted_values = encrypted_features.get(ld.variable_name);
+		BigInteger encrypted_client_value = null;
+		BigInteger encrypted_thresh = null;
+
+		// Encrypt the thresh-hold correctly
+		if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
+			encrypted_thresh = ld.getPaillier();
+			encrypted_client_value = encrypted_values.getIntegerValuePaillier();
+			toClient.writeInt(0);
+			Niu.setDGKMode(false);
+		}
+		else if ((comparisonType == 3) || (comparisonType == 5)) {
+			encrypted_thresh = ld.getDGK();
+			encrypted_client_value = encrypted_values.getIntegerValueDGK();
+			toClient.writeInt(1);
+			Niu.setDGKMode(true);
+		}
+		toClient.flush();
+		assert encrypted_client_value != null;
+		long stop_time = System.nanoTime();
+
+		double run_time = (double) (stop_time - start_time);
+		run_time = run_time / 1000000;
+		System.out.printf("Comparison took %f ms\n", run_time);
+		if (((comparisonType == 1) && (ld.threshold == 0))
+				|| (comparisonType == 4) || (comparisonType == 5)) {
+			return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
+		}
+		else {
+			return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
+		}
+	}
+
+	private void evaluate(int server_port) throws IOException, HomomorphicException {
+		ServerSocket serverSocket = new ServerSocket(server_port);
+		System.out.println("Server will be waiting for direct evaluation from client");
+		Object client_input;
+		Hashtable<String, BigIntegers> features = new Hashtable<>();
+		try (Socket client_site = serverSocket.accept()) {
+			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
+			ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
+
+			// Get encrypted features
+			client_input = from_client_site.readObject();
+			if (client_input instanceof Hashtable) {
+				for (Entry<?, ?> entry: ((Hashtable<?, ?>) client_input).entrySet()){
+					if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
+						features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
+					}
+				}
+			}
+			alice Niu = new alice(client_site);
+			Niu.setPaillierPublicKey(paillier_public);
+			Niu.setDGKPublicKey(dgk_public);
+
+			List<NodeInfo> node_level_data;
+			NodeInfo ls;
+			long start_time = System.nanoTime();
+
+			// Traverse DT until you hit a leaf, the client has to track the index...
+            for (level_order_site level_site_data : all_level_sites) {
+                node_level_data = level_site_data.get_node_data();
+
+                // Handle at a level...
+                int node_level_index = 0;
+                int n = 0;
+                int next_index = 0;
+				boolean equalsFound = false;
+				boolean inequalityHolds = false;
+
+                while (!equalsFound) {
+                    ls = node_level_data.get(node_level_index);
+                    System.out.println("j=" + node_level_index);
+                    if (ls.isLeaf()) {
+                        if (n == 2 * level_site_data.get_current_index()
+                                || n == 2 * level_site_data.get_current_index() + 1) {
+							// Tell the client the value
+							to_client_site.writeInt(-1);
+							to_client_site.writeObject(ls.getVariableName());
+							to_client_site.flush();
+							long stop_time = System.nanoTime();
+							double run_time = (double) (stop_time - start_time);
+							run_time = run_time / 1000000;
+							System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
+							break;
+                        }
+                        n += 2;
+                    } else {
+                        if ((n == 2 * level_site_data.get_current_index()
+                                || n == 2 * level_site_data.get_current_index() + 1)) {
+                            if (ls.comparisonType == 6) {
+                                boolean firstInequalityHolds = compare(ls, 3, features,
+										to_client_site, Niu);
+                                if (firstInequalityHolds) {
+                                    inequalityHolds = true;
+                                } else {
+                                    boolean secondInequalityHolds = compare(ls, 5, features,
+											to_client_site, Niu);
+                                    if (secondInequalityHolds) {
+                                        inequalityHolds = true;
+                                    }
+                                }
+                            } else {
+                                inequalityHolds = compare(ls, ls.comparisonType, features,
+										to_client_site, Niu);
+                            }
+
+                            if (inequalityHolds) {
+                                equalsFound = true;
+                                level_site_data.set_next_index(next_index);
+                                System.out.println("New index:" + level_site_data.get_current_index());
+                            }
+                        }
+                        n++;
+                        next_index++;
+                    }
+                    node_level_index++;
+                }
+            }
+		} catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        serverSocket.close();
 	}
 
 	private static String hash(String text) throws NoSuchAlgorithmException {
@@ -371,7 +538,19 @@ public final class server implements Runnable {
 		ObjectInputStream from_level_site;
 		int port_to_connect;
 
+		// If we are testing without level-sites do this...
+		if (!use_level_sites) {
+			try {
+				evaluate(this.server_port);
+			}
+			catch (IOException | HomomorphicException e) {
+				throw new RuntimeException(e);
+			}
+			return;
+		}
+
 		// There should be at least 1 IP Address for each level site
+		assert this.level_site_ips != null;
 		if(this.level_site_ips.length < all_level_sites.size()) {
 			String error = String.format("Please create more level-sites for the " +
 					"decision tree trained from %s", training_data);
