@@ -13,13 +13,31 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Hashtable;
+import java.util.Properties;
 
 public class shared {
+
+    public static final String[] protocols = new String[]{"TLSv1.3"};
+    public static final String[] cipher_suites = new String[]{"TLS_AES_128_GCM_SHA256"};
+
+
     // Used by server-site to hash leaves and client-site to find the leaf
     public static String hash(String text) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hash);
+    }
+
+    public static void setup_tls() {
+        // If you get a null pointer, you forgot to populate environment variables...
+        String keystore = System.getenv("KEYSTORE");
+        String password = System.getenv("PASSWORD");
+        Properties systemProps = System.getProperties();
+        systemProps.put("javax.net.ssl.keyStorePassword", password);
+        systemProps.put("javax.net.ssl.keyStore", keystore);
+        systemProps.put("javax.net.ssl.trustStore", keystore);
+        systemProps.put("javax.net.ssl.trustStorePassword", password);
+        System.setProperties(systemProps);
     }
 
     // Used by level-site and server-site to compare with a client

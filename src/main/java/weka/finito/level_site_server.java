@@ -3,23 +3,28 @@ package weka.finito;
 import weka.finito.structs.level_order_site;
 
 import javax.crypto.NoSuchPaddingException;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 
 import java.lang.System;
 import java.security.NoSuchAlgorithmException;
 
+import static weka.finito.utils.shared.cipher_suites;
+import static weka.finito.utils.shared.protocols;
+
 public class level_site_server implements Runnable {
 
     protected int          serverPort;
-    protected ServerSocket serverSocket = null;
+    protected SSLServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
     protected level_order_site level_site_parameters = null;
     protected int precision;
 
     protected AES crypto;
+    protected SSLServerSocketFactory factory;
 
     public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException {
         int our_port = 0;
@@ -63,10 +68,10 @@ public class level_site_server implements Runnable {
         openServerSocket();
 
         while(! isStopped()) {
-            Socket clientSocket;
+            SSLSocket clientSocket;
             try {
             	System.out.println("Ready to accept connections at: " + this.serverPort);
-                clientSocket = this.serverSocket.accept();
+                clientSocket = (SSLSocket) this.serverSocket.accept();
             }
             catch (IOException e) {
                 if(isStopped()) {
@@ -84,7 +89,7 @@ public class level_site_server implements Runnable {
             }
             else {
                 // Received new data from server-site, overwrite the existing copy if it is new
-                if (this.level_site_parameters.compareTo(new_data) != 0) {
+                if (!this.level_site_parameters.equals(new_data)) {
                     this.level_site_parameters = new_data;
                     // System.out.println("New Training Data received...Overwriting now...");
                 }
@@ -116,7 +121,11 @@ public class level_site_server implements Runnable {
 
     private void openServerSocket() {
         try {
-            this.serverSocket = new ServerSocket(this.serverPort);
+            // Step : 1
+            factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+            serverSocket = (SSLServerSocket) factory.createServerSocket(this.serverPort);
+            serverSocket.setEnabledProtocols(protocols);
+            serverSocket.setEnabledCipherSuites(cipher_suites);
         } 
         catch (IOException e) {
             throw new RuntimeException("Cannot open port " + this.serverPort, e);

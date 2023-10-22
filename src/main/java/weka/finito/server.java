@@ -30,6 +30,9 @@ import weka.finito.structs.BigIntegers;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import static weka.finito.utils.shared.*;
 
 
@@ -49,6 +52,8 @@ public final class server implements Runnable {
 
 	private final int server_port;
 	private final boolean use_level_sites;
+
+	private String client;
 
     public static void main(String[] args) {
         int port = 0;
@@ -91,6 +96,9 @@ public final class server implements Runnable {
         }
         String[] level_domains = level_domains_str.split(",");
 
+		// Figure out Client IP for last level-site to send back
+		String client = System.getenv("CLIENT");
+
 		// Create and run the server.
         System.out.println("Server Initialized and started running");
 
@@ -98,10 +106,9 @@ public final class server implements Runnable {
 		// Pick either Level-Sites or no Level-site
 		if (use_level_sites) {
 			server = new server(training_data, level_domains, port, precision, port);
-
 		}
 		else {
-			server = new server(training_data, precision, port);
+			server = new server(training_data, precision, port, client);
 		}
 		server.run();
 	}
@@ -135,6 +142,16 @@ public final class server implements Runnable {
 		this.server_port = server_port;
 		this.use_level_sites = false;
 	}
+
+	public server(String training_data, int precision, int server_port, String client) {
+		this.training_data = training_data;
+		this.level_site_ips = null;
+		this.precision = precision;
+		this.server_port = server_port;
+		this.use_level_sites = false;
+		this.client = client;
+	}
+
 
 	private void evaluate(int server_port) throws IOException, HomomorphicException {
 		ServerSocket serverSocket = new ServerSocket(server_port);
@@ -246,7 +263,6 @@ public final class server implements Runnable {
 
 			o = from_client_site.readObject();
 			this.dgk_public = (DGKPublicKey) o;
-
 			System.out.println("Server collected keys from client");
 
 			// Train level-sites
@@ -480,6 +496,9 @@ public final class server implements Runnable {
 
 	public void run() {
 
+		// Step : 1
+		SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
 		try {
 			// Train the DT
 			ppdt = train_decision_tree(this.training_data);
@@ -492,7 +511,7 @@ public final class server implements Runnable {
 
 		ObjectOutputStream to_level_site;
 		ObjectInputStream from_level_site;
-		int port_to_connect;
+		int connection_port;
 
 		// If we are testing without level-sites do this...
 		if (!use_level_sites) {
@@ -518,22 +537,42 @@ public final class server implements Runnable {
 			level_order_site current_level_site = all_level_sites.get(i);
 
 			if (port == -1) {
-				port_to_connect = this.level_site_ports[i];
+				connection_port = this.level_site_ports[i];
 			}
 			else {
-				port_to_connect = this.port;
+				connection_port = this.port;
 			}
 
-			try (Socket level_site = new Socket(level_site_ips[i], port_to_connect)) {
-				System.out.println("training level-site " + i + " on port:" + port_to_connect);
+			if (i + 1 != all_level_sites.size()) {
+				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
+			}
+			else {
+				current_level_site.set_next_level_site(client);
+			}
+			current_level_site.set_next_level_site_port(connection_port);
+
+			// System.out.println("Current level-site: " + level_site_ips[i] + ":" + port_to_connect);
+			// System.out.println("Next is: " + current_level_site.get_next_level_site()
+			//		+ ":" + current_level_site.get_next_level_site_port());
+
+			//try (Socket level_site = new Socket(level_site_ips[i], port_to_connect)) {
+			try(SSLSocket level_site = (SSLSocket) factory.createSocket(level_site_ips[i], connection_port)) {
+				// Step : 3
+				level_site.setEnabledProtocols(protocols);
+				level_site.setEnabledCipherSuites(cipher_suites);
+
+				// Step : 4 {optional}
+				level_site.startHandshake();
+
+				System.out.println("training level-site " + i + " on port:" + connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = new ObjectInputStream(level_site.getInputStream());
 				to_level_site.writeObject(current_level_site);
 				if(from_level_site.readBoolean()) {
-					System.out.println("Training Successful on port:" + port_to_connect);
+					System.out.println("Training Successful on port:" + connection_port);
 				}
 				else {
-					System.out.println("Training NOT Successful on port:" + port_to_connect);
+					System.out.println("Training NOT Successful on port:" + connection_port);
 				}
 			}
 			catch (IOException e) {

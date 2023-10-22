@@ -31,6 +31,8 @@ public class level_site_thread implements Runnable {
 	public level_site_thread(Socket client_socket, level_order_site level_site_data, AES crypto) {
 		this.client_socket = client_socket;
 		this.crypto = crypto;
+		String clientIpAddress = client_socket.getInetAddress().getHostAddress();
+		System.out.println("Level-Site got connection from client: " + clientIpAddress);
 
 		Object x;
 		try {
@@ -53,7 +55,7 @@ public class level_site_thread implements Runnable {
 				// Have encrypted copy of thresholds if not done already for all nodes in level-site
 				this.level_site_data = level_site_data;
 			} else {
-				System.out.println("Wrong Object Received: " + x.getClass().toString());
+				System.out.println("Wrong Object Received: " + x.getClass());
 				closeClientConnection();
 			}
 		} catch (Exception e) {

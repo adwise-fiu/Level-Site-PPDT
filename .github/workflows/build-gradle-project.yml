@@ -6,6 +6,12 @@ on:
 jobs:
   build-gradle-project:
     runs-on: ubuntu-latest
+    env:
+      ALIAS: andrew
+      KEYSTORE: andrew_keystore
+      PASSWORD: ${{ secrets.PASSWORD }}
+      CERTIFICATE: andrew_certificate
+
     steps:
     - name: Checkout project sources
       uses: actions/checkout@v3
@@ -19,6 +25,7 @@ jobs:
         distribution: 'oracle'
         java-version: '17'
         cache: 'gradle'
+
     - run: sh gradlew build
 
     - name: Upload coverage reports to Codecov

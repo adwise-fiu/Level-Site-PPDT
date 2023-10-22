@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static weka.finito.utils.shared.setup_tls;
 
 
 public final class PrivacyTest {
@@ -29,6 +30,9 @@ public final class PrivacyTest {
 	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub", "classes.txt"};
 	@Before
 	public void read_properties() throws IOException {
+
+		setup_tls();
+
 		// Arguments:
 		System.out.println("Running Full Local Test...");
 		System.out.println("Working Directory = " + System.getProperty("user.dir"));
