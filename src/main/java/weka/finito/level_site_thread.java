@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static weka.finito.utils.shared.compare;
+import static weka.finito.utils.shared.traverse_level;
 
 public class level_site_thread implements Runnable {
 
@@ -91,7 +92,6 @@ public class level_site_thread implements Runnable {
 				return;
 			}
 
-			List<NodeInfo> node_level_data = this.level_site_data.get_node_data();
 			niu.setDGKPublicKey(this.level_site_data.dgk_public_key);
 			niu.setPaillierPublicKey(this.level_site_data.paillier_public_key);
 
@@ -114,68 +114,20 @@ public class level_site_thread implements Runnable {
 				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
 			}
 
-			boolean equalsFound = false;
-			boolean inequalityHolds = false;
-			boolean terminalLeafFound = false;
-			int node_level_index = 0;
-			int n = 0;
-			int next_index = 0;
-			NodeInfo ls = null;
+			// Null, keep going down the tree,
+			// Not-null, you got the correct leaf node of your DT!
+			NodeInfo reply = traverse_level(level_site_data, encrypted_features, toClient, niu);
+
 			String encrypted_next_index;
-
-			while ((!equalsFound) && (!terminalLeafFound)) {
-				ls = node_level_data.get(node_level_index);
-				System.out.println("j=" + node_level_index);
-				if (ls.isLeaf()) {
-					if (n == 2 * this.level_site_data.get_current_index()
-							|| n == 2 * this.level_site_data.get_current_index() + 1) {
-						terminalLeafFound = true;
-						System.out.println("Terminal leaf:" + ls.getVariableName());
-					}
-					n += 2;
-				}
-				else {
-					if ((n==2 * this.level_site_data.get_current_index()
-							|| n == 2 * this.level_site_data.get_current_index() + 1)) {
-						if (ls.comparisonType == 6) {
-							boolean firstInequalityHolds = compare(ls, 3,
-									encrypted_features, toClient, niu);
-							if (firstInequalityHolds) {
-								inequalityHolds = true;
-							}
-							else {
-								boolean secondInequalityHolds = compare(ls, 5,
-										encrypted_features, toClient, niu);
-								if (secondInequalityHolds) {
-									inequalityHolds = true;
-								}
-							}
-						}
-						else {
-							inequalityHolds = compare(ls, ls.comparisonType,
-									encrypted_features, toClient, niu);
-						}
-
-						if (inequalityHolds) {
-							equalsFound = true;
-							this.level_site_data.set_next_index(next_index);
-							System.out.println("New index: " + this.level_site_data.get_next_index());
-						}
-					}
-					n++;
-					next_index++;
-				}
-				node_level_index++;
-			}
 
 			// Place -1 to break Protocol4 loop
 			toClient.writeInt(-1);
 			toClient.flush();
 
-			if (terminalLeafFound) {
+			if (reply != null) {
 				// Tell the client the value
 				toClient.writeBoolean(true);
-				toClient.writeObject(ls.getVariableName());
+				toClient.writeObject(reply.getVariableName());
 			}
 			else {
 				toClient.writeBoolean(false);

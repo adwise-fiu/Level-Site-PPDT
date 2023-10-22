@@ -4,6 +4,7 @@ import security.misc.HomomorphicException;
 import security.socialistmillionaire.alice;
 import weka.finito.structs.BigIntegers;
 import weka.finito.structs.NodeInfo;
+import weka.finito.structs.level_order_site;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -13,6 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Properties;
 
 public class shared {
@@ -38,6 +40,68 @@ public class shared {
         systemProps.put("javax.net.ssl.trustStore", keystore);
         systemProps.put("javax.net.ssl.trustStorePassword", password);
         System.setProperties(systemProps);
+    }
+
+    public static NodeInfo traverse_level(level_order_site level_site_data,
+                                         Hashtable<String, BigIntegers> encrypted_features,
+                                         ObjectOutputStream toClient, alice niu)
+            throws HomomorphicException, IOException, ClassNotFoundException {
+
+        List<NodeInfo> node_level_data = level_site_data.get_node_data();
+        boolean terminalLeafFound = false;
+        boolean equalsFound = false;
+        boolean inequalityHolds = false;
+        int node_level_index = 0;
+        int n = 0;
+        int next_index = 0;
+        NodeInfo ls;
+        NodeInfo to_return = null;
+
+        while ((!equalsFound) && (!terminalLeafFound)) {
+            ls = node_level_data.get(node_level_index);
+            System.out.println("j=" + node_level_index);
+            if (ls.isLeaf()) {
+                if (n == 2 * level_site_data.get_current_index()
+                        || n == 2 * level_site_data.get_current_index() + 1) {
+                    terminalLeafFound = true;
+                    to_return = ls;
+                }
+                n += 2;
+            }
+            else {
+                if ((n == 2 * level_site_data.get_current_index()
+                        || n == 2 * level_site_data.get_current_index() + 1)) {
+                    if (ls.comparisonType == 6) {
+                        boolean firstInequalityHolds = compare(ls, 3,
+                                encrypted_features, toClient, niu);
+                        if (firstInequalityHolds) {
+                            inequalityHolds = true;
+                        }
+                        else {
+                            boolean secondInequalityHolds = compare(ls, 5,
+                                    encrypted_features, toClient, niu);
+                            if (secondInequalityHolds) {
+                                inequalityHolds = true;
+                            }
+                        }
+                    }
+                    else {
+                        inequalityHolds = compare(ls, ls.comparisonType,
+                                encrypted_features, toClient, niu);
+                    }
+
+                    if (inequalityHolds) {
+                        equalsFound = true;
+                        level_site_data.set_next_index(next_index);
+                        System.out.println("New index: " + level_site_data.get_next_index());
+                    }
+                }
+                n++;
+                next_index++;
+            }
+            node_level_index++;
+        }
+        return to_return;
     }
 
     // Used by level-site and server-site to compare with a client

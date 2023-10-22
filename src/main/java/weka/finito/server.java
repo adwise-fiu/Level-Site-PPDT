@@ -175,73 +175,28 @@ public final class server implements Runnable {
 			Niu.setPaillierPublicKey(paillier_public);
 			Niu.setDGKPublicKey(dgk_public);
 
-			List<NodeInfo> node_level_data;
-			NodeInfo ls;
 			long start_time = System.nanoTime();
 			int previous_index = 0;
 
 			// Traverse DT until you hit a leaf, the client has to track the index...
             for (level_order_site level_site_data : all_level_sites) {
-                node_level_data = level_site_data.get_node_data();
 				level_site_data.set_current_index(previous_index);
 
                 // Handle at a level...
-                int node_level_index = 0;
-                int n = 0;
-                int next_index = 0;
-				boolean inequalityHolds = false;
+				NodeInfo leaf = traverse_level(level_site_data, features, to_client_site, Niu);
 
-                while (true) {
-                    ls = node_level_data.get(node_level_index);
-                    System.out.println("j=" + node_level_index);
-                    if (ls.isLeaf()) {
-                        if (n == 2 * level_site_data.get_current_index()
-                                || n == 2 * level_site_data.get_current_index() + 1) {
-							System.out.println("Terminal leaf:" + ls.getVariableName());
-							// Tell the client the value
-							to_client_site.writeInt(-1);
-							to_client_site.writeObject(ls.getVariableName());
-							to_client_site.flush();
-							long stop_time = System.nanoTime();
-							double run_time = (double) (stop_time - start_time);
-							run_time = run_time / 1000000;
-							System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
-							break;
-                        }
-                        n += 2;
-                    } else {
-                        if ((n == 2 * level_site_data.get_current_index()
-                                || n == 2 * level_site_data.get_current_index() + 1)) {
-                            if (ls.comparisonType == 6) {
-                                boolean firstInequalityHolds = compare(ls, 3, features,
-										to_client_site, Niu);
-                                if (firstInequalityHolds) {
-                                    inequalityHolds = true;
-                                } else {
-                                    boolean secondInequalityHolds = compare(ls, 5, features,
-											to_client_site, Niu);
-                                    if (secondInequalityHolds) {
-                                        inequalityHolds = true;
-                                    }
-                                }
-                            } else {
-                                inequalityHolds = compare(ls, ls.comparisonType, features,
-										to_client_site, Niu);
-                            }
-
-                            if (inequalityHolds) {
-                                level_site_data.set_next_index(next_index);
-                                System.out.println("Next index:" + next_index);
-								// Remember this for next loop...
-								previous_index = next_index;
-								break;
-                            }
-                        }
-                        n++;
-                        next_index++;
-                    }
-                    node_level_index++;
-                }
+				// You found a leaf! No more traversing needed!
+				if (leaf != null) {
+					// Tell the client the value
+					to_client_site.writeInt(-1);
+					to_client_site.writeObject(leaf.getVariableName());
+					to_client_site.flush();
+					long stop_time = System.nanoTime();
+					double run_time = (double) (stop_time - start_time);
+					run_time = run_time / 1000000;
+					System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
+					break;
+				}
             }
 		} catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
