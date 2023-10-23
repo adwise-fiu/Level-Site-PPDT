@@ -15,8 +15,11 @@ jobs:
     - name: Checkout project sources
       uses: actions/checkout@v3
 
-    - name: Install packages
+    - name: Install Graphviz to visualize trees
       run: sudo apt-get install -y graphviz
+
+    - name: Install Java to have KeyTool
+      run: sudo apt-get install -y java-11-amazon-corretto-jdk
 
     - name: Setup Gradle
       uses: actions/setup-java@v3
