@@ -25,6 +25,9 @@ jobs:
         java-version: '17'
         cache: 'gradle'
 
+    - name: Create Key Store
+      run: sh create_keystore.sh
+
     - name: Run Gradle Testing
       run: sh gradlew build
 
