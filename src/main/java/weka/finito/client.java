@@ -28,6 +28,8 @@ import javax.net.ssl.SSLSocketFactory;
 import static weka.finito.utils.shared.*;
 
 public final class client implements Runnable {
+	private final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
 	private final String classes_file = "classes.txt";
 	private final String features_file;
 	private final int key_size;
@@ -204,7 +206,7 @@ public final class client implements Runnable {
 	}
 
 	private String [] read_classes() {
-		// Don't forget to remember the classes of DT as well
+		// Remember the classes of DT as well
 		StringBuilder content = new StringBuilder();
 		String line;
 
@@ -397,8 +399,6 @@ public final class client implements Runnable {
 	public void run() {
 
 		// Step: 1
-		SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-
 		boolean talk_to_server_site = this.need_keys();
 
 		try {

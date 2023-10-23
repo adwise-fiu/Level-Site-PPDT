@@ -12,10 +12,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
 
-import static weka.finito.utils.shared.compare;
 import static weka.finito.utils.shared.traverse_level;
 
 public class level_site_thread implements Runnable {
@@ -32,8 +30,6 @@ public class level_site_thread implements Runnable {
 	public level_site_thread(Socket client_socket, level_order_site level_site_data, AES crypto) {
 		this.client_socket = client_socket;
 		this.crypto = crypto;
-		String clientIpAddress = client_socket.getInetAddress().getHostAddress();
-		System.out.println("Level-Site got connection from client: " + clientIpAddress);
 
 		Object x;
 		try {
@@ -42,7 +38,7 @@ public class level_site_thread implements Runnable {
 
 			x = fromClient.readObject();
 			if (x instanceof level_order_site) {
-				// Traffic from Server. Level-Site alone will manage closing this.
+				// Traffic from Server. Level-Site alone will manage to close this.
 				this.level_site_data = (level_order_site) x;
 				// System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
 				this.toClient.writeBoolean(true);
@@ -115,7 +111,7 @@ public class level_site_thread implements Runnable {
 			}
 
 			// Null, keep going down the tree,
-			// Not-null, you got the correct leaf node of your DT!
+			// Not null, you got the correct leaf node of your DT!
 			NodeInfo reply = traverse_level(level_site_data, encrypted_features, toClient, niu);
 
 			String encrypted_next_index;
@@ -130,8 +126,9 @@ public class level_site_thread implements Runnable {
 				toClient.writeObject(reply.getVariableName());
 			}
 			else {
+
 				toClient.writeBoolean(false);
-				// encrypt with AES, send to client which will send to next level-site
+				// encrypt with AES, send to the client which will send to next level-site
 				encrypted_next_index = crypto.encrypt(String.valueOf(this.level_site_data.get_next_index()));
 				iv = crypto.getIV();
 				toClient.writeObject(encrypted_next_index);

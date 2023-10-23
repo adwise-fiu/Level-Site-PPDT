@@ -10,7 +10,6 @@ jobs:
       ALIAS: andrew
       KEYSTORE: andrew_keystore
       PASSWORD: ${{ secrets.PASSWORD }}
-      CERTIFICATE: andrew_certificate
 
     steps:
     - name: Checkout project sources
@@ -26,7 +25,11 @@ jobs:
         java-version: '17'
         cache: 'gradle'
 
-    - run: sh gradlew build
+    - name: Create keystore for local use
+      run: sh create_keystore.sh
+
+    - name: Run Gradle Testing
+      run: sh gradlew build
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3

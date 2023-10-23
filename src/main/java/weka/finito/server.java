@@ -41,6 +41,7 @@ import static weka.finito.utils.shared.*;
 public final class server implements Runnable {
 
 	private final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+	private final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	private final String training_data;
 	private final String [] level_site_ips;
@@ -49,14 +50,13 @@ public final class server implements Runnable {
 	private PaillierPublicKey paillier_public;
 	private DGKPublicKey dgk_public;
 	private final int precision;
-	private ClassifierTree ppdt;
+	private ClassifierTree ppdt = null;
 	private final List<String> leaves = new ArrayList<>();
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
 
 	private final int server_port;
-	private final boolean use_level_sites;
 
-	private String client;
+	private int evaluations = 1;
 
     public static void main(String[] args) {
         int port = 0;
@@ -99,9 +99,6 @@ public final class server implements Runnable {
         }
         String[] level_domains = level_domains_str.split(",");
 
-		// Figure out Client IP for last level-site to send back
-		String client = System.getenv("CLIENT");
-
 		// Create and run the server.
         System.out.println("Server Initialized and started running");
 
@@ -111,7 +108,7 @@ public final class server implements Runnable {
 			server = new server(training_data, level_domains, port, precision, port);
 		}
 		else {
-			server = new server(training_data, precision, port, client);
+			server = new server(training_data, precision, port);
 		}
 		server.run();
 	}
@@ -124,50 +121,44 @@ public final class server implements Runnable {
 		this.level_site_ports = level_site_ports;
 		this.precision = precision;
 		this.server_port = server_port;
-		this.use_level_sites = true;
 	}
 
-	// For Cloud environment, (Testing with Kubernetes, for level-sites)
+	// For Cloud environment, (Testing with Kubernetes/EKS, for level-sites)
 	public server(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
 		this.port = port;
 		this.precision = precision;
 		this.server_port = server_port;
-		this.use_level_sites = true;
+		// I will likely want more than 1 test with server-site!
+		this.evaluations = 100;
 	}
 
-	// For testing, but having just a client and server
+	// For testing, but having just a client and server, just do one evaluation for the sake of testing.
 	public server(String training_data, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = null;
 		this.precision = precision;
 		this.server_port = server_port;
-		this.use_level_sites = false;
 	}
 
-	public server(String training_data, int precision, int server_port, String client) {
-		this.training_data = training_data;
-		this.level_site_ips = null;
-		this.precision = precision;
-		this.server_port = server_port;
-		this.use_level_sites = false;
-		this.client = client;
-	}
-
-	private void run_one_time(int port) throws IOException, HomomorphicException, ClassNotFoundException {
-		try (SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(port);) {
+	private void run_server_site(int port) throws IOException, HomomorphicException, ClassNotFoundException {
+		int count = 0;
+		try (SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(port)) {
 			serverSocket.setEnabledProtocols(protocols);
 			serverSocket.setEnabledCipherSuites(cipher_suites);
 
 			System.out.println("Server will be waiting for direct evaluation from client");
-			try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
-				evaluate(client_site);
+			while (count < evaluations) {
+				try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
+					evaluate_with_client_directly(client_site);
+				}
+				++count;
 			}
 		}
 	}
 
-	private void evaluate(SSLSocket client_site)
+	private void evaluate_with_client_directly(SSLSocket client_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 
 		ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
@@ -468,37 +459,39 @@ public final class server implements Runnable {
 	// Evaluate, be prepared for either level-site or no level-site case, 1 time
 	public void run() {
 
-		// Step 1
-		SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-
 		try {
-			// Train the DT
-			ppdt = train_decision_tree(this.training_data);
-			// Get Public Keys from Client AND train level-sites
-			client_communication();
+			// Train the DT if you have to.
+			if (ppdt == null) {
+				ppdt = train_decision_tree(this.training_data);
+				// Get Public Keys from Client AND train level-sites
+				client_communication();	
+			}
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 
-		ObjectOutputStream to_level_site;
-		ObjectInputStream from_level_site;
-		int connection_port;
-
 		// If we are testing without level-sites do this...
-		if (!use_level_sites) {
+		if (this.level_site_ips != null) {
+			train_level_sites();
+		} else {
 			try {
-				run_one_time(this.server_port);
+				run_server_site(this.server_port);
 			}
 			catch (IOException | HomomorphicException | ClassNotFoundException e) {
 				throw new RuntimeException(e);
 			}
-            return;
 		}
+	}
+
+	private void train_level_sites() {
+		ObjectOutputStream to_level_site;
+		ObjectInputStream from_level_site;
+		int connection_port;
 
 		// There should be at least 1 IP Address for each level site
-		assert this.level_site_ips != null;
-		if(this.level_site_ips.length < all_level_sites.size()) {
+        assert this.level_site_ips != null;
+        if(this.level_site_ips.length < all_level_sites.size()) {
 			String error = String.format("Please create more level-sites for the " +
 					"decision tree trained from %s", training_data);
 			throw new RuntimeException(error);
@@ -518,12 +511,10 @@ public final class server implements Runnable {
 			if (i + 1 != all_level_sites.size()) {
 				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
 			}
-			else {
-				current_level_site.set_next_level_site(client);
-			}
+
 			current_level_site.set_next_level_site_port(connection_port);
 
-			try(SSLSocket level_site = (SSLSocket) factory.createSocket(level_site_ips[i], connection_port)) {
+			try(SSLSocket level_site = (SSLSocket) socket_factory.createSocket(level_site_ips[i], connection_port)) {
 				// Step: 3
 				level_site.setEnabledProtocols(protocols);
 				level_site.setEnabledCipherSuites(cipher_suites);
