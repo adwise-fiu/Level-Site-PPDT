@@ -396,7 +396,7 @@ public final class client implements Runnable {
 	// Function used to Train (if needed) and Evaluate
 	public void run() {
 
-		// Step : 1
+		// Step: 1
 		SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 
 		boolean talk_to_server_site = this.need_keys();
@@ -438,7 +438,14 @@ public final class client implements Runnable {
 
 		// If you are just evaluating directly with the server-site
 		if (level_site_ips == null) {
-			try(Socket server_site = new Socket(server_ip, server_port)) {
+			try(SSLSocket server_site = (SSLSocket) factory.createSocket(server_ip, server_port)) {
+				// Step: 3
+				server_site.setEnabledProtocols(protocols);
+				server_site.setEnabledCipherSuites(cipher_suites);
+
+				// Step: 4 {optional}
+				server_site.startHandshake();
+
 				System.out.println("Client connected to sever-site with PPDT");
 				evaluate_with_server_site(server_site);
 				long end_time = System.nanoTime();
@@ -468,13 +475,12 @@ public final class client implements Runnable {
 					connection_port = port;
 				}
 
-				//try(Socket level_site = new Socket(level_site_ips[i], connection_port)) {
 				try(SSLSocket level_site = (SSLSocket) factory.createSocket(level_site_ips[i], connection_port)) {
-					// Step : 3
+					// Step: 3
 					level_site.setEnabledProtocols(protocols);
 					level_site.setEnabledCipherSuites(cipher_suites);
 
-					// Step : 4 {optional}
+					// Step: 4 {optional}
 					level_site.startHandshake();
 					System.out.println("Client connected to level " + i);
 					communicate_with_level_site(level_site);

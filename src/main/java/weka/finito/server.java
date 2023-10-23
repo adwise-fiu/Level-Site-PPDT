@@ -30,6 +30,8 @@ import weka.finito.structs.BigIntegers;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
 
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -38,6 +40,7 @@ import static weka.finito.utils.shared.*;
 
 public final class server implements Runnable {
 
+	private final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	private final String training_data;
 	private final String [] level_site_ips;
@@ -152,56 +155,67 @@ public final class server implements Runnable {
 		this.client = client;
 	}
 
+	private void run_one_time(int port) throws IOException, HomomorphicException, ClassNotFoundException {
+		try (SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(port);) {
+			serverSocket.setEnabledProtocols(protocols);
+			serverSocket.setEnabledCipherSuites(cipher_suites);
 
-	private void evaluate(int server_port) throws IOException, HomomorphicException {
-		ServerSocket serverSocket = new ServerSocket(server_port);
-		System.out.println("Server will be waiting for direct evaluation from client");
+			System.out.println("Server will be waiting for direct evaluation from client");
+			try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
+				evaluate(client_site);
+			}
+		}
+	}
+
+	private void evaluate(SSLSocket client_site)
+			throws IOException, HomomorphicException, ClassNotFoundException {
+
+		ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
+		ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
+
 		Object client_input;
 		Hashtable<String, BigIntegers> features = new Hashtable<>();
-		try (Socket client_site = serverSocket.accept()) {
-			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
-			ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
 
-			// Get encrypted features
-			client_input = from_client_site.readObject();
-			if (client_input instanceof Hashtable) {
-				for (Entry<?, ?> entry: ((Hashtable<?, ?>) client_input).entrySet()){
-					if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
-						features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
-					}
+		// Get encrypted features
+		client_input = from_client_site.readObject();
+		if (client_input instanceof Hashtable) {
+			for (Entry<?, ?> entry: ((Hashtable<?, ?>) client_input).entrySet()){
+				if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
+					features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
 				}
 			}
-			alice Niu = new alice(client_site);
-			Niu.setPaillierPublicKey(paillier_public);
-			Niu.setDGKPublicKey(dgk_public);
+		}
+		alice Niu = new alice(client_site);
+		Niu.setPaillierPublicKey(paillier_public);
+		Niu.setDGKPublicKey(dgk_public);
 
-			long start_time = System.nanoTime();
-			int previous_index = 0;
+		long start_time = System.nanoTime();
+		int previous_index = 0;
 
-			// Traverse DT until you hit a leaf, the client has to track the index...
-            for (level_order_site level_site_data : all_level_sites) {
-				level_site_data.set_current_index(previous_index);
+		// Traverse DT until you hit a leaf, the client has to track the index...
+		for (level_order_site level_site_data : all_level_sites) {
+			level_site_data.set_current_index(previous_index);
 
-                // Handle at a level...
-				NodeInfo leaf = traverse_level(level_site_data, features, to_client_site, Niu);
+			// Handle at a level...
+			NodeInfo leaf = traverse_level(level_site_data, features, to_client_site, Niu);
 
-				// You found a leaf! No more traversing needed!
-				if (leaf != null) {
-					// Tell the client the value
-					to_client_site.writeInt(-1);
-					to_client_site.writeObject(leaf.getVariableName());
-					to_client_site.flush();
-					long stop_time = System.nanoTime();
-					double run_time = (double) (stop_time - start_time);
-					run_time = run_time / 1000000;
-					System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
-					break;
-				}
-            }
-		} catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        serverSocket.close();
+			// You found a leaf! No more traversing needed!
+			if (leaf != null) {
+				// Tell the client the value
+				to_client_site.writeInt(-1);
+				to_client_site.writeObject(leaf.getVariableName());
+				to_client_site.flush();
+				long stop_time = System.nanoTime();
+				double run_time = (double) (stop_time - start_time);
+				run_time = run_time / 1000000;
+				System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
+				break;
+			}
+			else {
+				// Update the index for next merry-go-round
+				previous_index = level_site_data.get_next_index();
+			}
+		}
 	}
 
 	private void client_communication() throws Exception {
@@ -446,12 +460,15 @@ public final class server implements Runnable {
 			} // While n > 0 (nodes > 0)
 			all_level_sites.add(Level_Order_S);
 			++level;
-		} // While Tree Not Empty
+		} // While a tree is not empty
 	}
 
+	// Run should
+	// Train, ONLY if necessary
+	// Evaluate, be prepared for either level-site or no level-site case, 1 time
 	public void run() {
 
-		// Step : 1
+		// Step 1
 		SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 
 		try {
@@ -471,12 +488,12 @@ public final class server implements Runnable {
 		// If we are testing without level-sites do this...
 		if (!use_level_sites) {
 			try {
-				evaluate(this.server_port);
+				run_one_time(this.server_port);
 			}
-			catch (IOException | HomomorphicException e) {
+			catch (IOException | HomomorphicException | ClassNotFoundException e) {
 				throw new RuntimeException(e);
 			}
-			return;
+            return;
 		}
 
 		// There should be at least 1 IP Address for each level site
@@ -506,17 +523,12 @@ public final class server implements Runnable {
 			}
 			current_level_site.set_next_level_site_port(connection_port);
 
-			// System.out.println("Current level-site: " + level_site_ips[i] + ":" + port_to_connect);
-			// System.out.println("Next is: " + current_level_site.get_next_level_site()
-			//		+ ":" + current_level_site.get_next_level_site_port());
-
-			//try (Socket level_site = new Socket(level_site_ips[i], port_to_connect)) {
 			try(SSLSocket level_site = (SSLSocket) factory.createSocket(level_site_ips[i], connection_port)) {
-				// Step : 3
+				// Step: 3
 				level_site.setEnabledProtocols(protocols);
 				level_site.setEnabledCipherSuites(cipher_suites);
 
-				// Step : 4 {optional}
+				// Step: 4 {optional}
 				level_site.startHandshake();
 
 				System.out.println("training level-site " + i + " on port:" + connection_port);

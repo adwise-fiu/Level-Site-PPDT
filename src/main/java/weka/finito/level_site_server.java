@@ -24,7 +24,7 @@ public class level_site_server implements Runnable {
     protected int precision;
 
     protected AES crypto;
-    protected SSLServerSocketFactory factory;
+    protected SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 
     public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException {
         int our_port = 0;
@@ -121,8 +121,7 @@ public class level_site_server implements Runnable {
 
     private void openServerSocket() {
         try {
-            // Step : 1
-            factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+            // Step: 1
             serverSocket = (SSLServerSocket) factory.createServerSocket(this.serverPort);
             serverSocket.setEnabledProtocols(protocols);
             serverSocket.setEnabledCipherSuites(cipher_suites);
