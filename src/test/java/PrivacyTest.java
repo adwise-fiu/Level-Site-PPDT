@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static weka.finito.utils.shared.setup_tls;
 
 
 public final class PrivacyTest {
@@ -29,6 +30,9 @@ public final class PrivacyTest {
 	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub", "classes.txt"};
 	@Before
 	public void read_properties() throws IOException {
+
+		setup_tls();
+
 		// Arguments:
 		System.out.println("Running Full Local Test...");
 		System.out.println("Working Directory = " + System.getProperty("user.dir"));
@@ -51,7 +55,55 @@ public final class PrivacyTest {
 	}
 
 	@Test
-	public void test_all() throws Exception {
+	public void test_single_site() throws Exception {
+		String answer_path = new File(data_directory, "answers.csv").toString();
+		// Parse CSV file with various tests
+		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				String [] values = line.split(",");
+				String data_set = values[0];
+				String features = values[1];
+				String expected_classification = values[2];
+				String full_feature_path = new File(data_directory, features).toString();
+				String full_data_set_path = new File(data_directory, data_set).toString();
+				System.out.println(full_data_set_path);
+				String classification = test_server_case(full_data_set_path, full_feature_path, key_size, precision,
+						 server_ip, server_port);
+				System.out.println(expected_classification + " =!= " + classification);
+				assertEquals(expected_classification, classification);
+			}
+		}
+	}
+
+	public static String test_server_case(String training_data, String features_file,
+										int key_size, int precision, String server_ip, int server_port)
+			throws InterruptedException {
+
+		// Create the server
+		server cloud = new server(training_data, precision, server_port);
+		Thread server = new Thread(cloud);
+		server.start();
+
+		// Create client
+		client evaluate = new client(key_size, features_file, precision, server_ip, server_port);
+		Thread client = new Thread(evaluate);
+		client.start();
+
+		// Programmatically wait until classification is done.
+		server.join();
+		client.join();
+
+		// Be sure to delete any keys you made...
+		for (String file: delete_files) {
+			delete_file(file);
+		}
+		return evaluate.getClassification();
+	}
+
+	// Use this to test with level-sites
+	@Test
+	public void test_all_level_sites() throws Exception {
 		String answer_path = new File(data_directory, "answers.csv").toString();
 		// Parse CSV file with various tests
 		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
@@ -64,7 +116,7 @@ public final class PrivacyTest {
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
 				System.out.println(full_data_set_path);
-				String classification = test_case(full_data_set_path, full_feature_path, levels, key_size, precision,
+				String classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
 		        		level_site_ips, level_site_ports_string, server_ip, server_port);
 				System.out.println(expected_classification + " =!= " + classification);
 				assertEquals(expected_classification, classification);
@@ -72,7 +124,7 @@ public final class PrivacyTest {
 		}
 	}
 
-	public static String test_case(String training_data, String features_file, int levels,
+	public static String test_level_site(String training_data, String features_file, int levels,
 								   int key_size, int precision,
 			String [] level_site_ips, String [] level_site_ports_string, String server_ip, int server_port)
 			throws InterruptedException, NoSuchPaddingException, NoSuchAlgorithmException {
@@ -121,7 +173,7 @@ public final class PrivacyTest {
 		if (myObj.delete()) {
 			System.out.println("Deleted the file: " + myObj.getName());
 		} else {
-			System.out.println("Failed to delete the file.");
+			System.out.println("Failed to delete the file: " + myObj.getName());
 		}
 	}
 }

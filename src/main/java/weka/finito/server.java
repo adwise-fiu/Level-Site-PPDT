@@ -10,15 +10,15 @@ import java.io.IOException;
 
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
 
 import security.DGK.DGKPublicKey;
+import security.misc.HomomorphicException;
+import security.socialistmillionaire.alice;
 import security.paillier.PaillierPublicKey;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
@@ -26,12 +26,22 @@ import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
 
 import weka.core.SerializationHelper;
+import weka.finito.structs.BigIntegers;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
+
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
+import static weka.finito.utils.shared.*;
 
 
 public final class server implements Runnable {
 
+	private final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+	private final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	private final String training_data;
 	private final String [] level_site_ips;
@@ -40,18 +50,29 @@ public final class server implements Runnable {
 	private PaillierPublicKey paillier_public;
 	private DGKPublicKey dgk_public;
 	private final int precision;
-	private ClassifierTree ppdt;
+	private ClassifierTree ppdt = null;
 	private final List<String> leaves = new ArrayList<>();
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
 
 	private final int server_port;
 
+	private int evaluations = 1;
+
     public static void main(String[] args) {
         int port = 0;
 		int precision = 0;
+		String training_data = null;
+		boolean use_level_sites = false;
 
 		// Get data for training.
-		if (args.length != 1) {
+		if (args.length == 1) {
+			training_data = args[0];
+		}
+		else if (args.length == 2){
+			training_data = args[0];
+			use_level_sites = args[1].equalsIgnoreCase("--client");
+		}
+		else {
 			System.out.println("Missing Training Data set as an argument parameter");
 			System.exit(1);
 		}
@@ -80,11 +101,19 @@ public final class server implements Runnable {
 
 		// Create and run the server.
         System.out.println("Server Initialized and started running");
-        server server = new server(args[0], level_domains, port, precision, port);
-		server.run();
-    }
 
-	// For local host testing, (GitHub Actions CI, on PrivacyTest.java)
+		server server;
+		// Pick either Level-Sites or no Level-site
+		if (use_level_sites) {
+			server = new server(training_data, level_domains, port, precision, port);
+		}
+		else {
+			server = new server(training_data, precision, port);
+		}
+		server.run();
+	}
+
+	// For local host testing, (GitHub Actions CI, on PrivacyTest.java, for level-sites)
 	public server(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
 					   int server_port) {
 		this.training_data = training_data;
@@ -94,19 +123,90 @@ public final class server implements Runnable {
 		this.server_port = server_port;
 	}
 
-	// For Cloud environment, (Testing with Kubernetes)
+	// For Cloud environment, (Testing with Kubernetes/EKS, for level-sites)
 	public server(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
 		this.port = port;
 		this.precision = precision;
 		this.server_port = server_port;
+		// I will likely want more than 1 test with server-site!
+		this.evaluations = 100;
 	}
 
-	private static String hash(String text) throws NoSuchAlgorithmException {
-		MessageDigest digest = MessageDigest.getInstance("SHA-256");
-		byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-		return Base64.getEncoder().encodeToString(hash);
+	// For testing, but having just a client and server, just do one evaluation for the sake of testing.
+	public server(String training_data, int precision, int server_port) {
+		this.training_data = training_data;
+		this.level_site_ips = null;
+		this.precision = precision;
+		this.server_port = server_port;
+	}
+
+	private void run_server_site(int port) throws IOException, HomomorphicException, ClassNotFoundException {
+		int count = 0;
+		try (SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(port)) {
+			serverSocket.setEnabledProtocols(protocols);
+			serverSocket.setEnabledCipherSuites(cipher_suites);
+
+			System.out.println("Server will be waiting for direct evaluation from client");
+			while (count < evaluations) {
+				try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
+					evaluate_with_client_directly(client_site);
+				}
+				++count;
+			}
+		}
+	}
+
+	private void evaluate_with_client_directly(SSLSocket client_site)
+			throws IOException, HomomorphicException, ClassNotFoundException {
+
+		ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
+		ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
+
+		Object client_input;
+		Hashtable<String, BigIntegers> features = new Hashtable<>();
+
+		// Get encrypted features
+		client_input = from_client_site.readObject();
+		if (client_input instanceof Hashtable) {
+			for (Entry<?, ?> entry: ((Hashtable<?, ?>) client_input).entrySet()){
+				if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
+					features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
+				}
+			}
+		}
+		alice Niu = new alice(client_site);
+		Niu.setPaillierPublicKey(paillier_public);
+		Niu.setDGKPublicKey(dgk_public);
+
+		long start_time = System.nanoTime();
+		int previous_index = 0;
+
+		// Traverse DT until you hit a leaf, the client has to track the index...
+		for (level_order_site level_site_data : all_level_sites) {
+			level_site_data.set_current_index(previous_index);
+
+			// Handle at a level...
+			NodeInfo leaf = traverse_level(level_site_data, features, to_client_site, Niu);
+
+			// You found a leaf! No more traversing needed!
+			if (leaf != null) {
+				// Tell the client the value
+				to_client_site.writeInt(-1);
+				to_client_site.writeObject(leaf.getVariableName());
+				to_client_site.flush();
+				long stop_time = System.nanoTime();
+				double run_time = (double) (stop_time - start_time);
+				run_time = run_time / 1000000;
+				System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
+				break;
+			}
+			else {
+				// Update the index for next merry-go-round
+				previous_index = level_site_data.get_next_index();
+			}
+		}
 	}
 
 	private void client_communication() throws Exception {
@@ -123,7 +223,6 @@ public final class server implements Runnable {
 
 			o = from_client_site.readObject();
 			this.dgk_public = (DGKPublicKey) o;
-
 			System.out.println("Server collected keys from client");
 
 			// Train level-sites
@@ -352,27 +451,47 @@ public final class server implements Runnable {
 			} // While n > 0 (nodes > 0)
 			all_level_sites.add(Level_Order_S);
 			++level;
-		} // While Tree Not Empty
+		} // While a tree is not empty
 	}
 
+	// Run should
+	// Train, ONLY if necessary
+	// Evaluate, be prepared for either level-site or no level-site case, 1 time
 	public void run() {
 
 		try {
-			// Train the DT
-			ppdt = train_decision_tree(this.training_data);
-			// Get Public Keys from Client AND train level-sites
-			client_communication();
+			// Train the DT if you have to.
+			if (ppdt == null) {
+				ppdt = train_decision_tree(this.training_data);
+				// Get Public Keys from Client AND train level-sites
+				client_communication();	
+			}
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 
+		// If we are testing without level-sites do this...
+		if (this.level_site_ips != null) {
+			train_level_sites();
+		} else {
+			try {
+				run_server_site(this.server_port);
+			}
+			catch (IOException | HomomorphicException | ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	private void train_level_sites() {
 		ObjectOutputStream to_level_site;
 		ObjectInputStream from_level_site;
-		int port_to_connect;
+		int connection_port;
 
 		// There should be at least 1 IP Address for each level site
-		if(this.level_site_ips.length < all_level_sites.size()) {
+        assert this.level_site_ips != null;
+        if(this.level_site_ips.length < all_level_sites.size()) {
 			String error = String.format("Please create more level-sites for the " +
 					"decision tree trained from %s", training_data);
 			throw new RuntimeException(error);
@@ -383,22 +502,35 @@ public final class server implements Runnable {
 			level_order_site current_level_site = all_level_sites.get(i);
 
 			if (port == -1) {
-				port_to_connect = this.level_site_ports[i];
+				connection_port = this.level_site_ports[i];
 			}
 			else {
-				port_to_connect = this.port;
+				connection_port = this.port;
 			}
 
-			try (Socket level_site = new Socket(level_site_ips[i], port_to_connect)) {
-				System.out.println("training level-site " + i + " on port:" + port_to_connect);
+			if (i + 1 != all_level_sites.size()) {
+				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
+			}
+
+			current_level_site.set_next_level_site_port(connection_port);
+
+			try(SSLSocket level_site = (SSLSocket) socket_factory.createSocket(level_site_ips[i], connection_port)) {
+				// Step: 3
+				level_site.setEnabledProtocols(protocols);
+				level_site.setEnabledCipherSuites(cipher_suites);
+
+				// Step: 4 {optional}
+				level_site.startHandshake();
+
+				System.out.println("training level-site " + i + " on port:" + connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = new ObjectInputStream(level_site.getInputStream());
 				to_level_site.writeObject(current_level_site);
 				if(from_level_site.readBoolean()) {
-					System.out.println("Training Successful on port:" + port_to_connect);
+					System.out.println("Training Successful on port:" + connection_port);
 				}
 				else {
-					System.out.println("Training NOT Successful on port:" + port_to_connect);
+					System.out.println("Training NOT Successful on port:" + connection_port);
 				}
 			}
 			catch (IOException e) {

@@ -1,3 +1,7 @@
+# Making certificates, dont mess around here
+.env
+andrew_*
+
 # No Binaries
 bin
 

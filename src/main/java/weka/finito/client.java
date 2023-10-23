@@ -3,11 +3,8 @@ package weka.finito;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Hashtable;
 
@@ -25,7 +22,14 @@ import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
 import weka.finito.structs.BigIntegers;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
+import static weka.finito.utils.shared.*;
+
 public final class client implements Runnable {
+	private final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
 	private final String classes_file = "classes.txt";
 	private final String features_file;
 	private final int key_size;
@@ -50,7 +54,6 @@ public final class client implements Runnable {
 	private DGKPrivateKey dgk_private_key;
 	private PaillierPrivateKey paillier_private_key;
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
-	private boolean talk_to_server_site;
 	private final String server_ip;
 	private final int server_port;
 
@@ -100,7 +103,17 @@ public final class client implements Runnable {
 
 		client test = null;
 		if (args.length == 1) {
-			test = new client(key_size, args[0], level_domains, port, precision,server_ip, port);
+			// Test with level-sites
+			test = new client(key_size, args[0], level_domains, port, precision, server_ip, port);
+		}
+		else if (args.length == 2) {
+			// Test with just a server-site directly
+			if (args[1].equalsIgnoreCase("--server")) {
+				test = new client(key_size, args[0], precision, server_ip, port);
+			}
+			else {
+				test = new client(key_size, args[0], level_domains, port, precision, server_ip, port);
+			}
 		}
 		else {
 			System.out.println("Missing Testing Data set as an argument parameter");
@@ -136,6 +149,24 @@ public final class client implements Runnable {
 		this.server_port = server_port;
 	}
 
+	// Testing using only a single server, no level-sites
+	public client(int key_size, String features_file,
+				  int precision, String server_ip, int server_port) {
+		this.key_size = key_size;
+		this.features_file = features_file;
+		this.level_site_ips = null;
+		this.level_site_ports = null;
+		this.port = -1;
+		this.precision = precision;
+		this.server_ip = server_ip;
+		this.server_port = server_port;
+	}
+
+	// Get Classification after Evaluation
+	public String getClassification() {
+		return this.classification;
+	}
+
 	public void generate_keys() {
 		// Generate Key Pairs
 		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
@@ -150,12 +181,6 @@ public final class client implements Runnable {
 		paillier_public_key = (PaillierPublicKey) paillier.getPublic();
 		dgk_private_key = (DGKPrivateKey) dgk.getPrivate();
 		paillier_private_key = (PaillierPrivateKey) paillier.getPrivate();
-	}
-
-	public static String hash(String text) throws NoSuchAlgorithmException {
-		MessageDigest digest = MessageDigest.getInstance("SHA-256");
-		byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-		return Base64.getEncoder().encodeToString(hash);
 	}
 
 	private boolean need_keys() {
@@ -181,7 +206,7 @@ public final class client implements Runnable {
 	}
 
 	private String [] read_classes() {
-		// Don't forget to remember the classes of DT as well
+		// Remember the classes of DT as well
 		StringBuilder content = new StringBuilder();
 		String line;
 
@@ -199,7 +224,7 @@ public final class client implements Runnable {
 	}
 
 	// Used for set-up
-	private void communicate_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
+	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
 		System.out.println("Connecting to " + server_ip + ":" + server_port);
 		try (Socket server_site = new Socket(server_ip, server_port)) {
@@ -216,12 +241,6 @@ public final class client implements Runnable {
 			classes = (String []) o;
 		}
 	}
-
-	// Get Classification after Evaluation
-	public String getClassification() {
-		return this.classification;
-	}
-
 
 	// Evaluation
 	private Hashtable<String, BigIntegers> read_features(String path,
@@ -262,7 +281,47 @@ public final class client implements Runnable {
 		}
 	}
 
-	// Function used to Evaluate
+	private void evaluate_with_server_site(Socket server_site) throws IOException, HomomorphicException, ClassNotFoundException {
+		// Communicate with each Level-Site
+		Object o;
+		bob client;
+
+		// Create I/O streams
+		ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
+		ObjectInputStream from_server_site = new ObjectInputStream(server_site.getInputStream());
+
+		// Send the encrypted data to Level-Site
+		to_server_site.writeObject(this.feature);
+		to_server_site.flush();
+
+		// Send the Public Keys using Alice and Bob
+		client = new bob(server_site, paillier, dgk);
+
+		// Work with the comparison
+		int comparison_type;
+		while(true) {
+			comparison_type = from_server_site.readInt();
+			if (comparison_type == -1) {
+				this.classification_complete = true;
+				break;
+			}
+			else if (comparison_type == 0) {
+				client.setDGKMode(false);
+			}
+			else if (comparison_type == 1) {
+				client.setDGKMode(true);
+			}
+			client.Protocol4();
+		}
+
+		o = from_server_site.readObject();
+		if (o instanceof String) {
+			classification = (String) o;
+			classification = hashed_classification.get(classification);
+		}
+	}
+
+	// Function used to Evaluate for each level-site
 	private void communicate_with_level_site(Socket level_site)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
@@ -336,9 +395,11 @@ public final class client implements Runnable {
 		}
 	}
 
-	// Function used to Evaluate
+	// Function used to Train (if needed) and Evaluate
 	public void run() {
-		this.talk_to_server_site = this.need_keys();
+
+		// Step: 1
+		boolean talk_to_server_site = this.need_keys();
 
 		try {
 			// Don't regenerate keys if you are just using a different VALUES file
@@ -356,7 +417,7 @@ public final class client implements Runnable {
 			// Client needs to know all possible classes...
 			if (talk_to_server_site) {
 				// Don't send keys to server-site to ask for classes since now it is assumed level-sites are up
-				communicate_with_server_site(paillier_public_key, dgk_public_key);
+				setup_with_server_site(paillier_public_key, dgk_public_key);
 				for (String aClass : classes) {
 					hashed_classification.put(hash(aClass), aClass);
 				}
@@ -374,8 +435,33 @@ public final class client implements Runnable {
 
 		int connection_port;
 		long start_time = System.nanoTime();
-		try {
 
+		// If you are just evaluating directly with the server-site
+		if (level_site_ips == null) {
+			try(SSLSocket server_site = (SSLSocket) factory.createSocket(server_ip, server_port)) {
+				// Step: 3
+				server_site.setEnabledProtocols(protocols);
+				server_site.setEnabledCipherSuites(cipher_suites);
+
+				// Step: 4 {optional}
+				server_site.startHandshake();
+
+				System.out.println("Client connected to sever-site with PPDT");
+				evaluate_with_server_site(server_site);
+				long end_time = System.nanoTime();
+				System.out.println("The Classification is: " + classification);
+				double run_time = (double) (end_time - start_time);
+				run_time = run_time/1000000;
+				System.out.printf("It took %f ms to classify\n", run_time);
+				finish_evaluation();
+			}
+			catch (HomomorphicException | IOException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+			return;
+		}
+
+		try {
 			for (int i = 0; i < level_site_ips.length; i++) {
 				if (classification_complete) {
 					break;
@@ -389,7 +475,13 @@ public final class client implements Runnable {
 					connection_port = port;
 				}
 
-				try(Socket level_site = new Socket(level_site_ips[i], connection_port)) {
+				try(SSLSocket level_site = (SSLSocket) factory.createSocket(level_site_ips[i], connection_port)) {
+					// Step: 3
+					level_site.setEnabledProtocols(protocols);
+					level_site.setEnabledCipherSuites(cipher_suites);
+
+					// Step: 4 {optional}
+					level_site.startHandshake();
 					System.out.println("Client connected to level " + i);
 					communicate_with_level_site(level_site);
 				}
@@ -399,11 +491,14 @@ public final class client implements Runnable {
 			double run_time = (double) (end_time - start_time);
 			run_time = run_time/1000000;
             System.out.printf("It took %f ms to classify\n", run_time);
+			finish_evaluation();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
 
+	private void finish_evaluation() throws IOException {
 		// At the end, write your keys...
 		dgk_public_key.writeKey("dgk.pub");
 		paillier_public_key.writeKey("paillier.pub");
@@ -416,9 +511,6 @@ public final class client implements Runnable {
 				writer.write(aClass);
 				writer.write("\n");
 			}
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 }
