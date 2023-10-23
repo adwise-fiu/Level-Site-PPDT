@@ -18,18 +18,12 @@ jobs:
     - name: Install Graphviz to visualize trees
       run: sudo apt-get install -y graphviz
 
-    - name: Install Java to have KeyTool
-      run: sudo apt-get install -y default-jdk, default-jre, graphviz, curl, python3-pip
-
     - name: Setup Gradle
       uses: actions/setup-java@v3
       with:
         distribution: 'oracle'
         java-version: '17'
         cache: 'gradle'
-
-    - name: Create keystore for local use
-      run: sh create_keystore.sh
 
     - name: Run Gradle Testing
       run: sh gradlew build
