@@ -19,8 +19,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      ALIAS: andrew
-      KEYSTORE: andrew_keystore
+      ALIAS: appsec
+      KEYSTORE: keystore
       PASSWORD: ${{ secrets.PASSWORD }}
 
     steps:

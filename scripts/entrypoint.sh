@@ -12,6 +12,9 @@ if [[ $ROLE == "ALL" ]]; then
 elif [[ $ROLE == "SERVER" ]]; then
     echo "Role: Server selected"
     # gradle -g gradle_user_home run -PchooseRole=weka.finito.server_site
+    while :; do sleep 5 ; done
+elif [[ $ROLE == "SERVER_JOB" ]]; then
+    echo "Role: Server selected. The Job version, this was used before, I might remove later."
 elif [[ $ROLE == "LEVEL_SITE" ]]; then
     echo "Role: Level-site selected"
     gradle -g gradle_user_home run -PchooseRole=weka.finito.level_site_server

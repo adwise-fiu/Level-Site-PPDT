@@ -7,7 +7,7 @@ jobs:
   build-gradle-project:
     runs-on: ubuntu-latest
     env:
-      ALIAS: andrew
+      ALIAS: appsec
       KEYSTORE: keystore
       PASSWORD: ${{ secrets.PASSWORD }}
 

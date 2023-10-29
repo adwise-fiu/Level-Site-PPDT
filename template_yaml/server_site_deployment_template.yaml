@@ -21,7 +21,7 @@ spec:
             - containerPort: 8000
           env:
             - name: TREE_ROLE
-              value: "SERVER" 
+              value: "SERVER"
 
             - name: PPDT_DATA_DIR
               value: "/data/"
