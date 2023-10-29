@@ -196,9 +196,16 @@ public final class server implements Runnable {
 
 	private void client_communication() throws Exception {
 		SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(server_port);
-		System.out.println("Server ready to get public keys from client");
+		System.out.println("Server ready to get public keys from client on port: " + server_port);
 
 		try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
+			// Step: 3
+			client_site.setEnabledProtocols(protocols);
+			client_site.setEnabledCipherSuites(cipher_suites);
+
+			// Step: 4 {optional}
+			client_site.startHandshake();
+
 			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
 			ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
 

@@ -225,8 +225,15 @@ public final class client implements Runnable {
 	// Used for set-up
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
-		System.out.println("Connecting to " + server_ip + ":" + server_port);
-		try (Socket server_site = new Socket(server_ip, server_port)) {
+		System.out.println("Connecting to " + server_ip + ":" + server_port + " for set-up");
+		try (SSLSocket server_site = (SSLSocket) factory.createSocket(server_ip, server_port)) {
+			// Step: 3
+			server_site.setEnabledProtocols(protocols);
+			server_site.setEnabledCipherSuites(cipher_suites);
+
+			// Step: 4 {optional}
+			server_site.startHandshake();
+
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
 			ObjectInputStream from_server_site = new ObjectInputStream(server_site.getInputStream());
 
