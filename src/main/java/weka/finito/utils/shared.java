@@ -19,8 +19,47 @@ import java.util.Properties;
 
 public class shared {
 
-    public static final String[] protocols = new String[]{"TLSv1.3"};
-    public static final String[] cipher_suites = new String[]{"TLS_AES_128_GCM_SHA256"};
+    public static final String[] protocols = new String[]{ "TLSv1.2", "TLSv1.3"};
+    public static final String[] cipher_suites = new String[] {
+            "TLS_AES_128_GCM_SHA256",
+
+            // *_CHACHA20_POLY1305 are 3x to 4x faster than existing cipher suites.
+            //   http://googleonlinesecurity.blogspot.com/2014/04/speeding-up-and-strengthening-https.html
+            // Use them if available. Normative names can be found at (TLS spec depends on IPSec spec):
+            //   http://tools.ietf.org/html/draft-nir-ipsecme-chacha20-poly1305-01
+            //   http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-02
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_SHA",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_SHA",
+
+            "TLS_DHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_DHE_RSA_WITH_CHACHA20_SHA",
+            "TLS_RSA_WITH_CHACHA20_SHA",
+
+            // Done with bleeding edge, back to TLS v1.2 and below
+            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
+
+            // RSA key transport sucks, but they are needed as a fallback.
+            // For example, microsoft.com fails under all versions of TLS
+            // if they are not included. If only TLS 1.0 is available in
+            // the client, then google.com will fail too. TLS v1.3 is
+            // trying to deprecate them, so it will be interesting to see
+            // what happens.
+            "TLS_RSA_WITH_AES_256_CBC_SHA256",
+            "TLS_RSA_WITH_AES_256_CBC_SHA",
+            "TLS_RSA_WITH_AES_128_CBC_SHA256",
+            "TLS_RSA_WITH_AES_128_CBC_SHA"
+    };
 
 
     // Used by server-site to hash leaves and client-site to find the leaf
