@@ -62,15 +62,10 @@ public final class server implements Runnable {
         int port = 0;
 		int precision = 0;
 		String training_data = null;
-		boolean use_server_site = false;
 
 		// Get data for training.
 		if (args.length == 1) {
 			training_data = args[0];
-		}
-		else if (args.length == 2){
-			training_data = args[0];
-			use_server_site = args[1].equalsIgnoreCase("--server");
 		}
 		else {
 			System.out.println("Missing Training Data set as an argument parameter");
@@ -101,21 +96,24 @@ public final class server implements Runnable {
 
 		// Create and run the server.
         System.out.println("Server Initialized and started running");
-
-		server server;
-		// Pick either Level-Sites or no Level-site
-		if (use_server_site) {
-			server = new server(training_data, precision, port);
-		}
-		else {
-			server = new server(training_data, level_domains, port, precision, port);
-		}
+		server server = new server(training_data, level_domains, port, precision, port);
 		server.run();
+	}
+
+	// For Cloud environment, (Testing with Kubernetes/EKS, for level-sites AND server for easier testing)
+	public server(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
+		this.training_data = training_data;
+		this.level_site_ips = level_site_domains;
+		this.port = port;
+		this.precision = precision;
+		this.server_port = server_port;
+		// I will likely want more than 1 test with server-site, after level-sites are ready!
+		this.evaluations = 1000;
 	}
 
 	// For local host testing, (GitHub Actions CI, on PrivacyTest.java, for level-sites)
 	public server(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
-					   int server_port) {
+				  int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_ips;
 		this.level_site_ports = level_site_ports;
@@ -123,18 +121,7 @@ public final class server implements Runnable {
 		this.server_port = server_port;
 	}
 
-	// For Cloud environment, (Testing with Kubernetes/EKS, for level-sites)
-	public server(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
-		this.training_data = training_data;
-		this.level_site_ips = level_site_domains;
-		this.port = port;
-		this.precision = precision;
-		this.server_port = server_port;
-		// I will likely want more than 1 test with server-site!
-		this.evaluations = 100;
-	}
-
-	// For testing, but having just a client and server, just do one evaluation for the sake of testing.
+	// For Local host testing, (GitHub Actions CI, on PrivacyTest.java, for evaluating directly to server)
 	public server(String training_data, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = null;
@@ -474,6 +461,16 @@ public final class server implements Runnable {
 		// If we are testing without level-sites do this...
 		if (this.level_site_ips != null) {
 			train_level_sites();
+			// If running on a cluster, might as well train be able to run server-site too.
+			// If running locally, this.evaluations is set to 1 by default for local testing.
+			if (this.evaluations != 1) {
+				try {
+					run_server_site(this.server_port);
+				}
+				catch (IOException | HomomorphicException | ClassNotFoundException e) {
+					throw new RuntimeException(e);
+				}
+			}
 		} else {
 			try {
 				run_server_site(this.server_port);

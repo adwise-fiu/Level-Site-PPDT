@@ -147,9 +147,6 @@ start the server site. To do this, run the following command.
     kubectl apply -f k8/server
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
 
-    # Test WITHOUT level-sites
-    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE> --server"
-
 To verify that the server site is ready, use the following command to confirm the server_site is _running_
 and check the logs to confirm we see `Server ready to get public keys from client-site` so we can exit and run the client.
 
@@ -193,6 +190,7 @@ kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bas
 # Or just check the server-site being ready as shown in the previous section
 kubectl apply -f k8/client
 kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+kubectl logs -f $(kubectl get pod -l "pod=ppdt-client-deploy"-o name)
 ```
 
 ### Clean up
