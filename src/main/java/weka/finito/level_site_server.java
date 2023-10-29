@@ -23,7 +23,6 @@ public class level_site_server implements Runnable {
     protected level_order_site level_site_parameters = null;
     protected int precision;
 
-    protected AES crypto;
     protected SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 
     public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException {
@@ -41,7 +40,7 @@ public class level_site_server implements Runnable {
             System.out.println("AES_PASS is empty.");
             System.exit(1);
         }
-        level_site_server server = new level_site_server(our_port, our_precision, new AES(AES_Pass));
+        level_site_server server = new level_site_server(our_port, our_precision);
         new Thread(server).start();
         System.out.println("LEVEL SITE SERVER STARTED!");
         while (true) {
@@ -54,10 +53,9 @@ public class level_site_server implements Runnable {
         server.stop();
     }
     
-    public level_site_server (int port, int precision, AES crypto) {
+    public level_site_server (int port, int precision) {
         this.serverPort = port;
         this.precision = precision;
-        this.crypto = crypto;
     }
 
     public void run() {
@@ -81,7 +79,7 @@ public class level_site_server implements Runnable {
                 throw new RuntimeException("Error accepting client connection", e);
             }
             level_site_thread current_level_site_class = new level_site_thread(clientSocket,
-                    this.level_site_parameters, this.crypto);
+                    this.level_site_parameters);
 
             level_order_site new_data = current_level_site_class.getLevelSiteParameters();
             if (this.level_site_parameters == null) {

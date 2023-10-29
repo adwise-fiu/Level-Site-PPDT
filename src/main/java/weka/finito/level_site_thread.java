@@ -25,11 +25,8 @@ public class level_site_thread implements Runnable {
 	private level_order_site level_site_data = null;
 
 	private final Hashtable<String, BigIntegers> encrypted_features = new Hashtable<>();
-	private final AES crypto;
-
-	public level_site_thread(Socket client_socket, level_order_site level_site_data, AES crypto) {
+	public level_site_thread(Socket client_socket, level_order_site level_site_data) {
 		this.client_socket = client_socket;
-		this.crypto = crypto;
 
 		Object x;
 		try {
@@ -74,10 +71,8 @@ public class level_site_thread implements Runnable {
 
 	// This will run the communication with client and next level site
 	public final void run() {
-		Object o;
-		String previous_index = null;
-		String iv = null;
-		boolean get_previous_index;
+
+		int get_previous_index;
 		long start_time = System.nanoTime();
 
 		try {
@@ -90,31 +85,11 @@ public class level_site_thread implements Runnable {
 
 			niu.setDGKPublicKey(this.level_site_data.dgk_public_key);
 			niu.setPaillierPublicKey(this.level_site_data.paillier_public_key);
+			level_site_data.set_current_index(fromClient.readInt());
 
-			get_previous_index = fromClient.readBoolean();
-			if (get_previous_index) {
-				o = fromClient.readObject();
-				if (o instanceof String) {
-					previous_index = (String) o;
-				}
-				o = fromClient.readObject();
-				if (o instanceof String) {
-					iv = (String) o;
-				}
-				previous_index = crypto.decrypt(previous_index, iv);
-			}
-
-			// Level Data is the Node Data...
-			// it is set to 0 by default...
-			if (previous_index != null) {
-				this.level_site_data.set_current_index(Integer.parseInt(previous_index));
-			}
-
-			// Null, keep going down the tree,
+            // Null, keep going down the tree,
 			// Not null, you got the correct leaf node of your DT!
 			NodeInfo reply = traverse_level(level_site_data, encrypted_features, toClient, niu);
-
-			String encrypted_next_index;
 
 			// Place -1 to break Protocol4 loop
 			toClient.writeInt(-1);
@@ -126,13 +101,8 @@ public class level_site_thread implements Runnable {
 				toClient.writeObject(reply.getVariableName());
 			}
 			else {
-
 				toClient.writeBoolean(false);
-				// encrypt with AES, send to the client which will send to next level-site
-				encrypted_next_index = crypto.encrypt(String.valueOf(this.level_site_data.get_next_index()));
-				iv = crypto.getIV();
-				toClient.writeObject(encrypted_next_index);
-				toClient.writeObject(iv);
+				toClient.writeInt(level_site_data.get_next_index());
 			}
 			long stop_time = System.nanoTime();
 			double run_time = (double) (stop_time - start_time);

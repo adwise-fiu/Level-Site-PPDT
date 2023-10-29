@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ALIAS: andrew
-      KEYSTORE: andrew_keystore
+      KEYSTORE: keystore
       PASSWORD: ${{ secrets.PASSWORD }}
 
     steps:

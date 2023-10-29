@@ -18,6 +18,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ALIAS: andrew
+      KEYSTORE: andrew_keystore
+      PASSWORD: ${{ secrets.PASSWORD }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -27,7 +32,10 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
+      - name: Create Key Store
+        run: sh create_keystore.sh
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       

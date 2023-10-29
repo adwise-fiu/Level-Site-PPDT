@@ -1,16 +1,13 @@
 import org.junit.Before;
 import org.junit.Test;
-import weka.finito.AES;
 import weka.finito.client;
 import weka.finito.level_site_server;
 import weka.finito.server;
 
-import javax.crypto.NoSuchPaddingException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -127,7 +124,7 @@ public final class PrivacyTest {
 	public static String test_level_site(String training_data, String features_file, int levels,
 								   int key_size, int precision,
 			String [] level_site_ips, String [] level_site_ports_string, String server_ip, int server_port)
-			throws InterruptedException, NoSuchPaddingException, NoSuchAlgorithmException {
+			throws InterruptedException {
 		
 		int [] level_site_ports = new int[levels];
 
@@ -136,8 +133,7 @@ public final class PrivacyTest {
     	for (int i = 0; i < level_sites.length; i++) {
 			String port_string = level_site_ports_string[i].replaceAll("[^0-9]", "");
     		level_site_ports[i] = Integer.parseInt(port_string);
-    		level_sites[i] = new level_site_server(level_site_ports[i], precision,
-					new AES("AppSecSpring2023"));
+    		level_sites[i] = new level_site_server(level_site_ports[i], precision);
         	new Thread(level_sites[i]).start();
     	}
 
