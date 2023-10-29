@@ -120,7 +120,6 @@ public final class client implements Runnable {
 			System.exit(1);
 		}
 		test.run();
-        System.exit(0);
     }
 
 	// For local host testing with GitHub Actions

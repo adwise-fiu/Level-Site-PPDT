@@ -28,9 +28,7 @@ Run this command and all future commands from `the repository root`, run the fol
 bash setup.sh
 ```
 
-## Usage
-
-### Running it locally
+## Running PPDT locally
 
 1. Check the `config.properties` file is set to your needs. Currently:
    1. It assumes level-site 0 would use port 9000, level-site 1 would use port 9001, etc.
@@ -47,7 +45,7 @@ bash setup.sh
       It is assumed this is a J48 classifier tree model.
    2. The second column would the name of an input file that is tab separated with the feature name and value
    3. The third column would be the expected classification given the input from the second column.
-      If there is a mismatch, there will be an assert error.
+      If there is a mismatch, there will be an assertion error.
 
 To run the end-to-end test, run the following:
 ```bash
@@ -58,14 +56,11 @@ When the testing is done, you will have an output directory containing both the 
 your tree. Input the contents of the text file into the website [here](https://dreampuf.github.io/GraphvizOnline/) to get a
 drawing of what the DT looks like.
 
-### Running on local host Kubernetes Cluster
+## Running PPDT on Kubernetes clusters
 To make it easier for deploying on the cloud, we also provided a method to export our system into Kubernetes.
 This would assume one execution rather than multiple executions.
 
-#### Set Training data set
-In the `server_site_training_job.yaml` file, you need to change the first argument to point to the right ARFF file.
-
-#### Creating a Kubernetes Secret
+### Creating a Kubernetes Secret
 You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites`, `k8/client`, and `k8/server` folder.
 In the yaml file, you will need to replace <SECRET_VALUE> with a random string encoded in Base64.
 This secret is used in the AES encryption between level sites.
@@ -81,16 +76,40 @@ data:
 
 or you can use the command:
 
-    kubectl create secret generic ppdt-secrets --from-literal=aes-key=<SECRET_VALUE>
+    kubectl create secret generic ppdt-secrets --from-literal=keystore-pass=<SECRET_VALUE>
 
-#### Using Minikube
-You will need to start and configure minikube. When writing the paper, we provided 8 CPUs and 20 GB of memory,
-but feel free to modify the arguments that fit your computer's specs.
+### Option 1 - Using Minikube
+You will need to start and configure minikube. When writing the paper, we provided 8 CPUs and 20 GB of memory; this was set using the arguments that fit your computer's specs.
 
     minikube start --cpus 8 --memory 20000
     eval $(minikube docker-env)
 
-#### Running Kubernetes Commands
+### Option 2- Running it on an EKS Cluster
+
+- First install [eksctl](https://eksctl.io/introduction/#installation)
+
+- Create a user with sufficient permissions
+
+- Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
+
+- run `aws configure` to input the access id and credential.
+
+- Run the following command to create the cluster
+```bash
+eksctl create cluster --config-file eks-config/config.yaml
+```
+
+- Confirm the EKS cluster exists using the following
+```bash
+eksctl get clusters --region us-east-2
+```
+
+- Once you confirm the cluster is created, you need to register the cluster with kubectl:
+```bash
+aws eks update-kubeconfig --name ppdt --region us-east-2
+```
+
+### Running Kubernetes Commands
 The next step is to deploy the level sites. The level sites need to be deployed
 before any other portion of the system. This can be done by using the following
 command.
@@ -122,99 +141,70 @@ and wait for an output in standard output saying `Ready to accept connections at
 
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-01-deploy" -o name)
 
-
 After verifying that the level-sites are ready, the next step is to
 start the server site. To do this, run the following command.
 
     kubectl apply -f k8/server
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
+
+    # Test WITHOUT level-sites
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE> --server"
 
 To verify that the server site is ready, use the following command to confirm the server_site is _running_
 and check the logs to confirm we see `Server ready to get public keys from client-site` so we can exit and run the client.
 
     kubectl logs -f $(kubectl get pod -l job-name=ppdt-server-deploy -o name)
 
-To run the client, simply run the following commands to start the client and run an evaluation, 
+To run the client, run the following commands to start the client and run an evaluation, 
 you would point values to something like `/data/hypothyroid.values`
 
     kubectl apply -f k8/client
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 
+    # Test WITHOUT level-sites
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE> --server"
 
-To get the results, access the logs as described in the previous steps for both the client and level-sites.
+To get the results, access the logs as described in the previous steps for both the client and level-sites, see below.
 
-#### Re-running with different experiments
-- *Case 1: Re-run with different testing set*  
+    kubectl logs -f $(kubectl get pod -l "pod=ppdt-client-deploy"-o name)
+
+### Re-running with different experiments
+- *Case 1: Re-run with different testing set* 
 As the job created the pod, you would connect to the pod and run the modified Gradle command with the other VALUES file.
 ```bash
-kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE>"
+
+# Test WITHOUT level sites
+kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE> --server"
 ```
-- *Case 2: Train level-sites with new DT and new testing set*  
-You need to edit the `server_site_training_job.yaml` file to point to a new ARFF file.
+
+- *Case 2: Train level-sites with new DT and new testing set* 
+You need to delete the server, especially if you are testing locally and need to run the server again.
 ```bash
 # Delete job
-kubectl delete -f k8/server-site
+kubectl delete -f k8/server
 kubectl delete -f k8/client
 
 # Re-apply the jobs
-kubectl apply -f k8/server-site
+kubectl apply -f k8/server
+kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
+
 # Wait a few seconds to for server-site to be ready to get the client key...
 # Or just check the server-site being ready as shown in the previous section
 kubectl apply -f k8/client
-kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name)-- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
-```
-#### Clean up
-
-If you want to re-build everything in the experiment, run the following
-
-    docker system prune --force
-    minikube delete
-
-### Running it on an EKS Cluster
-
-#### Installation
-- First install [eksctl](https://eksctl.io/introduction/#installation)
-
-- Create a user with sufficient permissions
-
-- Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
-
-- run `aws configure` to input the access id and credential.
-
-- Run the following command to create the cluster
-```bash
-eksctl create cluster --config-file eks-config/config.yaml
+kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 ```
 
-- Confirm the EKS cluster exists using the following
-```bash
-eksctl get clusters --region us-east-2
-```
-
-#### Running the experiment
-- Once you confirm the cluster is created, you need to register the cluster with kubectl:
-```bash
-aws eks update-kubeconfig --name ppdt --region us-east-2
-```
-
-- Run the same commands as shown below. It is similar to [the previous section](#running-kubernetes-commands), but we point to different yaml files since it is pulling the container image from dockerhub.
-```bash
-# Make sure you aren't running these too early!
-kubectl apply -f eks-config/k8/level_sites
-kubectl apply -f eks-config/k8/server
-
-kubectl apply -f eks-config/k8/client
-kubectl exec <CLIENT-SITE-POD> -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
-
-kubectl exec ppdt-client-deploy-5795dcd946-bctkd -- bash -c "gradle run -PchooseRole=weka.finito.client --args /data/hypothyroid.values"
-```
-- Obtain the results of the classification using `kubectl logs` to the pods deployed on EKS.
-
-- If you want to re-run the experiments, follow the same flow [here](#re-running-with-different-experiments).
-
-#### Clean up
+### Clean up
 Destroy the EKS cluster using the following:
 ```bash
 eksctl delete cluster --config-file eks-config/config.yaml --wait
+docker system prune --force
+```
+
+Destroy the MiniKube environment as follows:
+```bash
+minikube delete
 docker system prune --force
 ```
 

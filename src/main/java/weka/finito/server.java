@@ -62,7 +62,7 @@ public final class server implements Runnable {
         int port = 0;
 		int precision = 0;
 		String training_data = null;
-		boolean use_level_sites = false;
+		boolean use_server_site = false;
 
 		// Get data for training.
 		if (args.length == 1) {
@@ -70,7 +70,7 @@ public final class server implements Runnable {
 		}
 		else if (args.length == 2){
 			training_data = args[0];
-			use_level_sites = args[1].equalsIgnoreCase("--client");
+			use_server_site = args[1].equalsIgnoreCase("--server");
 		}
 		else {
 			System.out.println("Missing Training Data set as an argument parameter");
@@ -104,11 +104,11 @@ public final class server implements Runnable {
 
 		server server;
 		// Pick either Level-Sites or no Level-site
-		if (use_level_sites) {
-			server = new server(training_data, level_domains, port, precision, port);
+		if (use_server_site) {
+			server = new server(training_data, precision, port);
 		}
 		else {
-			server = new server(training_data, precision, port);
+			server = new server(training_data, level_domains, port, precision, port);
 		}
 		server.run();
 	}
