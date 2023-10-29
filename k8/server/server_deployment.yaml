@@ -43,4 +43,7 @@ spec:
               value: "keystore"
 
             - name: PASSWORD
-              value: "WeshoulduseSealedSecretsSometime"
+              valueFrom:
+                secretKeyRef:
+                  name: ppdt-secrets
+                  key: keystore-pass
