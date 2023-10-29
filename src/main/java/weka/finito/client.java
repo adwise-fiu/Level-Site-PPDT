@@ -239,6 +239,7 @@ public final class client implements Runnable {
 			Object o = from_server_site.readObject();
 			classes = (String []) o;
 		}
+		System.out.println("Completed set-up with server");
 	}
 
 	// Evaluation

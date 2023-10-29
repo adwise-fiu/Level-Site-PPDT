@@ -1,6 +1,7 @@
 # Making certificates, dont mess around here
 .env
 keystore
+ppdt-certificate
 
 # No Binaries
 bin

@@ -150,7 +150,7 @@ start the server site. To do this, run the following command.
 To verify that the server site is ready, use the following command to confirm the server_site is _running_
 and check the logs to confirm we see `Server ready to get public keys from client-site` so we can exit and run the client.
 
-    kubectl logs -f $(kubectl get pod -l job-name=ppdt-server-deploy -o name)
+    kubectl logs -f $(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
 
 To run the client, run the following commands to start the client and run an evaluation, 
 you would point values to something like `/data/hypothyroid.values`

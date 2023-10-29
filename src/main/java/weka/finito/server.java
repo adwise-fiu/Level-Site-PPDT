@@ -8,8 +8,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -197,10 +195,10 @@ public final class server implements Runnable {
 	}
 
 	private void client_communication() throws Exception {
-		ServerSocket serverSocket = new ServerSocket(server_port);
+		SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(server_port);
 		System.out.println("Server ready to get public keys from client");
 
-		try (Socket client_site = serverSocket.accept()) {
+		try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
 			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
 			ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
 
@@ -464,6 +462,7 @@ public final class server implements Runnable {
 			// If running on a cluster, might as well train be able to run server-site too.
 			// If running locally, this.evaluations is set to 1 by default for local testing.
 			if (this.evaluations != 1) {
+				System.out.println("It seems server is being tested in K8s environment!");
 				try {
 					run_server_site(this.server_port);
 				}

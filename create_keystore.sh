@@ -18,4 +18,4 @@ keytool -genkey -noprompt \
 # -Djavax.net.ssl.keyStore=${KEYSTORE} -Djavax.net.ssl.keyStorePassword=${PASSWORD}
 # -Djavax.net.ssl.trustStore=${KEYSTORE} -Djavax.net.ssl.trustStorePassword=${PASSWORD}
 
-# keytool -export -alias "${ALIAS}" -keystore "${KEYSTORE}" -rfc -file "${CERTIFICATE}" -storepass "${PASSWORD}"
+keytool -export -alias "${ALIAS}" -keystore "${KEYSTORE}" -rfc -file "${CERTIFICATE}" -storepass "${PASSWORD}"

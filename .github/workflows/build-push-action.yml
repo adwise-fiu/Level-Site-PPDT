@@ -22,6 +22,7 @@ jobs:
       ALIAS: appsec
       KEYSTORE: keystore
       PASSWORD: ${{ secrets.PASSWORD }}
+      CERTIFICATE: ppdt-certificate
 
     steps:
       - name: Checkout
