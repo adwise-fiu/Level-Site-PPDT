@@ -27,8 +27,11 @@ spec:
             - name: PORT_NUM
               value: "9000"
 
-            - name: AES_PASS
+            - name: KEYSTORE
+              value: "keystore"
+
+            - name: PASSWORD
               valueFrom:
                 secretKeyRef:
-                    name: ppdt-secrets
-                    key: aes-key
+                  name: ppdt-secrets
+                  key: keystore-pass

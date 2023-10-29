@@ -7,6 +7,9 @@ bin
 
 # No attaching Kubernetes secrets
 k8/level_sites/ppdt-secrets.yaml
+k8/client/ppdt-secrets.yaml
+k8/server/ppdt-secrets.yaml
+k8/server-job/ppdt-secrets.yaml
 
 # Outputs from PPDT creation
 output

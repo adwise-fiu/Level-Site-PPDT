@@ -1,15 +1,12 @@
 package weka.finito;
 
 import weka.finito.structs.level_order_site;
-
-import javax.crypto.NoSuchPaddingException;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 
 import java.lang.System;
-import java.security.NoSuchAlgorithmException;
 
 import static weka.finito.utils.shared.cipher_suites;
 import static weka.finito.utils.shared.protocols;
@@ -21,15 +18,11 @@ public class level_site_server implements Runnable {
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
     protected level_order_site level_site_parameters = null;
-    protected int precision;
 
-    protected AES crypto;
     protected SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 
-    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException {
+    public static void main(String[] args) {
         int our_port = 0;
-        int our_precision = 0;
-        String AES_Pass = System.getenv("AES_PASS");
 
         try {
             our_port = Integer.parseInt(System.getenv("PORT_NUM"));
@@ -37,11 +30,7 @@ public class level_site_server implements Runnable {
             System.out.println("Port is not defined.");
             System.exit(1);
         }
-        if(AES_Pass == null || AES_Pass.isEmpty()) {
-            System.out.println("AES_PASS is empty.");
-            System.exit(1);
-        }
-        level_site_server server = new level_site_server(our_port, our_precision, new AES(AES_Pass));
+        level_site_server server = new level_site_server(our_port);
         new Thread(server).start();
         System.out.println("LEVEL SITE SERVER STARTED!");
         while (true) {
@@ -54,10 +43,8 @@ public class level_site_server implements Runnable {
         server.stop();
     }
     
-    public level_site_server (int port, int precision, AES crypto) {
+    public level_site_server (int port) {
         this.serverPort = port;
-        this.precision = precision;
-        this.crypto = crypto;
     }
 
     public void run() {
@@ -81,7 +68,7 @@ public class level_site_server implements Runnable {
                 throw new RuntimeException("Error accepting client connection", e);
             }
             level_site_thread current_level_site_class = new level_site_thread(clientSocket,
-                    this.level_site_parameters, this.crypto);
+                    this.level_site_parameters);
 
             level_order_site new_data = current_level_site_class.getLevelSiteParameters();
             if (this.level_site_parameters == null) {

@@ -44,8 +44,7 @@ public final class client implements Runnable {
 	private KeyPair dgk;
 	private KeyPair paillier;
 	private Hashtable<String, BigIntegers> feature = null;
-	private String next_index = null;
-	private String iv = null;
+
 	private boolean classification_complete = false;
 	private String [] classes;
 
@@ -56,6 +55,7 @@ public final class client implements Runnable {
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final String server_ip;
 	private final int server_port;
+	private Integer next_index = 0;
 
     //For k8s deployment.
     public static void main(String[] args) {
@@ -342,14 +342,7 @@ public final class client implements Runnable {
 		// Send bool:
 		// 1- true, there is an encrypted index coming
 		// 2- false, there is NO encrypted index coming
-		if (next_index == null) {
-			to_level_site.writeBoolean(false);
-		}
-		else {
-			to_level_site.writeBoolean(true);
-			to_level_site.writeObject(next_index);
-			to_level_site.writeObject(iv);
-		}
+		to_level_site.writeInt(next_index);
 		to_level_site.flush();
 
 		// Work with the comparison
@@ -377,21 +370,15 @@ public final class client implements Runnable {
 		// true - get leaf value
 		// false - get encrypted AES index for next round
 		classification_complete = from_level_site.readBoolean();
-		o = from_level_site.readObject();
 		if (classification_complete) {
+			o = from_level_site.readObject();
 			if (o instanceof String) {
 				classification = (String) o;
 				classification = hashed_classification.get(classification);
 			}
 		}
 		else {
-			if (o instanceof String) {
-				next_index = (String) o;
-			}
-			o = from_level_site.readObject();
-			if (o instanceof String) {
-				iv = (String) o;
-			}
+			next_index = from_level_site.readInt();
 		}
 	}
 

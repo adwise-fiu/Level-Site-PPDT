@@ -34,8 +34,8 @@ bash setup.sh
 
 1. Check the `config.properties` file is set to your needs. Currently:
    1. It assumes level-site 0 would use port 9000, level-site 1 would use port 9001, etc.
-      1. If you modify this, provide a comma separated string of all the ports for each level-site.
-      2. Currently, it assumes ports 9000 - 9009 will be used.
+      1. If you modify this, provide a comma-separated string of all the ports for each level-site.
+      2. Currently, it assumes ports 9000–9009 will be used.
    2. key_size corresponds to the key size of both DGK and Paillier keys.
    3. precision controls how accurate to measure thresholds that are decimals. If a value was 100.1, then a precision of
       1 would set this value to 1001.
@@ -66,7 +66,7 @@ This would assume one execution rather than multiple executions.
 In the `server_site_training_job.yaml` file, you need to change the first argument to point to the right ARFF file.
 
 #### Creating a Kubernetes Secret
-You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites` folder.
+You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites`, `k8/client`, and `k8/server` folder.
 In the yaml file, you will need to replace <SECRET_VALUE> with a random string encoded in Base64.
 This secret is used in the AES encryption between level sites.
 ```yaml
@@ -76,7 +76,7 @@ metadata:
     name: ppdt-secrets
 type: Opaque
 data:
-  aes-key: <SECRET_VALUE>>
+  keystore-pass: <SECRET_VALUE>>
 ```
 
 or you can use the command:
@@ -144,7 +144,7 @@ To get the results, access the logs as described in the previous steps for both 
 
 #### Re-running with different experiments
 - *Case 1: Re-run with different testing set*  
-As the job created the pod, you would connect to the pod and run the modified gradle command with the other VALUES file.
+As the job created the pod, you would connect to the pod and run the modified Gradle command with the other VALUES file.
 ```bash
 kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 ```
