@@ -72,7 +72,6 @@ public class level_site_thread implements Runnable {
 	// This will run the communication with client and next level site
 	public final void run() {
 
-		int get_previous_index;
 		long start_time = System.nanoTime();
 
 		try {

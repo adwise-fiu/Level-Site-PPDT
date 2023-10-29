@@ -46,4 +46,4 @@ spec:
               value: "keystore"
 
             - name: PASSWORD
-              value: 'helloworld'
+              value: "WeshoulduseSealedSecretsSometime"
