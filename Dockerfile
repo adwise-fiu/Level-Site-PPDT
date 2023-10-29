@@ -16,7 +16,7 @@ WORKDIR /code
 # Move certificate
 # https://stackoverflow.com/questions/54402673/how-to-fix-ssl-certificate-problem-self-signed-certificate-in-certificate-chain
 # https://stackoverflow.com/questions/26028971/docker-container-ssl-certificates
-RUN mv ppdt-certificate /usr/local/share/ca-certificates/
+RUN mv ppdt-certificate /etc/ssl/certs/
 RUN update-ca-certificates
 
 RUN useradd tree-user
