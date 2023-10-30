@@ -63,7 +63,8 @@ This would assume one execution rather than multiple executions.
 ### Creating a Kubernetes Secret
 You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites`, `k8/client`, and `k8/server` folder.
 In the yaml file, you will need to replace <SECRET_VALUE> with a random string encoded in Base64.
-This secret is used in the AES encryption between level sites.
+This secret is to access the keystore in the container. If you want to replicate results with what is 
+stored on DockerHub now, set it to the Base64 encoding of `WeshoulduseSealedSecretsSometime`.
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -86,9 +87,9 @@ You will need to start and configure minikube. When writing the paper, we provid
 
 ### Option 2- Running it on an EKS Cluster
 
-- First install [eksctl](https://eksctl.io/introduction/#installation)
+- First install [eksctl](https://eksctl.io/installation/?h=install)
 
-- Create a user with sufficient permissions
+- Create a user with sufficient permissions. Go to IAM, Select Users, Create User, Attach Policies directly, for a quick experiment select all permission.
 
 - Obtain AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY of the user account. [See the documentation provided here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
 
