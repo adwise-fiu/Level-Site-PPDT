@@ -8,8 +8,7 @@ import java.io.IOException;
 
 import java.lang.System;
 
-import static weka.finito.utils.shared.cipher_suites;
-import static weka.finito.utils.shared.protocols;
+import static weka.finito.utils.shared.*;
 
 public class level_site_server implements Runnable {
 
@@ -22,6 +21,8 @@ public class level_site_server implements Runnable {
     protected SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 
     public static void main(String[] args) {
+        setup_tls();
+
         int our_port = 0;
 
         try {

@@ -59,6 +59,8 @@ public final class client implements Runnable {
 
     //For k8s deployment.
     public static void main(String[] args) {
+		setup_tls();
+		
         // Declare variables needed.
         int key_size = -1;
         int precision = -1;

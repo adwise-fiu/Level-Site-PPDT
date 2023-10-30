@@ -57,6 +57,9 @@ public final class server implements Runnable {
 	private int evaluations = 1;
 
     public static void main(String[] args) {
+
+		setup_tls();
+
         int port = 0;
 		int precision = 0;
 		String training_data = null;
