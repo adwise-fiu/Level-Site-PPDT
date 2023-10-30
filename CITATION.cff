@@ -1,5 +1,5 @@
 cff-version: 1.0.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite the paper."
 authors:
 - family-names: "Quijano"
   given-names: "Andrew"
@@ -8,13 +8,15 @@ authors:
   given-names: "Spyros T."
 - family-names: "Gallagher"
   given-names: "Kevin"
+- family-names: "Akkaya"
+  given-names: "Kemal"
 - family-names: "Samaras"
   given-names: "Nikolaos"
-title: "Privacy Preserving Decision Trees in a Multi-Party Setting: a Level-Based Approach"
+title: "Evaluating Outsourced Decision Trees by a Level-Based Approach"
 version: 2.0.0
 doi: TBD
 date-released: 2021-07-31
-url: "https://github.com/AndrewQuijano/MPC-PPDT"
+url: "https://github.com/AndrewQuijano/Level-Site-PPDT"
 preferred-citation:
   type: article
   authors:
@@ -25,13 +27,15 @@ preferred-citation:
     given-names: "Spyros T."
   - family-names: "Gallagher"
     given-names: "Kevin"
+  - family-names: "Akkaya"
+    given-names: "Kemal"
   - family-names: "Samaras"
     given-names: "Nikolaos"
   journal: "ACM CCS '23 Computer and Communications Security"
   month: 07
   start: 1 # First page number
   end: 12 # Last page number
-  title: "Privacy Preserving Decision Trees in a Multi-Party Setting: a Level-Based Approach"
+  title: "Evaluating Outsourced Decision Trees by a Level-Based Approach"
   issue: 1
   volume: 1
   year: 2023

@@ -110,11 +110,11 @@ aws eks update-kubeconfig --name ppdt --region us-east-2
 ```
 
 ### Running Kubernetes Commands
-The next step is to deploy the level sites. The level sites need to be deployed
-before any other portion of the system. This can be done by using the following
-command.
+The next step is to start deploying all the components running the following:
 
+    kubectl apply -f k8/server
     kubectl apply -f k8/level_sites
+    kubectl apply -f k8/client
 
 You will then need to wait until all the level sites are launched. To verify
 this, please run the following command. All the pods that say level_site should have a status _running_.
@@ -135,35 +135,28 @@ ppdt-level-site-08-deploy-6d596967b8-mh9hz   1/1     Running     1 (2m39s ago)  
 ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)     16h
 ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
 ```
+The next step is to start the server site. To do this, run the following command.
+
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
 
 It does take time for the level-site to be able to accept connections. Run the following command on the first level-site,
 and wait for an output in standard output saying `Ready to accept connections at: 9000`. Use CTRL+C to exit the pod.
 
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-01-deploy" -o name)
 
-After verifying that the level-sites are ready, the next step is to
-start the server site. To do this, run the following command.
-
-    kubectl apply -f k8/server
-    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
 
 To verify that the server site is ready, use the following command to confirm the server_site is _running_
-and check the logs to confirm we see `Server ready to get public keys from client-site` so we can exit and run the client.
+and check the logs to confirm we see `Server ready to get public keys from client-site`.
 
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
 
-To run the client, run the following commands to start the client and run an evaluation, 
-you would point values to something like `/data/hypothyroid.values`
+**In a NEW terminal**, start the client, run the following commands to complete an evaluation. 
+You would point values to something like `/data/hypothyroid.values`
 
-    kubectl apply -f k8/client
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 
     # Test WITHOUT level-sites
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE> --server"
-
-To get the results, access the logs as described in the previous steps for both the client and level-sites, see below.
-
-    kubectl logs -f $(kubectl get pod -l "pod=ppdt-client-deploy"-o name)
 
 ### Re-running with different experiments
 - *Case 1: Re-run with different testing set* 
@@ -190,7 +183,6 @@ kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bas
 # Or just check the server-site being ready as shown in the previous section
 kubectl apply -f k8/client
 kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
-kubectl logs -f $(kubectl get pod -l "pod=ppdt-client-deploy"-o name)
 ```
 
 ### Clean up
