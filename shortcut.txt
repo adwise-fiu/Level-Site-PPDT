@@ -1,5 +1,5 @@
-$SERVER=$(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
-$CLIENT=$(kubectl get pod -l "pod=ppdt-client-deploy" -o name)
+SERVER=$(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
+CLIENT=$(kubectl get pod -l "pod=ppdt-client-deploy" -o name)
 
 # Diabetes
 kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args /data/diabetes.arff"

@@ -16,7 +16,7 @@ managedNodeGroups:
   minSize: 12
   maxSize: 15
   desiredCapacity: 12
-  maxPodsPerNode: 1
+  # maxPodsPerNode: 1
 
   # Allow to communicate with other node groups.
   # If you have multiple node groups you need this to be true
