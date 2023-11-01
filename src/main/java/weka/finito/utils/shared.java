@@ -162,10 +162,10 @@ public class shared {
         System.out.printf("Comparison took %f ms\n", run_time);
         if (((comparisonType == 1) && (ld.threshold == 0))
                 || (comparisonType == 4) || (comparisonType == 5)) {
-            return Niu.Protocol4(encrypted_thresh, encrypted_client_value);
+            return Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
         else {
-            return Niu.Protocol4(encrypted_client_value, encrypted_thresh);
+            return Niu.Protocol2(encrypted_client_value, encrypted_thresh);
         }
     }
 }

@@ -1,7 +1,7 @@
 package weka.finito.structs;
 
-import security.DGK.DGKOperations;
-import security.DGK.DGKPublicKey;
+import security.dgk.DGKOperations;
+import security.dgk.DGKPublicKey;
 import security.misc.HomomorphicException;
 import security.paillier.PaillierCipher;
 import security.paillier.PaillierPublicKey;

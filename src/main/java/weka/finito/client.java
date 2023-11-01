@@ -10,16 +10,17 @@ import java.util.Hashtable;
 
 import java.lang.System;
 
-import security.DGK.DGKKeyPairGenerator;
-import security.DGK.DGKOperations;
-import security.DGK.DGKPrivateKey;
-import security.DGK.DGKPublicKey;
+import security.dgk.DGKKeyPairGenerator;
+import security.dgk.DGKOperations;
+import security.dgk.DGKPrivateKey;
+import security.dgk.DGKPublicKey;
 import security.misc.HomomorphicException;
 import security.paillier.PaillierCipher;
 import security.paillier.PaillierKeyPairGenerator;
 import security.paillier.PaillierPrivateKey;
 import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob;
+import security.socialistmillionaire.bob_joye;
 import weka.finito.structs.BigIntegers;
 
 import javax.net.ssl.SSLSocket;
@@ -198,13 +199,10 @@ public final class client implements Runnable {
 			}
 			return false;
 		}
-		catch (RuntimeException e) {
+		catch (NoSuchAlgorithmException | IOException | ClassNotFoundException e) {
 			return true;
 		}
-		catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    }
 
 	private String [] read_classes() {
 		// Remember the classes of DT as well
@@ -304,7 +302,8 @@ public final class client implements Runnable {
 		to_server_site.flush();
 
 		// Send the Public Keys using Alice and Bob
-		client = new bob(server_site, paillier, dgk);
+		client = new bob_joye(paillier, dgk, null);
+		client.set_socket(server_site);
 
 		// Work with the comparison
 		int comparison_type;
@@ -320,7 +319,7 @@ public final class client implements Runnable {
 			else if (comparison_type == 1) {
 				client.setDGKMode(true);
 			}
-			client.Protocol4();
+			client.Protocol2();
 		}
 
 		o = from_server_site.readObject();
@@ -346,7 +345,8 @@ public final class client implements Runnable {
 		to_level_site.flush();
 
 		// Send the Public Keys using Alice and Bob
-		client = new bob(level_site, paillier, dgk);
+		client = new bob_joye(paillier, dgk, null);
+		client.set_socket(level_site);
 
 		// Send bool:
 		// 1- true, there is an encrypted index coming
@@ -372,7 +372,7 @@ public final class client implements Runnable {
 			else if (comparison_type == 1) {
 				client.setDGKMode(true);
 			}
-			client.Protocol4();
+			client.Protocol2();
 		}
 
 		// Get boolean from level-site:

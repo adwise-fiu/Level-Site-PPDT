@@ -1,6 +1,6 @@
 package weka.finito.structs;
 
-import security.DGK.DGKPublicKey;
+import security.dgk.DGKPublicKey;
 import security.paillier.PaillierPublicKey;
 
 import java.io.Serializable;

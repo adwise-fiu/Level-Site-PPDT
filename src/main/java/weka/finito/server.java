@@ -14,9 +14,9 @@ import java.util.Map.Entry;
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
 
-import security.DGK.DGKPublicKey;
+import security.dgk.DGKPublicKey;
 import security.misc.HomomorphicException;
-import security.socialistmillionaire.alice;
+import security.socialistmillionaire.alice_joye;
 import security.paillier.PaillierPublicKey;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
@@ -164,7 +164,8 @@ public final class server implements Runnable {
 				}
 			}
 		}
-		alice Niu = new alice(client_site);
+		alice_joye Niu = new alice_joye();
+		Niu.set_socket(client_site);
 		Niu.setPaillierPublicKey(paillier_public);
 		Niu.setDGKPublicKey(dgk_public);
 
