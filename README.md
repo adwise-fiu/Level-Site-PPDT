@@ -1,7 +1,7 @@
-# MPC-PPDT
+# Level-Site-PPDT
 [![Build Gradle project](https://github.com/AndrewQuijano/MPC-PPDT/actions/workflows/build-gradle-project.yml/badge.svg)](https://github.com/AndrewQuijano/MPC-PPDT/actions/workflows/build-gradle-project.yml)  
 [![codecov](https://codecov.io/gh/AndrewQuijano/MPC-PPDT/branch/main/graph/badge.svg?token=eEtEvBZYu9)](https://codecov.io/gh/AndrewQuijano/MPC-PPDT)  
-Implementation of the PPDT in the paper "Privacy Preserving Decision Trees in a Multi-Party Setting: a Level-Based Approach"
+Implementation of the PPDT in the paper "Evaluating Outsourced Decision Trees by a Level-Based Approach"
 
 ## Libraries
 * crypto.jar library is from this [repository](https://github.com/AndrewQuijano/Homomorphic_Encryption)
@@ -22,7 +22,8 @@ source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install gradle
 ```
 
-Run this command and all future commands from `the repository root`, run the following command once to install docker.
+Run this command and all future commands from `Level-Site-PPDT` folder, run the following command once to install docker.
+
 **Reboot your machine, then re-run the command to install minikube.**
 ```bash
 bash setup.sh
@@ -160,31 +161,16 @@ You would point values to something like `/data/hypothyroid.values`
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE> --server"
 
 ### Re-running with different experiments
-- *Case 1: Re-run with different testing set* 
-As the job created the pod, you would connect to the pod and run the modified Gradle command with the other VALUES file.
-```bash
-kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE>"
+If you are just re-running the client with the same or different values file, just re-run the above command again. 
+Howver, if you want to test with another data set, best to just rebuild the environment by deleting everything first.
 
-# Test WITHOUT level sites
-kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <NEW-VALUES-FILE> --server"
-```
-
-- *Case 2: Train level-sites with new DT and new testing set* 
-You need to delete the server, especially if you are testing locally and need to run the server again.
 ```bash
-# Delete job
-kubectl delete -f k8/server
 kubectl delete -f k8/client
-
-# Re-apply the jobs
-kubectl apply -f k8/server
-kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
-
-# Wait a few seconds to for server-site to be ready to get the client key...
-# Or just check the server-site being ready as shown in the previous section
-kubectl apply -f k8/client
-kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
+kubectl delete -f k8/server
+kubectl delete -f k8/level_sites
 ```
+
+Then just repeat the instructions on the previous section.
 
 ### Clean up
 Destroy the EKS cluster using the following:
