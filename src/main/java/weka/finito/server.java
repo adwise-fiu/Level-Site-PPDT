@@ -341,38 +341,35 @@ public final class server implements Runnable {
 				}
 				else {
 					float threshold = 0;
+
 					for (int i = 0; i < p.getSons().length; i++) {
+
+						// Determine which type of comparison is occurring.
 						String leftSide = p.getLocalModel().leftSide(p.getTrainingData());
 						String rightSide = p.getLocalModel().rightSide(i, p.getTrainingData());
 
+						// For Type 1/6, it seems a label encoder might be helpful.
+						// Maybe use hashing?
+						// The client and server have to agree ahead of time...
 						char[] rightSideChar = rightSide.toCharArray();
 						int type = 0;
-
 						char[] rightValue = new char[0];
+
+						// Type 1: =
+						// Don't think you can get anything except two booleans or string with '='
 						if (rightSideChar[1] == '=') {
 							type = 1;
 							rightValue = new char[rightSideChar.length - 3];
 							System.arraycopy(rightSideChar, 3, rightValue, 0, rightSideChar.length - 3);
-							String rightValueStr = new String(rightValue);
-							if (rightValueStr.equals("other")) {
-								type = 2;
-								threshold = 1;
-							}
 						}
+						// Type 6: !=
+						// Don't think you can get anything except two booleans or string with '!='
 						else if (rightSideChar[1] == '!') {
-							type = 4;
-							if (rightSideChar[2] == '=') {
-								rightValue = new char[rightSideChar.length - 4];
-								System.arraycopy(rightSideChar, 4, rightValue, 0, rightSideChar.length - 4);
-								String rightValueStr = new String(rightValue);
-								if (rightValueStr.equals("other")) {
-									threshold = 0;
-								}
-								if ((rightValueStr.equals("t"))||(rightValueStr.equals("f"))||(rightValueStr.equals("yes"))||(rightValueStr.equals("no"))) {
-									type = 6;
-								}
-							}
+							type = 6;
+							rightValue = new char[rightSideChar.length - 4];
+							System.arraycopy(rightSideChar, 4, rightValue, 0, rightSideChar.length - 4);
 						}
+						// Type 2 or 3, > or >=
 						else if (rightSideChar[1] == '>') {
 							if (rightSideChar[2] == '=') {
 								type = 2;
@@ -385,12 +382,15 @@ public final class server implements Runnable {
 								System.arraycopy(rightSideChar, 3, rightValue, 0, rightSideChar.length - 3);
 							}
 						}
+						// Type 4 or 5, < or <=
 						else if (rightSideChar[1] == '<') {
+							// Type 4: <=
 							if (rightSideChar[2] == '=') {
 								type = 4;
 								rightValue = new char[rightSideChar.length - 4];
 								System.arraycopy(rightSideChar, 4, rightValue, 0, rightSideChar.length - 4);
 							}
+							// Type 5: <
 							else {
 								type = 5;
 								rightValue = new char[rightSideChar.length - 3];
@@ -398,17 +398,25 @@ public final class server implements Runnable {
 							}
 						}
 
-						String rightValueStr = new String(rightValue);
-
-						if (!rightValueStr.equals("other")) {
-							if (rightValueStr.equals("t") || rightValueStr.equals("yes")) {
+						// Obtain and encrypt the threshold for level-site usage
+						String threshold_string = new String(rightValue);
+						if (threshold_string.equals("other")) {
+							if (type == 6) {
+								threshold = 0;
+							}
+							else if (type == 1) {
 								threshold = 1;
 							}
-							else if (rightValueStr.equals("f") || rightValueStr.equals("no")) {
+						}
+						else {
+							if (threshold_string.equals("t") || threshold_string.equals("yes")) {
+								threshold = 1;
+							}
+							else if (threshold_string.equals("f") || threshold_string.equals("no")) {
 								threshold = 0;
 							}
 							else {
-								threshold = Float.parseFloat(rightValueStr);
+								threshold = Float.parseFloat(threshold_string);
 							}
 						}
 						node_info = new NodeInfo(false, leftSide, type);
