@@ -74,7 +74,7 @@ public class shared {
         List<NodeInfo> node_level_data = level_site_data.get_node_data();
         boolean terminalLeafFound = false;
         boolean equalsFound = false;
-        boolean inequalityHolds = false;
+        boolean inequalityHolds;
         int node_level_index = 0;
         int n = 0;
         int next_index = 0;
@@ -95,19 +95,11 @@ public class shared {
             else {
                 if ((n == 2 * level_site_data.get_current_index()
                         || n == 2 * level_site_data.get_current_index() + 1)) {
+
                     if (ls.comparisonType == 6) {
-                        boolean firstInequalityHolds = compare(ls, 3,
+                        inequalityHolds = compare(ls, 1,
                                 encrypted_features, toClient, niu);
-                        if (firstInequalityHolds) {
-                            inequalityHolds = true;
-                        }
-                        else {
-                            boolean secondInequalityHolds = compare(ls, 5,
-                                    encrypted_features, toClient, niu);
-                            if (secondInequalityHolds) {
-                                inequalityHolds = true;
-                            }
-                        }
+                        inequalityHolds = !inequalityHolds;
                     }
                     else {
                         inequalityHolds = compare(ls, ls.comparisonType,

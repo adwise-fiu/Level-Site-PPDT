@@ -29,6 +29,9 @@ Run this command and all future commands from `Level-Site-PPDT` folder, run the 
 bash setup.sh
 ```
 
+Before you run the PPDT, make sure to create your keystore, this is necessary as the level-sites use TLS sockets. 
+Run the `create_keystore.sh` script, make sure the password is consistent with the Kubernetes secret.
+
 ## Running PPDT locally
 
 1. Check the `config.properties` file is set to your needs. Currently:
@@ -162,7 +165,7 @@ You would point values to something like `/data/hypothyroid.values`
 
 ### Re-running with different experiments
 If you are just re-running the client with the same or different values file, just re-run the above command again. 
-Howver, if you want to test with another data set, best to just rebuild the environment by deleting everything first.
+However, if you want to test with another data set, best to just rebuild the environment by deleting everything first.
 
 ```bash
 kubectl delete -f k8/client
@@ -170,7 +173,7 @@ kubectl delete -f k8/server
 kubectl delete -f k8/level_sites
 ```
 
-Then just repeat the instructions on the previous section.
+Then repeat the instructions on the previous section.
 
 ### Clean up
 Destroy the EKS cluster using the following:
@@ -192,5 +195,4 @@ Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
 [MIT](https://choosealicense.com/licenses/mit/)
 
 ## Project status
-Fully tested and completed. Future work currently includes:
-* See if I can run this on AWS EKS too
+Fully tested and completed. Although I believe I need a label encoder to compare two strings.
