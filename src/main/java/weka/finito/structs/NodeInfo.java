@@ -20,7 +20,7 @@ public final class NodeInfo implements Serializable, Comparable<NodeInfo> {
 	public final boolean is_leaf;
 	public final String variable_name;
 	public final int comparisonType;
-    public final float threshold;
+    public float threshold;
 
 	private BigInteger paillier;
 	private BigInteger dgk;
@@ -44,6 +44,7 @@ public final class NodeInfo implements Serializable, Comparable<NodeInfo> {
 		if (dgk_public_key != null) {
 			this.setDGK(DGKOperations.encrypt(temp_thresh, dgk_public_key));
 		}
+		this.threshold = threshold;
 	}
 
 	public void setDGK(BigInteger dgk){
