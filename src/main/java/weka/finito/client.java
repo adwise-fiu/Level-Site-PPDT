@@ -417,7 +417,7 @@ public final class client implements Runnable {
 					hashed_classification.put(hash(aClass), aClass);
 				}
 				// Make sure level-sites got everything...
-				Thread.sleep(2500);
+				Thread.sleep(2000);
 			}
 			else {
 				System.out.println("Not contacting server-site. Seems you just want to test on the" +
