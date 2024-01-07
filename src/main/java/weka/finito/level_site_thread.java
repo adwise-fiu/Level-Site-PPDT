@@ -2,7 +2,6 @@ package weka.finito;
 
 import java.lang.System;
 
-import security.socialistmillionaire.alice;
 import security.socialistmillionaire.alice_joye;
 import weka.finito.structs.BigIntegers;
 import weka.finito.structs.NodeInfo;
@@ -42,7 +41,7 @@ public class level_site_thread implements Runnable {
 				this.toClient.writeBoolean(true);
 				closeClientConnection();
 			} else if (x instanceof Hashtable) {
-				for (Map.Entry<?, ?> entry: ((Hashtable<?, ?>) x).entrySet()){
+				for (Map.Entry<?, ?> entry: ((Hashtable<?, ?>) x).entrySet()) {
 					if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
 						encrypted_features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
 					}
@@ -76,7 +75,7 @@ public class level_site_thread implements Runnable {
 		long start_time = System.nanoTime();
 
 		try {
-			alice niu = new alice_joye();
+			alice_joye niu = new alice_joye();
 			niu.set_socket(client_socket);
 			if (this.level_site_data == null) {
 				toClient.writeInt(-2);

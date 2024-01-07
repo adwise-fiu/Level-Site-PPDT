@@ -19,7 +19,6 @@ import security.paillier.PaillierCipher;
 import security.paillier.PaillierKeyPairGenerator;
 import security.paillier.PaillierPrivateKey;
 import security.paillier.PaillierPublicKey;
-import security.socialistmillionaire.bob;
 import security.socialistmillionaire.bob_joye;
 import weka.finito.structs.BigIntegers;
 
@@ -291,7 +290,7 @@ public final class client implements Runnable {
 	private void evaluate_with_server_site(Socket server_site) throws IOException, HomomorphicException, ClassNotFoundException {
 		// Communicate with each Level-Site
 		Object o;
-		bob client;
+		bob_joye client;
 
 		// Create I/O streams
 		ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
@@ -334,7 +333,7 @@ public final class client implements Runnable {
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
 		Object o;
-		bob client;
+		bob_joye client;
 
 		// Create I/O streams
 		ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
@@ -412,7 +411,7 @@ public final class client implements Runnable {
 			// Client needs to give server-site public key (to give to level-sites)
 			// Client needs to know all possible classes...
 			if (talk_to_server_site) {
-				// Don't send keys to server-site to ask for classes since now it is assumed level-sites are up
+				// Don't send keys to server-site to ask for classes now it is assumed level-sites are up
 				setup_with_server_site(paillier_public_key, dgk_public_key);
 				for (String aClass : classes) {
 					hashed_classification.put(hash(aClass), aClass);

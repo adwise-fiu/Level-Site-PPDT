@@ -65,6 +65,7 @@ public final class PrivacyTest {
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
 				System.out.println(full_data_set_path);
+				System.out.println("Features Vector: " + full_feature_path);
 				String classification = test_server_case(full_data_set_path, full_feature_path, key_size, precision,
 						 server_ip, server_port);
 				System.out.println(expected_classification + " =!= " + classification);
@@ -113,6 +114,7 @@ public final class PrivacyTest {
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
 				System.out.println(full_data_set_path);
+				System.out.println("Feature Vector Path: " + full_feature_path);
 				String classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
 		        		level_site_ips, level_site_ports_string, server_ip, server_port);
 				System.out.println(expected_classification + " =!= " + classification);
