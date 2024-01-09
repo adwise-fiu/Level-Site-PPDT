@@ -6,36 +6,44 @@ authors:
   orcid: "https://orcid.org/0000-0002-6673-4934"
 - family-names: "Halkidis"
   given-names: "Spyros T."
+  orcid: "https://orcid.org/0000-0001-9983-1012"
 - family-names: "Gallagher"
   given-names: "Kevin"
+  orcid: "https://orcid.org/0000-0002-2714-7841"
 - family-names: "Akkaya"
   given-names: "Kemal"
+  orcid: "https://orcid.org/0000-0002-7103-4545"
 - family-names: "Samaras"
   given-names: "Nikolaos"
-title: "Evaluating Outsourced Decision Trees by a Level-Based Approach"
+  orcid: "https://orcid.org/0000-0001-8201-7081"
+title: "Enhanced Outsourced and Secure Inference for Tall Sparse Decision Trees"
 version: 2.0.0
 doi: TBD
 date-released: 2021-07-31
 url: "https://github.com/AndrewQuijano/Level-Site-PPDT"
 preferred-citation:
-  type: article
+  type: inproceedings
   authors:
   - family-names: "Quijano"
     given-names: "Andrew"
     orcid: "https://orcid.org/0000-0002-6673-4934"
   - family-names: "Halkidis"
     given-names: "Spyros T."
+    orcid: "https://orcid.org/0000-0001-9983-1012"
   - family-names: "Gallagher"
     given-names: "Kevin"
+    orcid: "https://orcid.org/0000-0002-2714-7841"
   - family-names: "Akkaya"
     given-names: "Kemal"
+    orcid: "https://orcid.org/0000-0002-7103-4545"
   - family-names: "Samaras"
     given-names: "Nikolaos"
-  journal: "ACM CCS '23 Computer and Communications Security"
-  month: 07
+    orcid: "https://orcid.org/0000-0001-8201-7081"
+  journal: "ESORICS 2024"
+  month: 09
   start: 1 # First page number
-  end: 12 # Last page number
-  title: "Evaluating Outsourced Decision Trees by a Level-Based Approach"
+  end: 19 # Last page number
+  title: "Enhanced Outsourced and Secure Inference for Tall Sparse Decision Trees"
   issue: 1
   volume: 1
-  year: 2023
+  year: 2024
