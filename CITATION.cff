@@ -19,10 +19,10 @@ authors:
 title: "Enhanced Outsourced and Secure Inference for Tall Sparse Decision Trees"
 version: 2.0.0
 doi: TBD
-date-released: 2021-07-31
+date-released: 2024-03-23
 url: "https://github.com/AndrewQuijano/Level-Site-PPDT"
 preferred-citation:
-  type: inproceedings
+  type: conference-paper
   authors:
   - family-names: "Quijano"
     given-names: "Andrew"
