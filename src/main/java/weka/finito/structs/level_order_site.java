@@ -91,28 +91,4 @@ public final class level_order_site implements Serializable {
     	}
     	return output.toString();
     }
-
-	public boolean equals(level_order_site o) {
-		if (o == this) {
-			return true;
-		}
-
-		if (this.node_level_data.size() == o.node_level_data.size()) {
-			for (int i = 0; i < node_level_data.size(); i++) {
-				NodeInfo left = this.node_level_data.get(i);
-				NodeInfo right = o.node_level_data.get(i);
-				int comparison = left.compareTo(right);
-				if (comparison != 0) {
-					return false;
-				}
-			}
-			return true;
-		}
-		else if (this.node_level_data.size() > o.node_level_data.size()) {
-			return false;
-		}
-		else {
-			return false;
-		}
-	}
 }

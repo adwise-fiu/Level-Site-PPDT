@@ -6,7 +6,11 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import java.lang.System;
+import java.util.Hashtable;
 
 import static weka.finito.utils.shared.*;
 
@@ -54,12 +58,15 @@ public class level_site_server implements Runnable {
             this.runningThread = Thread.currentThread();
         }
         openServerSocket();
+        ObjectInputStream ois;
+        ObjectOutputStream oos;
+        Object o;
 
         while(! isStopped()) {
-            SSLSocket clientSocket;
+            SSLSocket client_socket;
             try {
             	System.out.println("Ready to accept connections at: " + this.serverPort);
-                clientSocket = (SSLSocket) this.serverSocket.accept();
+                client_socket = (SSLSocket) this.serverSocket.accept();
             }
             catch (IOException e) {
                 if(isStopped()) {
@@ -68,23 +75,29 @@ public class level_site_server implements Runnable {
                 }
                 throw new RuntimeException("Error accepting client connection", e);
             }
-            level_site_thread current_level_site_class = new level_site_thread(clientSocket,
-                    this.level_site_parameters);
 
-            level_order_site new_data = current_level_site_class.getLevelSiteParameters();
-            if (this.level_site_parameters == null) {
-            	this.level_site_parameters = new_data;
+            // Collect the object, and see what to do depending on the object.
+            oos = new ObjectOutputStream(client_socket.getOutputStream());
+			ois = new ObjectInputStream(client_socket.getInputStream());
+            o = ois.readObject();
+
+			if (o instanceof level_order_site) {
+				// Traffic from Server, collect the level-site data
+				this.level_site_parameters = (level_order_site) o;
+				// System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
+				oos.writeBoolean(true);
+                closeConnection(oos, ois, client_socket);
+			}
+            else if (o instanceof Hashtable) {
+                // Start evaluating with the client
+                Hashtable x = (Hashtable) o;
+                level_site_evaluation_thread current_level_site_class = new level_site_evaluation_thread(client_socket, 
+                this.level_site_parameters, x);
+                new Thread(current_level_site_class).start();
             }
             else {
-                // Received new data from server-site, overwrite the existing copy if it is new
-                if (!this.level_site_parameters.equals(new_data)) {
-                    this.level_site_parameters = new_data;
-                    // System.out.println("New Training Data received...Overwriting now...");
-                }
-                else {
-                    // System.out.println("Client evaluation starting...");
-                    new Thread(current_level_site_class).start();
-                }
+                System.out.println("The level site received the wrong object: " + o.getClass().getName());
+                closeConnection(oos, ois, client_socket);
             }
         }
         System.out.println("Server Stopped on port: " + this.serverPort) ;

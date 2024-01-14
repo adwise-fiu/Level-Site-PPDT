@@ -21,5 +21,4 @@ public final class BigIntegers implements Serializable {
     public BigInteger getIntegerValueDGK() {
         return this.integerValueDGK;
     }
-
 }

@@ -6,8 +6,10 @@ import weka.finito.structs.BigIntegers;
 import weka.finito.structs.NodeInfo;
 import weka.finito.structs.level_order_site;
 
-import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -160,4 +162,13 @@ public class shared {
             return Niu.Protocol2(encrypted_client_value, encrypted_thresh);
         }
     }
+
+    public static void closeConnection(ObjectOutputStream oos, 
+                    ObjectInputStream ois, Socket client_socket) throws IOException {
+		oos.close();
+		ois.close();
+		if (client_socket != null && client_socket.isConnected()) {
+			client_socket.close();
+		}
+	}
 }
