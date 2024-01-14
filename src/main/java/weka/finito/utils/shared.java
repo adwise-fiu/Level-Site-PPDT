@@ -127,7 +127,7 @@ public class shared {
                             HashMap<String, BigIntegers> encrypted_features, alice Niu)
             throws ClassNotFoundException, HomomorphicException, IOException {
 
-        long start_time = System.nanoTime();
+        boolean answer;
 
         BigIntegers encrypted_values = encrypted_features.get(ld.variable_name);
         BigInteger encrypted_client_value = null;
@@ -147,18 +147,19 @@ public class shared {
             Niu.setDGKMode(true);
         }
         assert encrypted_client_value != null;
+        long start_time = System.nanoTime();
+        if (((comparisonType == 1) && (ld.threshold == 0))
+                || (comparisonType == 4) || (comparisonType == 5)) {
+            answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
+        }
+        else {
+            answer = Niu.Protocol2(encrypted_client_value, encrypted_thresh);
+        }
         long stop_time = System.nanoTime();
-
         double run_time = (double) (stop_time - start_time);
         run_time = run_time / 1000000;
         System.out.printf("Comparison took %f ms\n", run_time);
-        if (((comparisonType == 1) && (ld.threshold == 0))
-                || (comparisonType == 4) || (comparisonType == 5)) {
-            return Niu.Protocol2(encrypted_thresh, encrypted_client_value);
-        }
-        else {
-            return Niu.Protocol2(encrypted_client_value, encrypted_thresh);
-        }
+        return answer;
     }
 
     public static void closeConnection(ObjectOutputStream oos, 
