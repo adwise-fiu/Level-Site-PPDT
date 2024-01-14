@@ -6,8 +6,6 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Hashtable;
-
 import java.lang.System;
 
 import security.dgk.DGKKeyPairGenerator;
@@ -43,8 +41,7 @@ public final class client implements Runnable {
 
 	private KeyPair dgk;
 	private KeyPair paillier;
-	private Hashtable<String, BigIntegers> feature = null;
-
+	private HashMap<String, BigIntegers> feature = null;
 	private boolean classification_complete = false;
 	private String [] classes;
 
@@ -249,7 +246,7 @@ public final class client implements Runnable {
 	}
 
 	// Evaluation
-	private Hashtable<String, BigIntegers> read_features(String path,
+	private HashMap<String, BigIntegers> read_features(String path,
 														PaillierPublicKey paillier_public_key,
 														DGKPublicKey dgk_public_key,
 														int precision)
@@ -258,7 +255,7 @@ public final class client implements Runnable {
 		BigInteger integerValuePaillier;
 		BigInteger integerValueDGK;
 		int intermediateInteger;
-		Hashtable<String, BigIntegers> values = new Hashtable<>();
+		HashMap<String, BigIntegers> values = new HashMap<>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 			String line;
 
@@ -287,27 +284,25 @@ public final class client implements Runnable {
 		}
 	}
 
-	private void evaluate_with_server_site(Socket server_site) throws IOException, HomomorphicException, ClassNotFoundException {
+	private void evaluate_with_server_site(Socket server_site)
+			throws IOException, HomomorphicException, ClassNotFoundException {
 		// Communicate with each Level-Site
 		Object o;
 		bob_joye client;
-
-		// Create I/O streams
-		ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
-		ObjectInputStream from_server_site = new ObjectInputStream(server_site.getInputStream());
-
-		// Send the encrypted data to Level-Site
-		to_server_site.writeObject(this.feature);
-		to_server_site.flush();
 
 		// Send the Public Keys using Alice and Bob
 		client = new bob_joye(paillier, dgk, null);
 		client.set_socket(server_site);
 
-		// Work with the comparison
+		// Send the encrypted data to Level-Site
+		ObjectOutputStream oos = new ObjectOutputStream(server_site.getOutputStream());
+		oos.writeObject(this.feature);
+		oos.flush();
+
+		// Yup, I need the while loop here because all level-sites are at server
 		int comparison_type;
-		while(true) {
-			comparison_type = from_server_site.readInt();
+		while (true) {
+			comparison_type = client.readInt();
 			if (comparison_type == -1) {
 				this.classification_complete = true;
 				break;
@@ -321,7 +316,7 @@ public final class client implements Runnable {
 			client.Protocol2();
 		}
 
-		o = from_server_site.readObject();
+		o = client.readObject();
 		if (o instanceof String) {
 			classification = (String) o;
 			classification = hashed_classification.get(classification);
@@ -353,26 +348,20 @@ public final class client implements Runnable {
 		to_level_site.writeInt(next_index);
 		to_level_site.flush();
 
-		// Work with the comparison
-		int comparison_type;
-		while(true) {
-			comparison_type = from_level_site.readInt();
-			if (comparison_type == -2) {
-				System.out.println("LEVEL-SITE DOESN'T HAVE DATA!!!");
-				this.classification_complete = true;
-				return;
-			}
-			else if (comparison_type == -1) {
-				break;
-			}
-			else if (comparison_type == 0) {
-				client.setDGKMode(false);
-			}
-			else if (comparison_type == 1) {
-				client.setDGKMode(true);
-			}
-			client.Protocol2();
+		// Get the comparison
+		int comparison_type = from_level_site.readInt();
+		if (comparison_type == -1) {
+			System.out.println("LEVEL-SITE DOESN'T HAVE DATA!!!");
+			this.classification_complete = true;
+			return;
 		}
+		else if (comparison_type == 0) {
+			client.setDGKMode(false);
+		}
+		else if (comparison_type == 1) {
+			client.setDGKMode(true);
+		}
+		client.Protocol2();
 
 		// Get boolean from level-site:
 		// true - get leaf value

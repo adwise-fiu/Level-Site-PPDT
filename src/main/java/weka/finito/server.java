@@ -149,25 +149,24 @@ public final class server implements Runnable {
 	private void evaluate_with_client_directly(SSLSocket client_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 
-		ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
-		ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
-
 		Object client_input;
-		Hashtable<String, BigIntegers> features = new Hashtable<>();
+		HashMap<String, BigIntegers> features = new HashMap<>();
+
+		alice_joye Niu = new alice_joye();
+		Niu.set_socket(client_site);
+		Niu.setPaillierPublicKey(paillier_public);
+		Niu.setDGKPublicKey(dgk_public);
 
 		// Get encrypted features
-		client_input = from_client_site.readObject();
-		if (client_input instanceof Hashtable) {
-			for (Entry<?, ?> entry: ((Hashtable<?, ?>) client_input).entrySet()){
+		ObjectInputStream ois = new ObjectInputStream(client_site.getInputStream());
+		client_input = ois.readObject();
+		if (client_input instanceof HashMap) {
+			for (Entry<?, ?> entry: ((HashMap<?, ?>) client_input).entrySet()){
 				if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
 					features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
 				}
 			}
 		}
-		alice_joye Niu = new alice_joye();
-		Niu.set_socket(client_site);
-		Niu.setPaillierPublicKey(paillier_public);
-		Niu.setDGKPublicKey(dgk_public);
 
 		long start_time = System.nanoTime();
 		int previous_index = 0;
@@ -177,14 +176,13 @@ public final class server implements Runnable {
 			level_site_data.set_current_index(previous_index);
 
 			// Handle at a level...
-			NodeInfo leaf = traverse_level(level_site_data, features, to_client_site, Niu);
+			NodeInfo leaf = traverse_level(level_site_data, features, Niu);
 
 			// You found a leaf! No more traversing needed!
 			if (leaf != null) {
 				// Tell the client the value
-				to_client_site.writeInt(-1);
-				to_client_site.writeObject(leaf.getVariableName());
-				to_client_site.flush();
+				Niu.writeInt(-1);
+				Niu.writeObject(leaf.getVariableName());
 				long stop_time = System.nanoTime();
 				double run_time = (double) (stop_time - start_time);
 				run_time = run_time / 1000000;

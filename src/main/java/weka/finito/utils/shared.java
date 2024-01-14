@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -69,8 +69,8 @@ public class shared {
     }
 
     public static NodeInfo traverse_level(level_order_site level_site_data,
-                                         Hashtable<String, BigIntegers> encrypted_features,
-                                         ObjectOutputStream toClient, alice niu)
+                                         HashMap<String, BigIntegers> encrypted_features,
+                                         alice niu)
             throws HomomorphicException, IOException, ClassNotFoundException {
 
         List<NodeInfo> node_level_data = level_site_data.get_node_data();
@@ -100,12 +100,12 @@ public class shared {
 
                     if (ls.comparisonType == 6) {
                         inequalityHolds = compare(ls, 1,
-                                encrypted_features, toClient, niu);
+                                encrypted_features, niu);
                         inequalityHolds = !inequalityHolds;
                     }
                     else {
                         inequalityHolds = compare(ls, ls.comparisonType,
-                                encrypted_features, toClient, niu);
+                                encrypted_features, niu);
                     }
 
                     if (inequalityHolds) {
@@ -124,8 +124,7 @@ public class shared {
 
     // Used by level-site and server-site to compare with a client
     public static boolean compare(NodeInfo ld, int comparisonType,
-                            Hashtable<String, BigIntegers> encrypted_features,
-                            ObjectOutputStream toClient, alice Niu)
+                            HashMap<String, BigIntegers> encrypted_features, alice Niu)
             throws ClassNotFoundException, HomomorphicException, IOException {
 
         long start_time = System.nanoTime();
@@ -138,16 +137,15 @@ public class shared {
         if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
             encrypted_thresh = ld.getPaillier();
             encrypted_client_value = encrypted_values.getIntegerValuePaillier();
-            toClient.writeInt(0);
+            Niu.writeInt(0);
             Niu.setDGKMode(false);
         }
         else if ((comparisonType == 3) || (comparisonType == 5)) {
             encrypted_thresh = ld.getDGK();
             encrypted_client_value = encrypted_values.getIntegerValueDGK();
-            toClient.writeInt(1);
+            Niu.writeInt(1);
             Niu.setDGKMode(true);
         }
-        toClient.flush();
         assert encrypted_client_value != null;
         long stop_time = System.nanoTime();
 

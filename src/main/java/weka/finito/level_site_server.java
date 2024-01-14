@@ -10,7 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import java.lang.System;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import static weka.finito.utils.shared.*;
 
@@ -88,9 +88,9 @@ public class level_site_server implements Runnable {
                     oos.writeBoolean(true);
                     closeConnection(oos, ois, client_socket);
                 }
-                else if (o instanceof Hashtable) {
+                else if (o instanceof HashMap) {
                     // Start evaluating with the client
-                    Hashtable x = (Hashtable) o;
+                    HashMap x = (HashMap) o;
                     level_site_evaluation_thread current_level_site_class = new level_site_evaluation_thread(client_socket,
                             this.level_site_parameters, x);
                     new Thread(current_level_site_class).start();
