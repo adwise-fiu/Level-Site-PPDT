@@ -42,13 +42,11 @@ public class level_site_evaluation_thread implements Runnable {
         ObjectInputStream ois = null;
 		ObjectOutputStream oos = null;
         try {
-            ois = new ObjectInputStream(client_socket.getInputStream());
-			oos = new ObjectOutputStream(client_socket.getOutputStream());
 			niu.set_socket(client_socket);
 			niu.setDGKPublicKey(this.level_site_data.dgk_public_key);
 			niu.setPaillierPublicKey(this.level_site_data.paillier_public_key);
 
-			level_site_data.set_current_index(ois.readInt());
+			level_site_data.set_current_index(niu.readInt());
 
             // Null, keep going down the tree,
 			// Not null, you got the correct leaf node of your DT!
@@ -56,12 +54,12 @@ public class level_site_evaluation_thread implements Runnable {
 
 			if (reply != null) {
 				// Tell the client the value
-				oos.writeBoolean(true);
-				oos.writeObject(reply.getVariableName());
+				niu.writeBoolean(true);
+				niu.writeObject(reply.getVariableName());
 			}
 			else {
-				oos.writeBoolean(false);
-				oos.writeInt(level_site_data.get_next_index());
+				niu.writeBoolean(false);
+				niu.writeInt(level_site_data.get_next_index());
 			}
 			long stop_time = System.nanoTime();
 			double run_time = (double) (stop_time - start_time);

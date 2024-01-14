@@ -345,11 +345,10 @@ public final class client implements Runnable {
 		// Send bool:
 		// 1- true, there is an encrypted index coming
 		// 2- false, there is NO encrypted index coming
-		to_level_site.writeInt(next_index);
-		to_level_site.flush();
+		client.writeInt(next_index);
 
 		// Get the comparison
-		int comparison_type = from_level_site.readInt();
+		int comparison_type = client.readInt();
 		if (comparison_type == -1) {
 			System.out.println("LEVEL-SITE DOESN'T HAVE DATA!!!");
 			this.classification_complete = true;
@@ -366,16 +365,16 @@ public final class client implements Runnable {
 		// Get boolean from level-site:
 		// true - get leaf value
 		// false - get encrypted AES index for next round
-		classification_complete = from_level_site.readBoolean();
+		classification_complete = client.readBoolean();
 		if (classification_complete) {
-			o = from_level_site.readObject();
+			o = client.readObject();
 			if (o instanceof String) {
 				classification = (String) o;
 				classification = hashed_classification.get(classification);
 			}
 		}
 		else {
-			next_index = from_level_site.readInt();
+			next_index = client.readInt();
 		}
 	}
 
