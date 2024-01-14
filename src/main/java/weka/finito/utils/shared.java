@@ -165,8 +165,12 @@ public class shared {
 
     public static void closeConnection(ObjectOutputStream oos, 
                     ObjectInputStream ois, Socket client_socket) throws IOException {
-		oos.close();
-		ois.close();
+        if (oos != null) {
+            oos.close();
+        }
+		if (ois != null) {
+            ois.close();
+        }
 		if (client_socket != null && client_socket.isConnected()) {
 			client_socket.close();
 		}

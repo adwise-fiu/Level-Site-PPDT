@@ -77,27 +77,31 @@ public class level_site_server implements Runnable {
             }
 
             // Collect the object, and see what to do depending on the object.
-            oos = new ObjectOutputStream(client_socket.getOutputStream());
-			ois = new ObjectInputStream(client_socket.getInputStream());
-            o = ois.readObject();
-
-			if (o instanceof level_order_site) {
-				// Traffic from Server, collect the level-site data
-				this.level_site_parameters = (level_order_site) o;
-				// System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
-				oos.writeBoolean(true);
-                closeConnection(oos, ois, client_socket);
-			}
-            else if (o instanceof Hashtable) {
-                // Start evaluating with the client
-                Hashtable x = (Hashtable) o;
-                level_site_evaluation_thread current_level_site_class = new level_site_evaluation_thread(client_socket, 
-                this.level_site_parameters, x);
-                new Thread(current_level_site_class).start();
+            try {
+                oos = new ObjectOutputStream(client_socket.getOutputStream());
+                ois = new ObjectInputStream(client_socket.getInputStream());
+                o = ois.readObject();
+                if (o instanceof level_order_site) {
+                    // Traffic from Server, collect the level-site data
+                    this.level_site_parameters = (level_order_site) o;
+                    // System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
+                    oos.writeBoolean(true);
+                    closeConnection(oos, ois, client_socket);
+                }
+                else if (o instanceof Hashtable) {
+                    // Start evaluating with the client
+                    Hashtable x = (Hashtable) o;
+                    level_site_evaluation_thread current_level_site_class = new level_site_evaluation_thread(client_socket,
+                            this.level_site_parameters, x);
+                    new Thread(current_level_site_class).start();
+                }
+                else {
+                    System.out.println("The level site received the wrong object: " + o.getClass().getName());
+                    closeConnection(oos, ois, client_socket);
+                }
             }
-            else {
-                System.out.println("The level site received the wrong object: " + o.getClass().getName());
-                closeConnection(oos, ois, client_socket);
+           catch (ClassNotFoundException | IOException e) {
+                System.out.println("Yikes! A bad connection from " + client_socket.getInetAddress());
             }
         }
         System.out.println("Server Stopped on port: " + this.serverPort) ;

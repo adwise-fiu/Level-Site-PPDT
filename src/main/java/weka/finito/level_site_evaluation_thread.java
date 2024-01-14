@@ -19,10 +19,7 @@ import static weka.finito.utils.shared.*;
 public class level_site_evaluation_thread implements Runnable {
 
 	private final Socket client_socket;
-	private ObjectInputStream fromClient;
-	private ObjectOutputStream toClient;
-
-	private level_order_site level_site_data = null;
+	private final level_order_site level_site_data;
 	private final Hashtable<String, BigIntegers> encrypted_features = new Hashtable<>();
 
 	// This thread is ONLY to handle evaluations
@@ -42,22 +39,21 @@ public class level_site_evaluation_thread implements Runnable {
 	public final void run() {
 		long start_time = System.nanoTime();
 		alice_joye niu = new alice_joye();
-		ObjectInputStream ois = new ObjectInputStream(client_socket.getInputStream());
-		ObjectOutputStream oos = new ObjectOutputStream(client_socket.getOutputStream());
-
-		try {
-
-
+        ObjectInputStream ois = null;
+		ObjectOutputStream oos = null;
+        try {
+            ois = new ObjectInputStream(client_socket.getInputStream());
+			oos = new ObjectOutputStream(client_socket.getOutputStream());
 			niu.set_socket(client_socket);
 			if (this.level_site_data == null) {
-				toClient.writeInt(-2);
+				oos.writeInt(-2);
 				closeConnection(oos, ois, client_socket);
 				return;
 			}
 
 			niu.setDGKPublicKey(this.level_site_data.dgk_public_key);
 			niu.setPaillierPublicKey(this.level_site_data.paillier_public_key);
-			level_site_data.set_current_index(fromClient.readInt());
+			level_site_data.set_current_index(ois.readInt());
 
             // Null, keep going down the tree,
 			// Not null, you got the correct leaf node of your DT!
