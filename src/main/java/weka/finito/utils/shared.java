@@ -184,6 +184,7 @@ public class shared {
                 weka.finito.structs.BigIntegers.class,
 
                 java.util.HashMap.class,
+                java.util.ArrayList.class,
                 java.lang.String.class,
                 security.paillier.PaillierPublicKey.class,
                 security.dgk.DGKPublicKey.class,

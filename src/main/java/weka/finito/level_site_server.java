@@ -100,7 +100,8 @@ public class level_site_server implements Runnable {
                 }
             }
            catch (ClassNotFoundException | IOException e) {
-                System.out.println("Yikes! A bad connection from " + client_socket.getInetAddress());
+                System.out.println("Yikes! A bad connection from " + client_socket.getInetAddress().getHostAddress());
+                e.printStackTrace();
             }
         }
         System.out.println("Server Stopped on port: " + this.serverPort) ;
