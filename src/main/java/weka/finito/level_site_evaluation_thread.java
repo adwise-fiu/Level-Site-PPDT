@@ -8,8 +8,6 @@ import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import static weka.finito.utils.shared.*;
@@ -19,22 +17,29 @@ public class level_site_evaluation_thread implements Runnable {
 	private final Socket client_socket;
 	private final level_order_site level_site_data;
 	private final features encrypted_features;
+	private final Socket next_level_site;
 
 	// This thread is ONLY to handle evaluations
 	public level_site_evaluation_thread(Socket client_socket, level_order_site level_site_data,
 										features encrypted_features) {
 		// Have encrypted copy of thresholds if not done already for all nodes in level-site
+		this(client_socket, level_site_data, encrypted_features, null);
+	}
+
+	// This thread is ONLY to handle evaluations
+	public level_site_evaluation_thread(Socket client_socket, level_order_site level_site_data,
+										features encrypted_features, Socket next_level_site) {
+		// Have encrypted copy of thresholds if not done already for all nodes in level-site
 		this.level_site_data = level_site_data;
 		this.client_socket = client_socket;
 		this.encrypted_features = encrypted_features;
+		this.next_level_site = next_level_site;
 	}
 
 	// This will run the communication with client and next level site
 	public final void run() {
 		long start_time = System.nanoTime();
 		alice_joye niu = new alice_joye();
-        ObjectInputStream ois = null;
-		ObjectOutputStream oos = null;
         try {
 			niu.set_socket(client_socket);
 			niu.setDGKPublicKey(this.level_site_data.dgk_public_key);
@@ -66,7 +71,7 @@ public class level_site_evaluation_thread implements Runnable {
 		}
 		finally {
 			try {
-				closeConnection(oos, ois, client_socket);
+				closeConnection(client_socket);
 			} catch (IOException e) {
 				System.out.println("IO Exception in closing Level-Site Connection in Evaluation");
 			}

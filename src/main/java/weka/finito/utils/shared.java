@@ -176,6 +176,10 @@ public class shared {
 		}
 	}
 
+    public static void closeConnection(Socket client_socket) throws IOException {
+        closeConnection(null, null, client_socket);
+    }
+
     public static ValidatingObjectInputStream get_ois(Socket socket) throws IOException {
         ValidatingObjectInputStream ois = new ValidatingObjectInputStream(socket.getInputStream());
         ois.accept(

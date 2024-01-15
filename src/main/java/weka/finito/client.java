@@ -300,7 +300,9 @@ public final class client implements Runnable {
 		bob_joye client;
 
 		// Create I/O stream and send features
+		// this.feature.set_next_index(next_index);
 		ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+		ObjectInputStream from_level_site = get_ois(level_site);
 		to_level_site.writeObject(this.feature);
 		to_level_site.flush();
 
@@ -317,7 +319,7 @@ public final class client implements Runnable {
 		// I am not sure why I need this loop, but you will only need 1 comparison.
 		int comparison_type;
 		while (true) {
-			comparison_type = client.readInt();
+			comparison_type = from_level_site.readInt();
 			if (comparison_type == -1) {
 				this.classification_complete = true;
 				break;

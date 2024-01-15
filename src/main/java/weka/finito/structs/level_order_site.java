@@ -13,7 +13,6 @@ import java.util.List;
  */
 
 public final class level_order_site implements Serializable {
-
 	private static final long serialVersionUID = 575566807906351024L;
 	private int index = 0;
     private int next_index;
@@ -24,7 +23,7 @@ public final class level_order_site implements Serializable {
     
     private final List<NodeInfo> node_level_data = new ArrayList<>();
 
-	// Set to value to client, to let level-site d-1 know to talk to client next with answer
+	// Set to value to a client, to let level-site d-1 know to talk to a client next with answer
 	private String next_level_site = "client";
 
 	private int next_level_site_port = -1;

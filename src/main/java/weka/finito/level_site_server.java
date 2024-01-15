@@ -85,6 +85,7 @@ public class level_site_server implements Runnable {
                     this.level_site_parameters = (level_order_site) o;
                     // System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
                     oos.writeBoolean(true);
+                    // Create a persistent connection to next level-site and oos to send the next stuff down
                     closeConnection(oos, ois, client_socket);
                 }
                 else if (o instanceof features) {

@@ -416,7 +416,7 @@ public final class server implements Runnable {
 					}
 
 					assert node_info != null;
-					if (!node_info.is_leaf){
+					if (!node_info.is_leaf) {
 						NodeInfo additionalNode = null;
 						if (node_info.comparisonType == 1) {
 							additionalNode = new NodeInfo(false, node_info.getVariableName(), 6);

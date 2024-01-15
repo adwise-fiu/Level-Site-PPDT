@@ -10,17 +10,15 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.HashMap;
 
-public class features implements Serializable {
+public final class features implements Serializable {
+    private static final long serialVersionUID = 6000706455545108960L;
     private String client_ip;
-    private int current_index;
     private int next_index;
-
     private final HashMap<String, BigIntegers> thresholds;
 
     public features(String path, int precision, PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key)
             throws HomomorphicException, IOException {
         this.client_ip = "";
-        this.current_index = 0;
         this.next_index = 0;
         this.thresholds = read_values(path, precision, paillier_public_key, dgk_public_key);
     }
@@ -35,14 +33,6 @@ public class features implements Serializable {
 
     public void set_client_ip(String client_ip) {
         this.client_ip = client_ip;
-    }
-
-    public int get_current_index() {
-        return this.current_index;
-    }
-
-    public void set_current_index(int current_index) {
-        this.current_index = current_index;
     }
 
     public int get_next_index() {
