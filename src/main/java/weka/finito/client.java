@@ -1,7 +1,6 @@
 package weka.finito;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -10,16 +9,14 @@ import java.lang.System;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import security.dgk.DGKKeyPairGenerator;
-import security.dgk.DGKOperations;
 import security.dgk.DGKPrivateKey;
 import security.dgk.DGKPublicKey;
 import security.misc.HomomorphicException;
-import security.paillier.PaillierCipher;
 import security.paillier.PaillierKeyPairGenerator;
 import security.paillier.PaillierPrivateKey;
 import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob_joye;
-import weka.finito.structs.BigIntegers;
+import weka.finito.structs.features;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -42,7 +39,7 @@ public final class client implements Runnable {
 
 	private KeyPair dgk;
 	private KeyPair paillier;
-	private HashMap<String, BigIntegers> feature = null;
+	private features feature = null;
 	private boolean classification_complete = false;
 	private String [] classes;
 
@@ -247,42 +244,13 @@ public final class client implements Runnable {
 	}
 
 	// Evaluation
-	private HashMap<String, BigIntegers> read_features(String path,
+	private features read_features(String path,
 														PaillierPublicKey paillier_public_key,
 														DGKPublicKey dgk_public_key,
 														int precision)
 					throws IOException, HomomorphicException {
 
-		BigInteger integerValuePaillier;
-		BigInteger integerValueDGK;
-		int intermediateInteger;
-		HashMap<String, BigIntegers> values = new HashMap<>();
-		try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-			String line;
-
-			while ((line = br.readLine()) != null) {
-				String key, value;
-				String[] split = line.split("\\t");
-				key = split[0];
-				value = split[1];
-				if (value.equals("t") || (value.equals("yes"))) {
-					value = "1";
-				}
-				if (value.equals("f") || (value.equals("no"))) {
-					value = "0";
-				}
-				if (value.equals("other")) {
-					value = "1";
-				}
-				System.out.println("Initial value:" + value);
-				intermediateInteger = (int) (Double.parseDouble(value) * Math.pow(10, precision));
-				System.out.println("Value to be compared with:" + intermediateInteger);
-				integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
-				integerValueDGK = DGKOperations.encrypt(intermediateInteger, dgk_public_key);
-				values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
-			}
-			return values;
-		}
+        return new features(path, precision, paillier_public_key, dgk_public_key);
 	}
 
 	private void evaluate_with_server_site(Socket server_site)
@@ -331,11 +299,8 @@ public final class client implements Runnable {
 		Object o;
 		bob_joye client;
 
-		// Create I/O streams
+		// Create I/O stream and send features
 		ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-		ValidatingObjectInputStream from_level_site = get_ois(level_site);
-
-		// Send the encrypted data to Level-Site
 		to_level_site.writeObject(this.feature);
 		to_level_site.flush();
 

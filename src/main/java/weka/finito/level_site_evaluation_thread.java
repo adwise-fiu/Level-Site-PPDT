@@ -3,16 +3,14 @@ package weka.finito;
 import java.lang.System;
 
 import security.socialistmillionaire.alice_joye;
-import weka.finito.structs.BigIntegers;
 import weka.finito.structs.NodeInfo;
+import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 
 import static weka.finito.utils.shared.*;
 
@@ -20,19 +18,15 @@ public class level_site_evaluation_thread implements Runnable {
 
 	private final Socket client_socket;
 	private final level_order_site level_site_data;
-	private final HashMap<String, BigIntegers> encrypted_features = new HashMap<>();
+	private final features encrypted_features;
 
 	// This thread is ONLY to handle evaluations
-	public level_site_evaluation_thread(Socket client_socket, level_order_site level_site_data, HashMap x) {
+	public level_site_evaluation_thread(Socket client_socket, level_order_site level_site_data,
+										features encrypted_features) {
 		// Have encrypted copy of thresholds if not done already for all nodes in level-site
 		this.level_site_data = level_site_data;
 		this.client_socket = client_socket;
-
-		for (Map.Entry<?, ?> entry: ((HashMap<?, ?>) x).entrySet()) {
-			if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
-				encrypted_features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
-			}
-		}
+		this.encrypted_features = encrypted_features;
 	}
 
 	// This will run the communication with client and next level site

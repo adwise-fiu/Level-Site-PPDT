@@ -8,8 +8,6 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import java.util.*;
-import java.util.Map.Entry;
-
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +22,7 @@ import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
 
 import weka.core.SerializationHelper;
-import weka.finito.structs.BigIntegers;
+import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
 
@@ -150,8 +148,7 @@ public final class server implements Runnable {
 			throws IOException, HomomorphicException, ClassNotFoundException {
 
 		Object client_input;
-		HashMap<String, BigIntegers> features = new HashMap<>();
-
+		features input = null;
 		alice_joye Niu = new alice_joye();
 		Niu.set_socket(client_site);
 		Niu.setPaillierPublicKey(paillier_public);
@@ -160,12 +157,8 @@ public final class server implements Runnable {
 		// Get encrypted features
 		ValidatingObjectInputStream ois = get_ois(client_site);
 		client_input = ois.readObject();
-		if (client_input instanceof HashMap) {
-			for (Entry<?, ?> entry: ((HashMap<?, ?>) client_input).entrySet()){
-				if (entry.getKey() instanceof String && entry.getValue() instanceof BigIntegers) {
-					features.put((String) entry.getKey(), (BigIntegers) entry.getValue());
-				}
-			}
+		if (client_input instanceof features) {
+			input = (features) client_input;
 		}
 
 		long start_time = System.nanoTime();
@@ -176,7 +169,7 @@ public final class server implements Runnable {
 			level_site_data.set_current_index(previous_index);
 
 			// Handle at a level...
-			NodeInfo leaf = traverse_level(level_site_data, features, Niu);
+			NodeInfo leaf = traverse_level(level_site_data, input, Niu);
 
 			// You found a leaf! No more traversing needed!
 			if (leaf != null) {

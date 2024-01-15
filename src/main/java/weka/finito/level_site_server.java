@@ -1,6 +1,7 @@
 package weka.finito;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
+import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -9,7 +10,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 import java.lang.System;
-import java.util.HashMap;
 
 import static weka.finito.utils.shared.*;
 
@@ -87,11 +87,10 @@ public class level_site_server implements Runnable {
                     oos.writeBoolean(true);
                     closeConnection(oos, ois, client_socket);
                 }
-                else if (o instanceof HashMap) {
+                else if (o instanceof features) {
                     // Start evaluating with the client
-                    HashMap x = (HashMap) o;
-                    level_site_evaluation_thread current_level_site_class = new level_site_evaluation_thread(client_socket,
-                            this.level_site_parameters, x);
+                    level_site_evaluation_thread current_level_site_class =
+                            new level_site_evaluation_thread(client_socket, this.level_site_parameters, (features) o);
                     new Thread(current_level_site_class).start();
                 }
                 else {

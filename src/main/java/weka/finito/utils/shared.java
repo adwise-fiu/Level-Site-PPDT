@@ -5,6 +5,7 @@ import security.misc.HomomorphicException;
 import security.socialistmillionaire.alice;
 import weka.finito.structs.BigIntegers;
 import weka.finito.structs.NodeInfo;
+import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 
 import java.io.ObjectInputStream;
@@ -16,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -70,7 +70,7 @@ public class shared {
     }
 
     public static NodeInfo traverse_level(level_order_site level_site_data,
-                                         HashMap<String, BigIntegers> encrypted_features,
+                                         features encrypted_features,
                                          alice niu)
             throws HomomorphicException, IOException, ClassNotFoundException {
 
@@ -125,12 +125,12 @@ public class shared {
 
     // Used by level-site and server-site to compare with a client
     public static boolean compare(NodeInfo ld, int comparisonType,
-                            HashMap<String, BigIntegers> encrypted_features, alice Niu)
+                                  features encrypted_features, alice Niu)
             throws ClassNotFoundException, HomomorphicException, IOException {
 
         boolean answer;
 
-        BigIntegers encrypted_values = encrypted_features.get(ld.variable_name);
+        BigIntegers encrypted_values = encrypted_features.get_thresholds(ld.variable_name);
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
 
@@ -182,6 +182,7 @@ public class shared {
                 weka.finito.structs.NodeInfo.class,
                 weka.finito.structs.level_order_site.class,
                 weka.finito.structs.BigIntegers.class,
+                weka.finito.structs.features.class,
 
                 java.util.HashMap.class,
                 java.util.ArrayList.class,
