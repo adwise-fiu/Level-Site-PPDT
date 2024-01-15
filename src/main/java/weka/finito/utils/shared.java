@@ -1,5 +1,6 @@
 package weka.finito.utils;
 
+import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import security.misc.HomomorphicException;
 import security.socialistmillionaire.alice;
 import weka.finito.structs.BigIntegers;
@@ -174,4 +175,25 @@ public class shared {
 			client_socket.close();
 		}
 	}
+
+    public static ValidatingObjectInputStream get_ois(Socket socket) throws IOException {
+        ValidatingObjectInputStream ois = new ValidatingObjectInputStream(socket.getInputStream());
+        ois.accept(
+                weka.finito.structs.NodeInfo.class,
+                weka.finito.structs.level_order_site.class,
+                weka.finito.structs.BigIntegers.class,
+
+                java.util.HashMap.class,
+                java.lang.String.class,
+                security.paillier.PaillierPublicKey.class,
+                security.dgk.DGKPublicKey.class,
+
+                java.lang.Number.class,
+                java.math.BigInteger.class,
+                java.lang.Long.class
+        );
+        ois.accept("[B");
+        ois.accept("[L*");
+        return ois;
+    }
 }

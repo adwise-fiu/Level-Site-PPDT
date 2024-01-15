@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.lang.System;
 
+import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import security.dgk.DGKKeyPairGenerator;
 import security.dgk.DGKOperations;
 import security.dgk.DGKPrivateKey;
@@ -231,7 +232,7 @@ public final class client implements Runnable {
 			server_site.startHandshake();
 
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
-			ObjectInputStream from_server_site = new ObjectInputStream(server_site.getInputStream());
+			ValidatingObjectInputStream from_server_site = get_ois(server_site);
 
 			// Receive a message from the client to get their keys
 			to_server_site.writeObject(paillier);
@@ -332,7 +333,7 @@ public final class client implements Runnable {
 
 		// Create I/O streams
 		ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-		ObjectInputStream from_level_site = new ObjectInputStream(level_site.getInputStream());
+		ValidatingObjectInputStream from_level_site = get_ois(level_site);
 
 		// Send the encrypted data to Level-Site
 		to_level_site.writeObject(this.feature);

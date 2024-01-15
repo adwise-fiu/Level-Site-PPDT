@@ -1,7 +1,6 @@
 package weka.finito;
 
 import java.io.File;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
@@ -14,6 +13,7 @@ import java.util.Map.Entry;
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import security.dgk.DGKPublicKey;
 import security.misc.HomomorphicException;
 import security.socialistmillionaire.alice_joye;
@@ -158,7 +158,7 @@ public final class server implements Runnable {
 		Niu.setDGKPublicKey(dgk_public);
 
 		// Get encrypted features
-		ObjectInputStream ois = new ObjectInputStream(client_site.getInputStream());
+		ValidatingObjectInputStream ois = get_ois(client_site);
 		client_input = ois.readObject();
 		if (client_input instanceof HashMap) {
 			for (Entry<?, ?> entry: ((HashMap<?, ?>) client_input).entrySet()){
@@ -209,7 +209,7 @@ public final class server implements Runnable {
 			client_site.startHandshake();
 
 			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
-			ObjectInputStream from_client_site = new ObjectInputStream(client_site.getInputStream());
+			ValidatingObjectInputStream from_client_site = get_ois(client_site);
 
 			// Receive a message from the client to get their keys
 			Object o = from_client_site.readObject();
@@ -499,7 +499,7 @@ public final class server implements Runnable {
 
 	private void train_level_sites() {
 		ObjectOutputStream to_level_site;
-		ObjectInputStream from_level_site;
+		ValidatingObjectInputStream from_level_site;
 		int connection_port;
 
 		// There should be at least 1 IP Address for each level site
@@ -537,7 +537,7 @@ public final class server implements Runnable {
 
 				System.out.println("training level-site " + i + " on port:" + connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-				from_level_site = new ObjectInputStream(level_site.getInputStream());
+				from_level_site = get_ois(level_site);
 				to_level_site.writeObject(current_level_site);
 				if(from_level_site.readBoolean()) {
 					System.out.println("Training Successful on port:" + connection_port);

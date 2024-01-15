@@ -1,12 +1,11 @@
 package weka.finito;
 
+import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import weka.finito.structs.level_order_site;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
-
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import java.lang.System;
@@ -58,7 +57,7 @@ public class level_site_server implements Runnable {
             this.runningThread = Thread.currentThread();
         }
         openServerSocket();
-        ObjectInputStream ois;
+        ValidatingObjectInputStream ois;
         ObjectOutputStream oos;
         Object o;
 
@@ -79,7 +78,7 @@ public class level_site_server implements Runnable {
             // Collect the object, and see what to do depending on the object.
             try {
                 oos = new ObjectOutputStream(client_socket.getOutputStream());
-                ois = new ObjectInputStream(client_socket.getInputStream());
+                ois = get_ois(client_socket);
                 o = ois.readObject();
                 if (o instanceof level_order_site) {
                     // Traffic from Server, collect the level-site data
