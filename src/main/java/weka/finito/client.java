@@ -348,24 +348,28 @@ public final class client implements Runnable {
 		client.writeInt(next_index);
 
 		// Get the comparison
-		int comparison_type = client.readInt();
-		if (comparison_type == -1) {
-			System.out.println("LEVEL-SITE DOESN'T HAVE DATA!!!");
-			this.classification_complete = true;
-			return;
+		// I am not sure why I need this loop, but you will only need 1 comparison.
+		int comparison_type;
+		while (true) {
+			comparison_type = client.readInt();
+			if (comparison_type == -1) {
+				this.classification_complete = true;
+				break;
+			}
+			else if (comparison_type == 0) {
+				client.setDGKMode(false);
+			}
+			else if (comparison_type == 1) {
+				client.setDGKMode(true);
+			}
+			client.Protocol2();
 		}
-		else if (comparison_type == 0) {
-			client.setDGKMode(false);
-		}
-		else if (comparison_type == 1) {
-			client.setDGKMode(true);
-		}
-		client.Protocol2();
 
 		// Get boolean from level-site:
 		// true - get leaf value
 		// false - get encrypted AES index for next round
 		classification_complete = client.readBoolean();
+		System.out.println("BOOLEAN READ");
 		if (classification_complete) {
 			o = client.readObject();
 			if (o instanceof String) {

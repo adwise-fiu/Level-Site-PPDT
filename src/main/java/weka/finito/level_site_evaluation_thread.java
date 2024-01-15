@@ -51,6 +51,7 @@ public class level_site_evaluation_thread implements Runnable {
             // Null, keep going down the tree,
 			// Not null, you got the correct leaf node of your DT!
 			NodeInfo reply = traverse_level(level_site_data, encrypted_features, niu);
+			niu.writeInt(-1);
 
 			if (reply != null) {
 				// Tell the client the value
