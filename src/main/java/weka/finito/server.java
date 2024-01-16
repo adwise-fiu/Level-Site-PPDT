@@ -160,13 +160,14 @@ public final class server implements Runnable {
 		if (client_input instanceof features) {
 			input = (features) client_input;
 		}
+		assert input != null;
 
 		long start_time = System.nanoTime();
 		int previous_index = 0;
 
 		// Traverse DT until you hit a leaf, the client has to track the index...
 		for (level_order_site level_site_data : all_level_sites) {
-			level_site_data.set_current_index(previous_index);
+            input.set_current_index(previous_index);
 
 			// Handle at a level...
 			NodeInfo leaf = traverse_level(level_site_data, input, Niu);
@@ -184,7 +185,7 @@ public final class server implements Runnable {
 			}
 			else {
 				// Update the index for next merry-go-round
-				previous_index = level_site_data.get_next_index();
+				previous_index = input.get_next_index();
 			}
 		}
 	}

@@ -14,12 +14,14 @@ public final class features implements Serializable {
     private static final long serialVersionUID = 6000706455545108960L;
     private String client_ip;
     private int next_index;
+    private int current_index;
     private final HashMap<String, BigIntegers> thresholds;
 
     public features(String path, int precision, PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key)
             throws HomomorphicException, IOException {
         this.client_ip = "";
         this.next_index = 0;
+        this.current_index =0;
         this.thresholds = read_values(path, precision, paillier_public_key, dgk_public_key);
     }
 
@@ -41,6 +43,14 @@ public final class features implements Serializable {
 
     public void set_next_index(int next_index) {
         this.next_index = next_index;
+    }
+
+    public int get_current_index() {
+        return this.current_index;
+    }
+
+    public void set_current_index(int current_index) {
+        this.current_index = current_index;
     }
 
     public static HashMap<String, BigIntegers> read_values(String path,

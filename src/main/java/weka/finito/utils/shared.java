@@ -88,16 +88,16 @@ public class shared {
             ls = node_level_data.get(node_level_index);
             System.out.println("j=" + node_level_index);
             if (ls.isLeaf()) {
-                if (n == 2 * level_site_data.get_current_index()
-                        || n == 2 * level_site_data.get_current_index() + 1) {
+                if (n == 2 * encrypted_features.get_current_index()
+                        || n == 2 * encrypted_features.get_current_index() + 1) {
                     terminalLeafFound = true;
                     to_return = ls;
                 }
                 n += 2;
             }
             else {
-                if ((n == 2 * level_site_data.get_current_index()
-                        || n == 2 * level_site_data.get_current_index() + 1)) {
+                if ((n == 2 * encrypted_features.get_current_index()
+                        || n == 2 * encrypted_features.get_current_index() + 1)) {
 
                     if (ls.comparisonType == 6) {
                         inequalityHolds = compare(ls, 1,
@@ -111,8 +111,8 @@ public class shared {
 
                     if (inequalityHolds) {
                         equalsFound = true;
-                        level_site_data.set_next_index(next_index);
-                        System.out.println("New index: " + level_site_data.get_next_index());
+                        encrypted_features.set_next_index(next_index);
+                        System.out.println("New index: " + encrypted_features.get_next_index());
                     }
                 }
                 n++;

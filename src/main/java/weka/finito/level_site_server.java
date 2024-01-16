@@ -6,6 +6,7 @@ import weka.finito.structs.level_order_site;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
@@ -20,8 +21,9 @@ public class level_site_server implements Runnable {
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
     protected level_order_site level_site_parameters = null;
-
     protected SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+    private final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+    private SSLSocket next_level_site;
 
     public static void main(String[] args) {
         setup_tls();
@@ -86,12 +88,19 @@ public class level_site_server implements Runnable {
                     // System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
                     oos.writeBoolean(true);
                     // Create a persistent connection to next level-site and oos to send the next stuff down
+                    /*
+                    if(level_site_parameters.get_next_level_site() != null) {
+                        next_level_site = (SSLSocket) socket_factory.createSocket(
+                                level_site_parameters.get_next_level_site(), level_site_parameters.get_next_level_site_port());
+                    }
+                     */
                     closeConnection(oos, ois, client_socket);
                 }
                 else if (o instanceof features) {
                     // Start evaluating with the client
                     level_site_evaluation_thread current_level_site_class =
-                            new level_site_evaluation_thread(client_socket, this.level_site_parameters, (features) o);
+                            new level_site_evaluation_thread(client_socket, this.level_site_parameters,
+                                    (features) o, oos);
                     new Thread(current_level_site_class).start();
                 }
                 else {

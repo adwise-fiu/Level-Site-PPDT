@@ -25,24 +25,19 @@ import static weka.finito.utils.shared.*;
 
 public final class client implements Runnable {
 	private final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-
 	private final String classes_file = "classes.txt";
 	private final String features_file;
 	private final int key_size;
 	private final int precision;
-
 	private final String [] level_site_ips;
 	private final int [] level_site_ports;
 	private final int port;
-
 	private String classification = null;
-
 	private KeyPair dgk;
 	private KeyPair paillier;
 	private features feature = null;
 	private boolean classification_complete = false;
 	private String [] classes;
-
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
 	private DGKPrivateKey dgk_private_key;
@@ -50,7 +45,6 @@ public final class client implements Runnable {
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final String server_ip;
 	private final int server_port;
-	private Integer next_index = 0;
 
     //For k8s deployment.
     public static void main(String[] args) {
@@ -310,11 +304,6 @@ public final class client implements Runnable {
 		client = new bob_joye(paillier, dgk, null);
 		client.set_socket(level_site);
 
-		// Send bool:
-		// 1- true, there is an encrypted index coming
-		// 2- false, there is NO encrypted index coming
-		client.writeInt(next_index);
-
 		// Get the comparison
 		// I am not sure why I need this loop, but you will only need 1 comparison.
 		int comparison_type;
@@ -337,7 +326,6 @@ public final class client implements Runnable {
 		// true - get leaf value
 		// false - get encrypted AES index for next round
 		classification_complete = client.readBoolean();
-		System.out.println("BOOLEAN READ");
 		if (classification_complete) {
 			o = client.readObject();
 			if (o instanceof String) {
@@ -346,7 +334,10 @@ public final class client implements Runnable {
 			}
 		}
 		else {
-			next_index = client.readInt();
+			o = from_level_site.readObject();
+			if (o instanceof features) {
+				this.feature = (features) o;
+			}
 		}
 	}
 
