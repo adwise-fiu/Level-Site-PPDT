@@ -144,6 +144,8 @@ public final class server implements Runnable {
 		}
 	}
 
+	// This is essentially the same as running all level-sites on one server, But
+	// you will lose timing attack protection, see the paper
 	private void evaluate_with_client_directly(SSLSocket client_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 
@@ -163,12 +165,9 @@ public final class server implements Runnable {
 		assert input != null;
 
 		long start_time = System.nanoTime();
-		int previous_index = 0;
 
 		// Traverse DT until you hit a leaf, the client has to track the index...
 		for (level_order_site level_site_data : all_level_sites) {
-            input.set_current_index(previous_index);
-
 			// Handle at a level...
 			NodeInfo leaf = traverse_level(level_site_data, input, Niu);
 
@@ -182,10 +181,6 @@ public final class server implements Runnable {
 				run_time = run_time / 1000000;
 				System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
 				break;
-			}
-			else {
-				// Update the index for next merry-go-round
-				previous_index = input.get_next_index();
 			}
 		}
 	}

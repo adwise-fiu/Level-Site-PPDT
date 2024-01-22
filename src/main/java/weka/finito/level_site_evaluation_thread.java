@@ -53,7 +53,6 @@ public class level_site_evaluation_thread implements Runnable {
 				niu.writeBoolean(false);
 				oos.writeObject(encrypted_features);
 				oos.flush();
-				// Update Index and send it down to the next level-site
 			}
 			long stop_time = System.nanoTime();
 			double run_time = (double) (stop_time - start_time);
