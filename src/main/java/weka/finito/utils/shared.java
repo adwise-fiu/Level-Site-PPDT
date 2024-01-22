@@ -151,7 +151,8 @@ public class shared {
         }
         assert encrypted_client_value != null;
         long start_time = System.nanoTime();
-        if ((comparisonType == 1) || (comparisonType == 4) || (comparisonType == 5)) {
+        if ((comparisonType == 1) && (ld.threshold == 0) ||
+                (comparisonType == 4) || (comparisonType == 5)) {
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
         else {
