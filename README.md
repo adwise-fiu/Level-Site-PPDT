@@ -19,18 +19,49 @@ pip3 install pyyaml
 pip3 install configobj
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
+# In a new terminal, you run this command
 sdk install gradle
 ```
 
-Run this command and all future commands from `Level-Site-PPDT` folder, run the following command once to install docker.
+Run this command and all future commands from `Level-Site-PPDT` folder, run the following command once to install docker and MiniKube.
 
 **Reboot your machine, then re-run the command to install minikube.**
 ```bash
 bash setup.sh
 ```
 
+Also,
+remember to install [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets?tab=readme-ov-file#installation).
+```bash
+sudo apt-get install jq
+
+# Fetch the latest sealed-secrets version using GitHub API
+KUBESEAL_VERSION=$(curl -s https://api.github.com/repos/bitnami-labs/sealed-secrets/tags | jq -r '.[0].name' | cut -c 2-)
+
+# Check if the version was fetched successfully
+if [ -z "$KUBESEAL_VERSION" ]; then
+    echo "Failed to fetch the latest KUBESEAL_VERSION"
+    exit 1
+fi
+
+wget "https://github.com/bitnami-labs/sealed-secrets/releases/download/v${KUBESEAL_VERSION}/kubeseal-${KUBESEAL_VERSION}-linux-amd64.tar.gz"
+tar -xvzf kubeseal-"${KUBESEAL_VERSION}"-linux-amd64.tar.gz kubeseal
+sudo install -m 755 kubeseal /usr/local/bin/kubeseal
+rm kubeseal
+
+# Install Helm
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+rm ./get_helm
+
+# Add Sealed Secret Cluster
+helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
+helm install sealed-secrets -n kube-system --set-string fullnameOverride=sealed-secrets-controller sealed-secrets/sealed-secrets
+```
+
 Before you run the PPDT, make sure to create your keystore, this is necessary as the level-sites use TLS sockets. 
-Run the `create_keystore.sh` script, make sure the password is consistent with the Kubernetes secret.
+Either run `create_keystore.sh` script, make sure the password is consistent with the Kubernetes secret, or just use the Sealed Secret.
 
 ## Running PPDT locally
 
@@ -64,25 +95,6 @@ drawing of what the DT looks like.
 To make it easier for deploying on the cloud, we also provided a method to export our system into Kubernetes.
 This would assume one execution rather than multiple executions.
 
-### Creating a Kubernetes Secret
-You should set up a Kubernetes secret file, called `ppdt-secrets.yaml` in the `k8/level-sites`, `k8/client`, and `k8/server` folder.
-In the yaml file, you will need to replace <SECRET_VALUE> with a random string encoded in Base64.
-This secret is to access the keystore in the container. If you want to replicate results with what is 
-stored on DockerHub now, set it to the Base64 encoding of `WeshoulduseSealedSecretsSometime`.
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-    name: ppdt-secrets
-type: Opaque
-data:
-  keystore-pass: <SECRET_VALUE>>
-```
-
-or you can use the command:
-
-    kubectl create secret generic ppdt-secrets --from-literal=keystore-pass=<SECRET_VALUE>
-
 ### Option 1 - Using Minikube
 You will need to start and configure minikube. When writing the paper, we provided 8 CPUs and 20 GB of memory; this was set using the arguments that fit your computer's specs.
 
@@ -113,6 +125,20 @@ eksctl get clusters --region us-east-2
 ```bash
 aws eks update-kubeconfig --name ppdt --region us-east-2
 ```
+
+### Using/Creating a Kubernetes Sealed Secret
+It is suggested you use the existing sealed secret. The password in this secret is aligned with what is on the keystore,
+
+```commandline
+kubectl -f apply ppdt-sealedsecret.yaml
+```
+
+Alternatively, you can create a new sealed secret as follows:
+```bash
+kubectl create secret generic ppdt-secrets  --from-literal=keystore-pass=ZifangHuang
+kubectl get secret ppdt-secrets -o yaml | kubeseal > ppdt-sealedsecret.yaml
+```
+However, if you make a new sealed secret, you should re-make the keystore as well.
 
 ### Running Kubernetes Commands
 The next step is to start deploying all the components running the following:

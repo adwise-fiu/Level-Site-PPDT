@@ -16,15 +16,29 @@
 # Install docker if user is not already in docker group
 if [[ $(id) != *\(docker\)* ]]; then
 	# INSTALL DOCKER
+	# https://docs.docker.com/engine/install/ubuntu/
 	echo '##################################################'
 	echo '[*] Installing Docker...'
 	echo '##################################################'
 	sleep 3
-	sudo apt install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-	sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-	sudo apt-get update
-	sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
+  for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+
+  # Add Docker's official GPG key:
+  sudo apt-get update
+  sudo apt-get install ca-certificates curl
+  sudo install -m 0755 -d /etc/apt/keyrings
+  sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+  # Add the repository to Apt sources:
+  echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  sudo apt-get update
+
+  sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 	# CONFIGURE STANDARD USER TO MANAGE DOCKER WITHOUT ROOT
 	echo '##################################################'
@@ -38,16 +52,16 @@ if [[ $(id) != *\(docker\)* ]]; then
 	echo '#####################################################################'
 else
 	# INSTALL KUBERNETES CLI TOOLS
+	# https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 	echo '##################################################'
 	echo '[*] Installing kubectl...'
 	echo '##################################################'
 	sleep 3
-	sudo apt-get install -y apt-transport-https ca-certificates curl
-	sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-	echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-	sudo apt-get update -y
-	sudo apt-get install -y kubectl
+  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+  sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+  rm kubectl
 
+  # https://minikube.sigs.k8s.io/docs/start/
 	echo '##################################################'
 	echo '[*] Installing minikube...'
 	echo '##################################################'
