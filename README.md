@@ -53,7 +53,7 @@ rm kubeseal
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
-rm ./get_helm
+rm get_helm
 
 # Add Sealed Secret Cluster
 helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
@@ -130,12 +130,12 @@ aws eks update-kubeconfig --name ppdt --region us-east-2
 It is suggested you use the existing sealed secret. The password in this secret is aligned with what is on the keystore,
 
 ```commandline
-kubectl -f apply ppdt-sealedsecret.yaml
+kubectl apply -f ppdt-sealedsecret.yaml
 ```
 
 Alternatively, you can create a new sealed secret as follows:
 ```bash
-kubectl create secret generic ppdt-secrets  --from-literal=keystore-pass=ZifangHuang
+kubectl create secret generic ppdt-secrets  --from-literal=keystore-pass=<SECRET_VALUE>
 kubectl get secret ppdt-secrets -o yaml | kubeseal > ppdt-sealedsecret.yaml
 ```
 However, if you make a new sealed secret, you should re-make the keystore as well.
