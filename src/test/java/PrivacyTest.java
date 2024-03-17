@@ -13,9 +13,11 @@ import java.util.Properties;
 import static org.junit.Assert.assertEquals;
 import static weka.finito.utils.shared.setup_tls;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public final class PrivacyTest {
-
+	private static final Logger logger = LogManager.getLogger(PrivacyTest.class);
 	private String [] level_site_ports_string;
 	private String [] level_site_ips;
 	private int levels;
@@ -31,8 +33,8 @@ public final class PrivacyTest {
 		setup_tls();
 
 		// Arguments:
-		System.out.println("Running Full Local Test...");
-		System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		logger.info("Running Full Local Test...");
+		logger.info("Working Directory = " + System.getProperty("user.dir"));
 
 		Properties config = new Properties();
 		try (FileReader in = new FileReader("config.properties")) {
@@ -64,11 +66,11 @@ public final class PrivacyTest {
 				String expected_classification = values[2];
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
-				System.out.println(full_data_set_path);
-				System.out.println("Features Vector: " + full_feature_path);
+				logger.info(full_data_set_path);
+				logger.info("Features Vector: " + full_feature_path);
 				String classification = test_server_case(full_data_set_path, full_feature_path, key_size, precision,
 						 server_ip, server_port);
-				System.out.println(expected_classification + " =!= " + classification);
+				logger.info(expected_classification + " =!= " + classification);
 				assertEquals(expected_classification, classification);
 			}
 		}
@@ -113,11 +115,11 @@ public final class PrivacyTest {
 		        String expected_classification = values[2];
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
-				System.out.println(full_data_set_path);
-				System.out.println("Feature Vector Path: " + full_feature_path);
+				logger.info(full_data_set_path);
+				logger.info("Feature Vector Path: " + full_feature_path);
 				String classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
 		        		level_site_ips, level_site_ports_string, server_ip, server_port);
-				System.out.println(expected_classification + " =!= " + classification);
+				logger.info(expected_classification + " =!= " + classification);
 				assertEquals(expected_classification, classification);
 		    }
 		}
@@ -169,9 +171,9 @@ public final class PrivacyTest {
 	public static void delete_file(String file_name){
 		File myObj = new File(file_name);
 		if (myObj.delete()) {
-			System.out.println("Deleted the file: " + myObj.getName());
+			logger.info("Deleted the file: " + myObj.getName());
 		} else {
-			System.out.println("Failed to delete the file: " + myObj.getName());
+			logger.info("Failed to delete the file: " + myObj.getName());
 		}
 	}
 }
