@@ -10,7 +10,12 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.HashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public final class features implements Serializable {
+    private static final Logger logger = LogManager.getLogger(features.class);
+    @Serial
     private static final long serialVersionUID = 6000706455545108960L;
     private String client_ip;
     private int next_index;
@@ -81,9 +86,9 @@ public final class features implements Serializable {
                 if (value.equals("other")) {
                     value = "1";
                 }
-                System.out.println("Initial value:" + value);
+                logger.info("Initial value:" + value);
                 intermediateInteger = (int) (Double.parseDouble(value) * Math.pow(10, precision));
-                System.out.println("Value to be compared with:" + intermediateInteger);
+                logger.info("Value to be compared with:" + intermediateInteger);
                 integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
                 integerValueDGK = DGKOperations.encrypt(intermediateInteger, dgk_public_key);
                 values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));

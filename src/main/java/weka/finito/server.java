@@ -33,9 +33,11 @@ import javax.net.ssl.SSLSocketFactory;
 
 import static weka.finito.utils.shared.*;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public final class server implements Runnable {
-
+	private static final Logger logger = LogManager.getLogger(server.class);
 	private final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 	private final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private static final String os = System.getProperty("os.name").toLowerCase();
@@ -67,34 +69,34 @@ public final class server implements Runnable {
 			training_data = args[0];
 		}
 		else {
-			System.out.println("Missing Training Data set as an argument parameter");
+			logger.error("Missing Training Data set as an argument parameter");
 			System.exit(1);
 		}
 
         try {
             port = Integer.parseInt(System.getenv("PORT_NUM"));
         } catch (NumberFormatException e) {
-			System.out.println("No level site port provided");
+			logger.error("No level site port provided");
             System.exit(1);
         }
 
 		try {
 			precision = Integer.parseInt(System.getenv("PRECISION"));
 		} catch (NumberFormatException e) {
-			System.out.println("Precision is not defined.");
+			logger.error("Precision is not defined.");
 			System.exit(1);
 		}
         
         // Pass data to level sites.
         String level_domains_str = System.getenv("LEVEL_SITE_DOMAINS");
         if(level_domains_str == null || level_domains_str.isEmpty()) {
-			System.out.println("No level site domains provided");
+			logger.error("No level site domains provided");
             System.exit(1);
         }
         String[] level_domains = level_domains_str.split(",");
 
 		// Create and run the server.
-        System.out.println("Server Initialized and started running");
+        logger.info("Server Initialized and started running");
 		server server = new server(training_data, level_domains, port, precision, port);
 		server.run();
 	}
@@ -134,7 +136,7 @@ public final class server implements Runnable {
 			serverSocket.setEnabledProtocols(protocols);
 			serverSocket.setEnabledCipherSuites(cipher_suites);
 
-			System.out.println("Server will be waiting for direct evaluation from client");
+			logger.info("Server will be waiting for direct evaluation from client");
 			while (count < evaluations) {
 				try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
 					evaluate_with_client_directly(client_site);
@@ -179,7 +181,7 @@ public final class server implements Runnable {
 				long stop_time = System.nanoTime();
 				double run_time = (double) (stop_time - start_time);
 				run_time = run_time / 1000000;
-				System.out.printf("Total Server-Site run-time took %f ms\n", run_time);
+				logger.info(String.format("Total Server-Site run-time took %f ms\n", run_time));
 				break;
 			}
 		}
@@ -187,7 +189,7 @@ public final class server implements Runnable {
 
 	private void client_communication() throws Exception {
 		SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(server_port);
-		System.out.println("Server ready to get public keys from client on port: " + server_port);
+		logger.info("Server ready to get public keys from client on port: " + server_port);
 
 		try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
 			// Step: 3
@@ -206,18 +208,18 @@ public final class server implements Runnable {
 
 			o = from_client_site.readObject();
 			this.dgk_public = (DGKPublicKey) o;
-			System.out.println("Server collected keys from client");
+			logger.info("Server collected keys from client");
 
 			// Train level-sites
 			get_level_site_data(ppdt, all_level_sites);
 
-			System.out.println("Server trained DT and created level-sites");
+			logger.info("Server trained DT and created level-sites");
 
 			// Now I know the leaves to send back to the client
 			String [] leaf_array = leaves.toArray(new String[0]);
 			to_client_site.writeObject(leaf_array);
 
-			System.out.println("Server sent the leaves back to the client");
+			logger.info("Server sent the leaves back to the client");
 		}
 		serverSocket.close();
 	}
@@ -243,7 +245,7 @@ public final class server implements Runnable {
 				}
 			}
 			catch (IOException e) {
-				System.out.println("Can't generate image, so skip for now...");
+				logger.error("Can't generate image, so skip for now...");
 			}
 		}
 	}
@@ -278,7 +280,7 @@ public final class server implements Runnable {
 		try (BufferedReader reader = new BufferedReader(new FileReader(arff_file))) {
 			train = new Instances(reader);
 		} catch (IOException e2) {
-			e2.printStackTrace();
+			logger.error(e2.getStackTrace());
 		}
 		assert train != null;
 		train.setClassIndex(train.numAttributes() - 1);
@@ -468,7 +470,7 @@ public final class server implements Runnable {
 			// If running on a cluster, might as well train be able to run server-site too.
 			// If running locally, this.evaluations is set to 1 by default for local testing.
 			if (this.evaluations != 1) {
-				System.out.println("It seems server is being tested in K8s environment!");
+				logger.info("It seems server is being tested in K8s environment!");
 				try {
 					run_server_site(this.server_port);
 				}
@@ -524,15 +526,15 @@ public final class server implements Runnable {
 				// Step: 4 {optional}
 				level_site.startHandshake();
 
-				System.out.println("training level-site " + i + " on port:" + connection_port);
+				logger.info("training level-site " + i + " on port:" + connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = get_ois(level_site);
 				to_level_site.writeObject(current_level_site);
 				if(from_level_site.readBoolean()) {
-					System.out.println("Training Successful on port:" + connection_port);
+					logger.info("Training Successful on port:" + connection_port);
 				}
 				else {
-					System.out.println("Training NOT Successful on port:" + connection_port);
+					logger.error("Training NOT Successful on port:" + connection_port);
 				}
 			}
 			catch (IOException e) {

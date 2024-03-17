@@ -139,13 +139,13 @@ public class shared {
         // Encrypt the thresh-hold correctly
         if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
             encrypted_thresh = ld.getPaillier();
-            encrypted_client_value = encrypted_values.getIntegerValuePaillier();
+            encrypted_client_value = encrypted_values.integerValuePaillier();
             Niu.writeInt(0);
             Niu.setDGKMode(false);
         }
         else if ((comparisonType == 3) || (comparisonType == 5)) {
             encrypted_thresh = ld.getDGK();
-            encrypted_client_value = encrypted_values.getIntegerValueDGK();
+            encrypted_client_value = encrypted_values.integerValueDGK();
             Niu.writeInt(1);
             Niu.setDGKMode(true);
         }

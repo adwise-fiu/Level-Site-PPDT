@@ -6,6 +6,7 @@ import security.misc.HomomorphicException;
 import security.paillier.PaillierCipher;
 import security.paillier.PaillierPublicKey;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigInteger;
 
@@ -15,13 +16,12 @@ import java.math.BigInteger;
  */
 
 public final class NodeInfo implements Serializable {
-
+	@Serial
 	private static final long serialVersionUID = -3569139531917752891L;
 	public final boolean is_leaf;
 	public final String variable_name;
 	public final int comparisonType;
     public float threshold;
-
 	private BigInteger paillier;
 	private BigInteger dgk;
 
@@ -62,7 +62,6 @@ public final class NodeInfo implements Serializable {
 	public BigInteger getPaillier() {
 		return this.paillier;
 	}
-
     
     public boolean isLeaf() {
     	return this.is_leaf;

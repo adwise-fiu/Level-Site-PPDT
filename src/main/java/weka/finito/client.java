@@ -23,7 +23,11 @@ import javax.net.ssl.SSLSocketFactory;
 
 import static weka.finito.utils.shared.*;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public final class client implements Runnable {
+	private static final Logger logger = LogManager.getLogger(client.class);
 	private final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private final String classes_file = "classes.txt";
 	private final String features_file;
@@ -60,7 +64,7 @@ public final class client implements Runnable {
         // Read in our environment variables.
         level_site_string = System.getenv("LEVEL_SITE_DOMAINS");
         if(level_site_string == null || level_site_string.isEmpty()) {
-            System.out.println("No level site domains provided.");
+            logger.fatal("No level site domains provided.");
             System.exit(1);
         }
         String[] level_domains = level_site_string.split(",");
@@ -68,27 +72,27 @@ public final class client implements Runnable {
         try {
             port = Integer.parseInt(System.getenv("PORT_NUM"));
         } catch (NumberFormatException e) {
-            System.out.println("No port provided for the Level Sites.");
+            logger.fatal("No port provided for the Level Sites.");
             System.exit(1);
         }
 
         try {
             precision = Integer.parseInt(System.getenv("PRECISION"));
         } catch (NumberFormatException e) {
-            System.out.println("No Precision value provided.");
+            logger.fatal("No Precision value provided.");
             System.exit(1);
         }
 
         try {
             key_size = Integer.parseInt(System.getenv("PPDT_KEY_SIZE"));
         } catch (NumberFormatException e) {
-            System.out.println("No crypto key provided value provided.");
+            logger.fatal("No crypto key provided value provided.");
             System.exit(1);
         }
 
 		server_ip = System.getenv("SERVER");
 		if(server_ip == null || server_ip.isEmpty()) {
-			System.out.println("No server site domain provided.");
+			logger.fatal("No server site domain provided.");
 			System.exit(1);
 		}
 
@@ -107,7 +111,7 @@ public final class client implements Runnable {
 			}
 		}
 		else {
-			System.out.println("Missing Testing Data set as an argument parameter");
+			logger.fatal("Missing Testing Data set as an argument parameter");
 			System.exit(1);
 		}
 		test.run();
@@ -213,7 +217,7 @@ public final class client implements Runnable {
 	// Used for set-up
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
-		System.out.println("Connecting to " + server_ip + ":" + server_port + " for set-up");
+		logger.info("Connecting to " + server_ip + ":" + server_port + " for set-up");
 		try (SSLSocket server_site = (SSLSocket) factory.createSocket(server_ip, server_port)) {
 			// Step: 3
 			server_site.setEnabledProtocols(protocols);
@@ -234,7 +238,7 @@ public final class client implements Runnable {
 			Object o = from_server_site.readObject();
 			classes = (String []) o;
 		}
-		System.out.println("Completed set-up with server");
+		logger.info("Completed set-up with server");
 	}
 
 	// Evaluation
@@ -350,11 +354,11 @@ public final class client implements Runnable {
 		try {
 			// Don't regenerate keys if you are just using a different VALUES file
 			if (talk_to_server_site) {
-				System.out.println("Need to generate keys...");
+				logger.info("Need to generate keys...");
 				generate_keys();
 			}
 			else {
-				System.out.println("I already read the keys from a file made from a previous run...");
+				logger.info("I already read the keys from a file made from a previous run...");
 			}
 
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
@@ -371,7 +375,7 @@ public final class client implements Runnable {
 				Thread.sleep(2000);
 			}
 			else {
-				System.out.println("Not contacting server-site. Seems you just want to test on the" +
+				logger.info("Not contacting server-site. Seems you just want to test on the" +
 						" same PPDT but different VALUES");
 			}
 		}
@@ -392,13 +396,13 @@ public final class client implements Runnable {
 				// Step: 4 {optional}
 				server_site.startHandshake();
 
-				System.out.println("Client connected to sever-site with PPDT");
+				logger.info("Client connected to sever-site with PPDT");
 				evaluate_with_server_site(server_site);
 				long end_time = System.nanoTime();
-				System.out.println("The Classification is: " + classification);
+				logger.info("The Classification is: " + classification);
 				double run_time = (double) (end_time - start_time);
 				run_time = run_time/1000000;
-				System.out.printf("It took %f ms to classify\n", run_time);
+				logger.info(String.format("It took %f ms to classify\n", run_time));
 				finish_evaluation();
 			}
 			catch (HomomorphicException | IOException | ClassNotFoundException e) {
@@ -415,7 +419,7 @@ public final class client implements Runnable {
 				if (port == -1) {
 					assert level_site_ports != null;
 					connection_port = level_site_ports[i];
-					System.out.println("Local Test: " + level_site_ips[i] + ":" + level_site_ports[i]);
+					logger.info("Local Test: " + level_site_ips[i] + ":" + level_site_ports[i]);
 				}
 				else {
 					connection_port = port;
@@ -428,15 +432,15 @@ public final class client implements Runnable {
 
 					// Step: 4 {optional}
 					level_site.startHandshake();
-					System.out.println("Client connected to level " + i);
+					logger.info("Client connected to level " + i);
 					communicate_with_level_site(level_site);
 				}
 			}
             long end_time = System.nanoTime();
-			System.out.println("The Classification is: " + classification);
+			logger.info("The Classification is: " + classification);
 			double run_time = (double) (end_time - start_time);
 			run_time = run_time/1000000;
-            System.out.printf("It took %f ms to classify\n", run_time);
+            logger.info(String.format("It took %f ms to classify\n", run_time));
 			finish_evaluation();
 		}
 		catch (Exception e) {

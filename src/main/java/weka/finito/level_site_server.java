@@ -14,8 +14,11 @@ import java.lang.System;
 
 import static weka.finito.utils.shared.*;
 
-public class level_site_server implements Runnable {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+public class level_site_server implements Runnable {
+    private static final Logger logger = LogManager.getLogger(level_site_server.class);
     protected int          serverPort;
     protected SSLServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
@@ -66,12 +69,12 @@ public class level_site_server implements Runnable {
         while(! isStopped()) {
             SSLSocket client_socket;
             try {
-            	System.out.println("Ready to accept connections at: " + this.serverPort);
+            	logger.info("Ready to accept connections at: " + this.serverPort);
                 client_socket = (SSLSocket) this.serverSocket.accept();
             }
             catch (IOException e) {
                 if(isStopped()) {
-                    System.out.println("Server Stopped on port " + this.serverPort);
+                    logger.info("Server Stopped on port " + this.serverPort);
                     return;
                 }
                 throw new RuntimeException("Error accepting client connection", e);
@@ -85,7 +88,6 @@ public class level_site_server implements Runnable {
                 if (o instanceof level_order_site) {
                     // Traffic from Server, collect the level-site data
                     this.level_site_parameters = (level_order_site) o;
-                    // System.out.println("Level-Site received training data on Port: " + client_socket.getLocalPort());
                     oos.writeBoolean(true);
                     // Create a persistent connection to next level-site and oos to send the next stuff down
                     /*
@@ -104,19 +106,19 @@ public class level_site_server implements Runnable {
                     new Thread(current_level_site_class).start();
                 }
                 else {
-                    System.out.println("The level site received the wrong object: " + o.getClass().getName());
+                    logger.error("The level site received the wrong object: " + o.getClass().getName());
                     closeConnection(oos, ois, client_socket);
                 }
             }
            catch (ClassNotFoundException | IOException e) {
-                System.out.println("Yikes! A bad connection from " + client_socket.getInetAddress().getHostAddress());
-                e.printStackTrace();
+                logger.error("Yikes! A bad connection from " + client_socket.getInetAddress().getHostAddress());
+                logger.error(e.getStackTrace());
             }
         }
-        System.out.println("Server Stopped on port: " + this.serverPort) ;
+        logger.info("Server Stopped on port: " + this.serverPort); ;
         long stop_time = System.nanoTime();
         double run_time = (double) (stop_time - start_time)/1000000;
-        System.out.printf("Time to start up: %f\n", run_time);
+        logger.info(String.format("Time to start up: %f\n", run_time));
     }
 
     private synchronized boolean isStopped() {

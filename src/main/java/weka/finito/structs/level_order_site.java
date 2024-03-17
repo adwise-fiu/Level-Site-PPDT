@@ -3,6 +3,7 @@ package weka.finito.structs;
 import security.dgk.DGKPublicKey;
 import security.paillier.PaillierPublicKey;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
  */
 
 public final class level_order_site implements Serializable {
+	@Serial
 	private static final long serialVersionUID = 575566807906351024L;
     private final int level;
 	public final PaillierPublicKey paillier_public_key;

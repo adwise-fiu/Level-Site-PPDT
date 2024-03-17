@@ -10,10 +10,12 @@ import weka.finito.structs.level_order_site;
 
 import java.io.IOException;
 import java.net.Socket;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static weka.finito.utils.shared.*;
 
 public class level_site_evaluation_thread implements Runnable {
+	private static final Logger logger = LogManager.getLogger(level_site_evaluation_thread.class);
 	private final Socket client_socket;
 	private final level_order_site level_site_data;
 	private final features encrypted_features;
@@ -57,16 +59,16 @@ public class level_site_evaluation_thread implements Runnable {
 			long stop_time = System.nanoTime();
 			double run_time = (double) (stop_time - start_time);
 			run_time = run_time / 1000000;
-			System.out.printf("Total Level-Site run-time took %f ms\n", run_time);
+			logger.info(String.format("Total Level-Site run-time took %f ms\n", run_time));
 		}
         catch (Exception e) {
-			e.printStackTrace();
+			logger.error(e.getStackTrace());
 		}
 		finally {
 			try {
 				closeConnection(client_socket);
 			} catch (IOException e) {
-				System.out.println("IO Exception in closing Level-Site Connection in Evaluation");
+				logger.info("IO Exception in closing Level-Site Connection in Evaluation");
 			}
 		}
 	}
