@@ -19,9 +19,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class shared {
-
+    private static final Logger logger = LogManager.getLogger(shared.class);
     public static final String[] protocols = new String[]{ "TLSv1.2", "TLSv1.3"};
     public static final String[] cipher_suites = new String[] {
             "TLS_AES_128_GCM_SHA256",
@@ -86,7 +88,7 @@ public class shared {
 
         while ((!equalsFound) && (!terminalLeafFound)) {
             ls = node_level_data.get(node_level_index);
-            System.out.println("j=" + node_level_index);
+            logger.info("j=" + node_level_index);
             if (ls.isLeaf()) {
                 if (n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1) {
@@ -112,7 +114,7 @@ public class shared {
                     if (inequalityHolds) {
                         equalsFound = true;
                         encrypted_features.set_next_index(next_index);
-                        System.out.println("New index: " + encrypted_features.get_next_index());
+                        logger.info("New index: " + encrypted_features.get_next_index());
                     }
                 }
                 n++;
@@ -161,7 +163,7 @@ public class shared {
         long stop_time = System.nanoTime();
         double run_time = (double) (stop_time - start_time);
         run_time = run_time / 1000000;
-        System.out.printf("Comparison took %f ms\n", run_time);
+        logger.info(String.format("Comparison took %f ms\n", run_time));
         return answer;
     }
 
