@@ -139,11 +139,11 @@ public class shared {
         BigInteger encrypted_thresh = null;
 
         // Encrypt the thresh-hold correctly
-        if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
-            encrypted_thresh = ld.getPaillier();
-            encrypted_client_value = encrypted_values.integerValuePaillier();
-            Niu.writeInt(0);
-            Niu.setDGKMode(false);
+        if ((comparisonType == 2) || (comparisonType == 4)) {
+                encrypted_thresh = ld.getPaillier();
+                encrypted_client_value = encrypted_values.integerValuePaillier();
+                Niu.writeInt(0);
+                Niu.setDGKMode(false);
         }
         else if ((comparisonType == 3) || (comparisonType == 5)) {
             encrypted_thresh = ld.getDGK();
@@ -151,13 +151,25 @@ public class shared {
             Niu.writeInt(1);
             Niu.setDGKMode(true);
         }
+        else if (comparisonType == 1) {
+            encrypted_thresh = ld.getPaillier();
+            encrypted_client_value = encrypted_values.integerValuePaillier();
+            Niu.writeInt(2);
+            Niu.setDGKMode(false);
+        }
+
         assert encrypted_client_value != null;
         long start_time = System.nanoTime();
-        if ((comparisonType == 1) && (ld.threshold == 0) ||
-                (comparisonType == 4) || (comparisonType == 5)) {
+        if (comparisonType == 1) {
+            // Also factors in type 6, just need it to the negated result
+            answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
+        }
+        else if ((comparisonType == 4) || (comparisonType == 5)) {
+            // Test Y >= X or Y > X
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
         else {
+            // Test X >= Y or X > Y
             answer = Niu.Protocol2(encrypted_client_value, encrypted_thresh);
         }
         long stop_time = System.nanoTime();

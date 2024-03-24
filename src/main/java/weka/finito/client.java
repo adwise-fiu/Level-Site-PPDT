@@ -319,11 +319,16 @@ public final class client implements Runnable {
 			}
 			else if (comparison_type == 0) {
 				client.setDGKMode(false);
+				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
 				client.setDGKMode(true);
+				client.Protocol2();
 			}
-			client.Protocol2();
+			else if (comparison_type == 2) {
+				client.setDGKMode(false);
+				client.encrypted_equals();
+			}
 		}
 
 		// Get boolean from level-site:
