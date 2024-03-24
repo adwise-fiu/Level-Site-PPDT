@@ -243,9 +243,8 @@ public final class client implements Runnable {
 
 	// Evaluation
 	private features read_features(String path,
-														PaillierPublicKey paillier_public_key,
-														DGKPublicKey dgk_public_key,
-														int precision)
+								   PaillierPublicKey paillier_public_key,
+								   DGKPublicKey dgk_public_key, int precision)
 					throws IOException, HomomorphicException {
 
         return new features(path, precision, paillier_public_key, dgk_public_key);
@@ -275,12 +274,20 @@ public final class client implements Runnable {
 				break;
 			}
 			else if (comparison_type == 0) {
+				logger.info("Comparing two Paillier Values");
 				client.setDGKMode(false);
+				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
+				logger.info("Comparing two DGK Values");
 				client.setDGKMode(true);
+				client.Protocol2();
 			}
-			client.Protocol2();
+			else if (comparison_type == 2) {
+				logger.info("Comparing two DGK Values, Encrypted Equals!");
+				client.setDGKMode(true);
+				client.encrypted_equals();
+			}
 		}
 
 		o = client.readObject();
@@ -313,19 +320,23 @@ public final class client implements Runnable {
 		int comparison_type;
 		while (true) {
 			comparison_type = from_level_site.readInt();
+			logger.info(String.format("Using comparison type %d", comparison_type));
 			if (comparison_type == -1) {
 				this.classification_complete = true;
 				break;
 			}
 			else if (comparison_type == 0) {
+				logger.info("Comparing two Paillier Values");
 				client.setDGKMode(false);
 				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
+				logger.info("Comparing two DGK Values");
 				client.setDGKMode(true);
 				client.Protocol2();
 			}
 			else if (comparison_type == 2) {
+				logger.info("Comparing two DGK Values, Encrypted Equals!");
 				client.setDGKMode(true);
 				client.encrypted_equals();
 			}

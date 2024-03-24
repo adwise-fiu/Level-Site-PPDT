@@ -137,6 +137,7 @@ public class shared {
         BigIntegers encrypted_values = encrypted_features.get_thresholds(ld.variable_name);
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
+        logger.info(String.format("Using comparison type %d", comparisonType));
 
         // Encrypt the thresh-hold correctly
         if ((comparisonType == 2) || (comparisonType == 4)) {
@@ -162,6 +163,7 @@ public class shared {
         long start_time = System.nanoTime();
         if (comparisonType == 1) {
             // Also factors in type 6, just need it to the negated result
+            logger.info("Using encrypted equals check");
             answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
         }
         else if ((comparisonType == 4) || (comparisonType == 5)) {
