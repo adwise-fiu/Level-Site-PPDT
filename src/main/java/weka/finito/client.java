@@ -326,7 +326,7 @@ public final class client implements Runnable {
 				client.Protocol2();
 			}
 			else if (comparison_type == 2) {
-				client.setDGKMode(false);
+				client.setDGKMode(true);
 				client.encrypted_equals();
 			}
 		}

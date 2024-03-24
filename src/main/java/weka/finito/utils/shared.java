@@ -140,10 +140,10 @@ public class shared {
 
         // Encrypt the thresh-hold correctly
         if ((comparisonType == 2) || (comparisonType == 4)) {
-                encrypted_thresh = ld.getPaillier();
-                encrypted_client_value = encrypted_values.integerValuePaillier();
-                Niu.writeInt(0);
-                Niu.setDGKMode(false);
+            encrypted_thresh = ld.getPaillier();
+            encrypted_client_value = encrypted_values.integerValuePaillier();
+            Niu.writeInt(0);
+            Niu.setDGKMode(false);
         }
         else if ((comparisonType == 3) || (comparisonType == 5)) {
             encrypted_thresh = ld.getDGK();
@@ -152,10 +152,10 @@ public class shared {
             Niu.setDGKMode(true);
         }
         else if (comparisonType == 1) {
-            encrypted_thresh = ld.getPaillier();
-            encrypted_client_value = encrypted_values.integerValuePaillier();
+            encrypted_thresh = ld.getDGK();
+            encrypted_client_value = encrypted_values.integerValueDGK();
             Niu.writeInt(2);
-            Niu.setDGKMode(false);
+            Niu.setDGKMode(true);
         }
 
         assert encrypted_client_value != null;
