@@ -377,8 +377,6 @@ public final class client implements Runnable {
 				logger.info("I already read the keys from a file made from a previous run...");
 			}
 
-			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
-
 			// Client needs to give server-site public key (to give to level-sites)
 			// Client needs to know all possible classes...
 			if (talk_to_server_site) {
@@ -387,13 +385,15 @@ public final class client implements Runnable {
 				for (String aClass : classes) {
 					hashed_classification.put(hash(aClass), aClass);
 				}
+
 				// Make sure level-sites got everything...
-				Thread.sleep(2000);
+				Thread.sleep(2200);
 			}
 			else {
 				logger.info("Not contacting server-site. Seems you just want to test on the" +
 						" same PPDT but different VALUES");
 			}
+			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);

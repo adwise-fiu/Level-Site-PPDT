@@ -77,6 +77,7 @@ public final class features implements Serializable {
                 String[] split = line.split("\\t");
                 key = split[0];
                 value = split[1];
+                // I need to refer to label encoder after training to know what I am doing...
                 if (value.equals("t") || (value.equals("yes"))) {
                     value = "1";
                 }

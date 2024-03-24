@@ -62,13 +62,13 @@ public class level_site_evaluation_thread implements Runnable {
 			logger.info(String.format("Total Level-Site run-time took %f ms\n", run_time));
 		}
         catch (Exception e) {
-			logger.error(e.getStackTrace());
+			logger.error("Exception found", e);
 		}
 		finally {
 			try {
 				closeConnection(client_socket);
 			} catch (IOException e) {
-				logger.info("IO Exception in closing Level-Site Connection in Evaluation");
+				logger.info("IO Exception in closing Level-Site Connection in Evaluation", e);
 			}
 		}
 	}
