@@ -25,6 +25,7 @@ import static weka.finito.utils.shared.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import weka.finito.utils.LabelEncoder;
 
 public final class client implements Runnable {
 	private static final Logger logger = LogManager.getLogger(client.class);
@@ -49,6 +50,7 @@ public final class client implements Runnable {
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final String server_ip;
 	private final int server_port;
+	private LabelEncoder label_encoder;
 
     //For k8s deployment.
     public static void main(String[] args) {
@@ -237,6 +239,9 @@ public final class client implements Runnable {
 			// Get leaves from Server-site
 			Object o = from_server_site.readObject();
 			classes = (String []) o;
+
+			o = from_server_site.readObject();
+			label_encoder = (LabelEncoder) o;
 		}
 		logger.info("Completed set-up with server");
 	}
@@ -244,10 +249,10 @@ public final class client implements Runnable {
 	// Evaluation
 	private features read_features(String path,
 								   PaillierPublicKey paillier_public_key,
-								   DGKPublicKey dgk_public_key, int precision)
+								   DGKPublicKey dgk_public_key, int precision, LabelEncoder encoder)
 					throws IOException, HomomorphicException {
 
-        return new features(path, precision, paillier_public_key, dgk_public_key);
+        return new features(path, precision, paillier_public_key, dgk_public_key, encoder);
 	}
 
 	private void evaluate_with_server_site(Socket server_site)

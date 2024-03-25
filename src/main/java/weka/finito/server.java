@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +36,7 @@ import static weka.finito.utils.shared.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import weka.finito.utils.LabelEncoder;
 
 public final class server implements Runnable {
 	private static final Logger logger = LogManager.getLogger(server.class);
@@ -51,13 +53,11 @@ public final class server implements Runnable {
 	private ClassifierTree ppdt = null;
 	private final List<String> leaves = new ArrayList<>();
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
-
 	private final int server_port;
-
 	private int evaluations = 1;
+	private final LabelEncoder label_encoder = new LabelEncoder();
 
     public static void main(String[] args) {
-
 		setup_tls();
 
         int port = 0;
@@ -187,6 +187,7 @@ public final class server implements Runnable {
 		}
 	}
 
+	// Talk to Client to get the Public Keys. Give client hashed classes and complete Label Encoder
 	private void client_communication() throws Exception {
 		SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(server_port);
 		logger.info("Server ready to get public keys from client on port: " + server_port);
@@ -219,7 +220,9 @@ public final class server implements Runnable {
 			String [] leaf_array = leaves.toArray(new String[0]);
 			to_client_site.writeObject(leaf_array);
 
-			logger.info("Server sent the leaves back to the client");
+			// Also, I know the labels used for PPDT; the client must know
+			to_client_site.writeObject(label_encoder);
+			logger.info("Server sent the leaves and label encoder back to the client");
 		}
 		serverSocket.close();
 	}
@@ -389,27 +392,18 @@ public final class server implements Runnable {
 
 						// Obtain and encrypt the threshold for level-site usage
 						String threshold_string = new String(rightValue);
-						if (threshold_string.equals("other")) {
-							if (type == 6) {
-								threshold = 0;
-							}
-							else if (type == 1) {
-								threshold = 1;
-							}
+						BigInteger temp_thresh;
+						try {
+							threshold = Float.parseFloat(threshold_string);
 						}
-						else {
-							if (threshold_string.equals("t") || threshold_string.equals("yes")) {
-								threshold = 1;
-							}
-							else if (threshold_string.equals("f") || threshold_string.equals("no")) {
-								threshold = 0;
-							}
-							else {
-								threshold = Float.parseFloat(threshold_string);
-							}
+						catch (NumberFormatException e) {
+							// Use Label Encoder, only type 1 and 6 though
+							temp_thresh = label_encoder.encode(threshold_string);
+							logger.info("Encoding " + threshold_string + " to " + temp_thresh);
 						}
+						temp_thresh = NodeInfo.set_precision(threshold, precision);
 						node_info = new NodeInfo(false, leftSide, type);
-						node_info.encrypt(threshold, precision, paillier_public, dgk_public);
+						node_info.encrypt(temp_thresh, paillier_public, dgk_public);
 						q.add(p.getSons()[i]);
 					}
 
@@ -435,7 +429,8 @@ public final class server implements Runnable {
 							additionalNode = new NodeInfo(false, node_info.getVariableName(), 1);
 						}
 						assert additionalNode != null;
-						additionalNode.encrypt(threshold, precision, paillier_public, dgk_public);
+						BigInteger temp_thresh = NodeInfo.set_precision(threshold, precision);
+						additionalNode.encrypt(temp_thresh, paillier_public, dgk_public);
 						Level_Order_S.append_data(additionalNode);
 					}
 					Level_Order_S.append_data(node_info);

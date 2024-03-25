@@ -205,6 +205,7 @@ public class shared {
                 weka.finito.structs.level_order_site.class,
                 weka.finito.structs.BigIntegers.class,
                 weka.finito.structs.features.class,
+                weka.finito.utils.LabelEncoder.class,
 
                 java.util.HashMap.class,
                 java.util.ArrayList.class,
