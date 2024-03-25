@@ -9,20 +9,22 @@ import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 
 import java.io.IOException;
-import java.net.Socket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.net.ssl.SSLSocket;
+
 import static weka.finito.utils.shared.*;
 
 public class level_site_evaluation_thread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(level_site_evaluation_thread.class);
-	private final Socket client_socket;
+	private final SSLSocket client_socket;
 	private final level_order_site level_site_data;
 	private final features encrypted_features;
 	private final ObjectOutputStream oos;
 
 	// This thread is ONLY to handle evaluations
-	public level_site_evaluation_thread(Socket client_socket, level_order_site level_site_data,
+	public level_site_evaluation_thread(SSLSocket client_socket, level_order_site level_site_data,
 										features encrypted_features, ObjectOutputStream oos) {
 		// Have encrypted copy of thresholds if not done already for all nodes in level-site
 		this.client_socket = client_socket;

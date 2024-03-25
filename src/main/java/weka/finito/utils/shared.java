@@ -10,7 +10,6 @@ import weka.finito.structs.level_order_site;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +20,8 @@ import java.util.List;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.net.ssl.SSLSocket;
 
 public class shared {
     private static final Logger logger = LogManager.getLogger(shared.class);
@@ -181,7 +182,7 @@ public class shared {
     }
 
     public static void closeConnection(ObjectOutputStream oos, 
-                    ObjectInputStream ois, Socket client_socket) throws IOException {
+                    ObjectInputStream ois, SSLSocket client_socket) throws IOException {
         if (oos != null) {
             oos.close();
         }
@@ -193,11 +194,11 @@ public class shared {
 		}
 	}
 
-    public static void closeConnection(Socket client_socket) throws IOException {
+    public static void closeConnection(SSLSocket client_socket) throws IOException {
         closeConnection(null, null, client_socket);
     }
 
-    public static ValidatingObjectInputStream get_ois(Socket socket) throws IOException {
+    public static ValidatingObjectInputStream get_ois(SSLSocket socket) throws IOException {
         ValidatingObjectInputStream ois = new ValidatingObjectInputStream(socket.getInputStream());
         ois.accept(
                 weka.finito.structs.NodeInfo.class,

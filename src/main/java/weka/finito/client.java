@@ -1,7 +1,6 @@
 package weka.finito;
 
 import java.io.*;
-import java.net.Socket;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -255,7 +254,7 @@ public final class client implements Runnable {
         return new features(path, precision, paillier_public_key, dgk_public_key, encoder);
 	}
 
-	private void evaluate_with_server_site(Socket server_site)
+	private void evaluate_with_server_site(SSLSocket server_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 		// Communicate with each Level-Site
 		Object o;
@@ -303,7 +302,7 @@ public final class client implements Runnable {
 	}
 
 	// Function used to Evaluate for each level-site
-	private void communicate_with_level_site(Socket level_site)
+	private void communicate_with_level_site(SSLSocket level_site)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
 		Object o;
