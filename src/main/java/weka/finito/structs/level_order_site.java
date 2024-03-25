@@ -23,11 +23,21 @@ public final class level_order_site implements Serializable {
 	// Set to value to a client, to let level-site d-1 know to talk to a client next with answer
 	private String next_level_site = null;
 	private int next_level_site_port = -1;
+	private int level_site_listening_port = -1;
 
 	public level_order_site(int level, PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key) {
 		this.level = level;
 		this.paillier_public_key = paillier_public_key;
 		this.dgk_public_key = dgk_public_key;
+	}
+	public int get_level() {
+		return this.level;
+	}
+	public int get_listen_port() {
+		return this.level_site_listening_port;
+	}
+	public void set_listen_port(int level_site_listening_port) {
+		this.level_site_listening_port = level_site_listening_port;
 	}
 
 	public List<NodeInfo> get_node_data() {
@@ -41,7 +51,6 @@ public final class level_order_site implements Serializable {
 	public String get_next_level_site() {
 		return this.next_level_site;
 	}
-
 	public void set_next_level_site_port(int next_level_site_port) {
 		this.next_level_site_port = next_level_site_port;
 	}
@@ -58,7 +67,7 @@ public final class level_order_site implements Serializable {
     	StringBuilder output = new StringBuilder();
     	int num = 0;
     	output.append("level: ");
-    	output.append(this.level);
+    	output.append(get_level());
     	output.append('\n');
     	for (NodeInfo i: node_level_data) {
     		output.append("Index ");

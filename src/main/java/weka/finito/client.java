@@ -261,7 +261,7 @@ public final class client implements Runnable {
 		bob_joye client;
 
 		// Send the Public Keys using Alice and Bob
-		client = new bob_joye(paillier, dgk, null);
+		client = new bob_joye(paillier, dgk);
 		client.set_socket(server_site);
 
 		// Send the encrypted data to Level-Site
@@ -398,6 +398,8 @@ public final class client implements Runnable {
 						" same PPDT but different VALUES");
 			}
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision, label_encoder);
+			feature.set_client_ip("127.0.0.1");
+			feature.set_client_port(10000);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);

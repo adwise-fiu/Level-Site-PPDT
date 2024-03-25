@@ -19,6 +19,7 @@ public final class features implements Serializable {
     @Serial
     private static final long serialVersionUID = 6000706455545108960L;
     private String client_ip;
+    private int client_port;
     private int next_index;
     private int current_index;
     private final HashMap<String, BigIntegers> thresholds;
@@ -42,6 +43,14 @@ public final class features implements Serializable {
 
     public void set_client_ip(String client_ip) {
         this.client_ip = client_ip;
+    }
+
+    public int get_client_port() {
+        return this.client_port;
+    }
+
+    public void set_client_port(int client_port) {
+        this.client_port = client_port;
     }
 
     public int get_next_index() {

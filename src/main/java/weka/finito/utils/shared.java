@@ -21,6 +21,7 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 
 public class shared {
@@ -220,5 +221,11 @@ public class shared {
         ois.accept("[B");
         ois.accept("[L*");
         return ois;
+    }
+
+    public static void closeConnection(SSLServerSocket server_socket) throws IOException {
+        if (server_socket != null) {
+            server_socket.close();
+        }
     }
 }

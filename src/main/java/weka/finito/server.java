@@ -514,9 +514,16 @@ public final class server implements Runnable {
 
 			if (i + 1 != all_level_sites.size()) {
 				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
-			}
+				if (port == -1) {
+					current_level_site.set_next_level_site_port(level_site_ports[(i + 1) % level_site_ports.length]);
+					current_level_site.set_listen_port(level_site_ports[i]);
+				}
+				else {
+					current_level_site.set_next_level_site_port(connection_port);
+					current_level_site.set_listen_port(connection_port);
+				}
 
-			current_level_site.set_next_level_site_port(connection_port);
+			}
 
 			try(SSLSocket level_site = (SSLSocket) socket_factory.createSocket(level_site_ips[i], connection_port)) {
 				// Step: 3
