@@ -101,15 +101,7 @@ public class shared {
                 if ((n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1)) {
 
-                    if (ls.comparisonType == 6) {
-                        inequalityHolds = compare(ls, 1,
-                                encrypted_features, niu);
-                        inequalityHolds = !inequalityHolds;
-                    }
-                    else {
-                        inequalityHolds = compare(ls, ls.comparisonType,
-                                encrypted_features, niu);
-                    }
+                    inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
 
                     if (inequalityHolds) {
                         equalsFound = true;
@@ -137,9 +129,10 @@ public class shared {
         BigIntegers encrypted_values = encrypted_features.get_thresholds(ld.variable_name);
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
+        logger.info(String.format("Using comparison type %d", comparisonType));
 
         // Encrypt the thresh-hold correctly
-        if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
+        if ((comparisonType == 2) || (comparisonType == 4)) {
             encrypted_thresh = ld.getPaillier();
             encrypted_client_value = encrypted_values.integerValuePaillier();
             Niu.writeInt(0);
@@ -151,13 +144,33 @@ public class shared {
             Niu.writeInt(1);
             Niu.setDGKMode(true);
         }
+        else if (comparisonType == 1 || comparisonType == 6) {
+            encrypted_thresh = ld.getDGK();
+            encrypted_client_value = encrypted_values.integerValueDGK();
+            Niu.writeInt(2);
+            Niu.setDGKMode(true);
+        }
+
         assert encrypted_client_value != null;
         long start_time = System.nanoTime();
-        if ((comparisonType == 1) && (ld.threshold == 0) ||
-                (comparisonType == 4) || (comparisonType == 5)) {
+        if (comparisonType == 1) {
+            logger.info("Using encrypted equals check");
+            answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
+        }
+        else if (comparisonType == 6) {
+            // Also factors in type 6, just need it to the negated result
+            logger.info("Using encrypted inequality check");
+            answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
+            answer = !answer;
+        }
+        // only seen type 4 in the wild
+        else if ((comparisonType == 4) || (comparisonType == 5)) {
+            // Test Y >= X or Y > X
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
+        // only seen type 3 in the wild
         else {
+            // Test X >= Y or X > Y
             answer = Niu.Protocol2(encrypted_client_value, encrypted_thresh);
         }
         long stop_time = System.nanoTime();
@@ -191,6 +204,7 @@ public class shared {
                 weka.finito.structs.level_order_site.class,
                 weka.finito.structs.BigIntegers.class,
                 weka.finito.structs.features.class,
+                weka.finito.utils.LabelEncoder.class,
 
                 java.util.HashMap.class,
                 java.util.ArrayList.class,

@@ -12,6 +12,7 @@ import java.util.HashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import weka.finito.utils.LabelEncoder;
 
 public final class features implements Serializable {
     private static final Logger logger = LogManager.getLogger(features.class);
@@ -22,12 +23,13 @@ public final class features implements Serializable {
     private int current_index;
     private final HashMap<String, BigIntegers> thresholds;
 
-    public features(String path, int precision, PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key)
+    public features(String path, int precision, PaillierPublicKey paillier_public_key,
+                    DGKPublicKey dgk_public_key, LabelEncoder encoder)
             throws HomomorphicException, IOException {
         this.client_ip = "";
         this.next_index = 0;
-        this.current_index =0;
-        this.thresholds = read_values(path, precision, paillier_public_key, dgk_public_key);
+        this.current_index = 0;
+        this.thresholds = read_values(path, precision, paillier_public_key, dgk_public_key, encoder);
     }
 
     public BigIntegers get_thresholds(String feature) {
@@ -61,13 +63,15 @@ public final class features implements Serializable {
     public static HashMap<String, BigIntegers> read_values(String path,
                                                            int precision,
                                                            PaillierPublicKey paillier_public_key,
-                                                           DGKPublicKey dgk_public_key)
+                                                           DGKPublicKey dgk_public_key,
+                                                           LabelEncoder encoder)
             throws IOException, HomomorphicException {
 
         BigInteger integerValuePaillier;
         BigInteger integerValueDGK;
-        int intermediateInteger;
+        BigInteger temp;
         HashMap<String, BigIntegers> values = new HashMap<>();
+        double double_value;
 
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
@@ -77,20 +81,20 @@ public final class features implements Serializable {
                 String[] split = line.split("\\t");
                 key = split[0];
                 value = split[1];
-                if (value.equals("t") || (value.equals("yes"))) {
-                    value = "1";
+                // I need to refer to label encoder after training to know what I am doing...
+                try {
+                    double_value = Double.parseDouble(value);
+                    logger.info("Initial value: " + value);
                 }
-                if (value.equals("f") || (value.equals("no"))) {
-                    value = "0";
+                catch (NumberFormatException e) {
+                    double_value = encoder.encode(value).doubleValue();
+                    logger.info("Encoding value: " + value + " to " + double_value);
                 }
-                if (value.equals("other")) {
-                    value = "1";
-                }
-                logger.info("Initial value:" + value);
-                intermediateInteger = (int) (Double.parseDouble(value) * Math.pow(10, precision));
-                logger.info("Value to be compared with:" + intermediateInteger);
-                integerValuePaillier = PaillierCipher.encrypt(intermediateInteger, paillier_public_key);
-                integerValueDGK = DGKOperations.encrypt(intermediateInteger, dgk_public_key);
+                temp = NodeInfo.set_precision(double_value, precision);
+                logger.info("Value to be compared with: " + temp);
+
+                integerValuePaillier = PaillierCipher.encrypt(temp, paillier_public_key);
+                integerValueDGK = DGKOperations.encrypt(temp, dgk_public_key);
                 values.put(key, new BigIntegers(integerValuePaillier, integerValueDGK));
             }
         }

@@ -33,6 +33,9 @@ public class level_site_evaluation_thread implements Runnable {
 
 	// This will run the communication with client and next level site
 	public final void run() {
+		logger.info("Showing level-site");
+		logger.info(level_site_data.toString());
+
 		long start_time = System.nanoTime();
 		alice_joye niu = new alice_joye();
         try {
@@ -62,13 +65,13 @@ public class level_site_evaluation_thread implements Runnable {
 			logger.info(String.format("Total Level-Site run-time took %f ms\n", run_time));
 		}
         catch (Exception e) {
-			logger.error(e.getStackTrace());
+			logger.error("Exception found", e);
 		}
 		finally {
 			try {
 				closeConnection(client_socket);
 			} catch (IOException e) {
-				logger.info("IO Exception in closing Level-Site Connection in Evaluation");
+				logger.info("IO Exception in closing Level-Site Connection in Evaluation", e);
 			}
 		}
 	}

@@ -25,6 +25,7 @@ import static weka.finito.utils.shared.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import weka.finito.utils.LabelEncoder;
 
 public final class client implements Runnable {
 	private static final Logger logger = LogManager.getLogger(client.class);
@@ -49,6 +50,7 @@ public final class client implements Runnable {
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final String server_ip;
 	private final int server_port;
+	private LabelEncoder label_encoder;
 
     //For k8s deployment.
     public static void main(String[] args) {
@@ -237,18 +239,20 @@ public final class client implements Runnable {
 			// Get leaves from Server-site
 			Object o = from_server_site.readObject();
 			classes = (String []) o;
+
+			o = from_server_site.readObject();
+			label_encoder = (LabelEncoder) o;
 		}
 		logger.info("Completed set-up with server");
 	}
 
 	// Evaluation
 	private features read_features(String path,
-														PaillierPublicKey paillier_public_key,
-														DGKPublicKey dgk_public_key,
-														int precision)
+								   PaillierPublicKey paillier_public_key,
+								   DGKPublicKey dgk_public_key, int precision, LabelEncoder encoder)
 					throws IOException, HomomorphicException {
 
-        return new features(path, precision, paillier_public_key, dgk_public_key);
+        return new features(path, precision, paillier_public_key, dgk_public_key, encoder);
 	}
 
 	private void evaluate_with_server_site(Socket server_site)
@@ -275,12 +279,20 @@ public final class client implements Runnable {
 				break;
 			}
 			else if (comparison_type == 0) {
+				logger.info("Comparing two Paillier Values");
 				client.setDGKMode(false);
+				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
+				logger.info("Comparing two DGK Values");
 				client.setDGKMode(true);
+				client.Protocol2();
 			}
-			client.Protocol2();
+			else if (comparison_type == 2) {
+				logger.info("Comparing two DGK Values, Encrypted Equals!");
+				client.setDGKMode(true);
+				client.encrypted_equals();
+			}
 		}
 
 		o = client.readObject();
@@ -313,17 +325,26 @@ public final class client implements Runnable {
 		int comparison_type;
 		while (true) {
 			comparison_type = from_level_site.readInt();
+			logger.info(String.format("Using comparison type %d", comparison_type));
 			if (comparison_type == -1) {
 				this.classification_complete = true;
 				break;
 			}
 			else if (comparison_type == 0) {
+				logger.info("Comparing two Paillier Values");
 				client.setDGKMode(false);
+				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
+				logger.info("Comparing two DGK Values");
 				client.setDGKMode(true);
+				client.Protocol2();
 			}
-			client.Protocol2();
+			else if (comparison_type == 2) {
+				logger.info("Comparing two DGK Values, Encrypted Equals!");
+				client.setDGKMode(true);
+				client.encrypted_equals();
+			}
 		}
 
 		// Get boolean from level-site:
@@ -361,8 +382,6 @@ public final class client implements Runnable {
 				logger.info("I already read the keys from a file made from a previous run...");
 			}
 
-			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
-
 			// Client needs to give server-site public key (to give to level-sites)
 			// Client needs to know all possible classes...
 			if (talk_to_server_site) {
@@ -371,13 +390,15 @@ public final class client implements Runnable {
 				for (String aClass : classes) {
 					hashed_classification.put(hash(aClass), aClass);
 				}
+
 				// Make sure level-sites got everything...
-				Thread.sleep(2000);
+				Thread.sleep(2200);
 			}
 			else {
 				logger.info("Not contacting server-site. Seems you just want to test on the" +
 						" same PPDT but different VALUES");
 			}
+			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision, label_encoder);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
