@@ -398,7 +398,7 @@ public final class client implements Runnable {
 				logger.info("Not contacting server-site. Seems you just want to test on the" +
 						" same PPDT but different VALUES");
 			}
-			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision);
+			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision, label_encoder);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
