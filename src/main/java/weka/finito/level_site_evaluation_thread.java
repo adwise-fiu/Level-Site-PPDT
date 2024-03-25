@@ -33,6 +33,9 @@ public class level_site_evaluation_thread implements Runnable {
 
 	// This will run the communication with client and next level site
 	public final void run() {
+		logger.info("Showing level-site");
+		logger.info(level_site_data.toString());
+
 		long start_time = System.nanoTime();
 		alice_joye niu = new alice_joye();
         try {

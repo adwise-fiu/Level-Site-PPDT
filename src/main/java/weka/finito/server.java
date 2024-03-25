@@ -313,6 +313,7 @@ public final class server implements Runnable {
 		Queue<ClassifierTree> q = new LinkedList<>();
 		q.add(root);
 		int level = 0;
+		BigInteger temp_thresh = null;
 
 		while (!q.isEmpty()) {
 			level_order_site Level_Order_S = new level_order_site(level, paillier_public, dgk_public);
@@ -332,7 +333,7 @@ public final class server implements Runnable {
 					Level_Order_S.append_data(node_info);
 				}
 				else {
-					float threshold = 0;
+					double threshold;
 
 					for (int i = 0; i < p.getSons().length; i++) {
 
@@ -364,11 +365,14 @@ public final class server implements Runnable {
 						// Type 2 or 3, > or >=
 						else if (rightSideChar[1] == '>') {
 							if (rightSideChar[2] == '=') {
+								// Type 2: >=, not seen when building these trees
 								type = 2;
 								rightValue = new char[rightSideChar.length - 4];
 								System.arraycopy(rightSideChar, 4, rightValue, 0, rightSideChar.length - 4);
 							}
 							else {
+								// In practice, I only see type 3, which is great!
+								// Type 3: >
 								type = 3;
 								rightValue = new char[rightSideChar.length - 3];
 								System.arraycopy(rightSideChar, 3, rightValue, 0, rightSideChar.length - 3);
@@ -376,13 +380,14 @@ public final class server implements Runnable {
 						}
 						// Type 4 or 5, < or <=
 						else if (rightSideChar[1] == '<') {
+							// In practice, I only see type 4, which is great!
 							// Type 4: <=
 							if (rightSideChar[2] == '=') {
 								type = 4;
 								rightValue = new char[rightSideChar.length - 4];
 								System.arraycopy(rightSideChar, 4, rightValue, 0, rightSideChar.length - 4);
 							}
-							// Type 5: <
+							// Type 5: <, not seen when building these trees
 							else {
 								type = 5;
 								rightValue = new char[rightSideChar.length - 3];
@@ -392,17 +397,18 @@ public final class server implements Runnable {
 
 						// Obtain and encrypt the threshold for level-site usage
 						String threshold_string = new String(rightValue);
-						BigInteger temp_thresh;
+
 						try {
 							threshold = Float.parseFloat(threshold_string);
 						}
 						catch (NumberFormatException e) {
 							// Use Label Encoder, only type 1 and 6 though
-							temp_thresh = label_encoder.encode(threshold_string);
+							threshold = label_encoder.encode(threshold_string).doubleValue();
 							logger.info("Encoding " + threshold_string + " to " + temp_thresh);
 						}
 						temp_thresh = NodeInfo.set_precision(threshold, precision);
 						node_info = new NodeInfo(false, leftSide, type);
+						logger.info("Updated threshold is: " + temp_thresh);
 						node_info.encrypt(temp_thresh, paillier_public, dgk_public);
 						q.add(p.getSons()[i]);
 					}
@@ -429,7 +435,6 @@ public final class server implements Runnable {
 							additionalNode = new NodeInfo(false, node_info.getVariableName(), 1);
 						}
 						assert additionalNode != null;
-						BigInteger temp_thresh = NodeInfo.set_precision(threshold, precision);
 						additionalNode.encrypt(temp_thresh, paillier_public, dgk_public);
 						Level_Order_S.append_data(additionalNode);
 					}

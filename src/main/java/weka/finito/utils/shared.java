@@ -101,15 +101,7 @@ public class shared {
                 if ((n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1)) {
 
-                    if (ls.comparisonType == 6) {
-                        inequalityHolds = compare(ls, 1,
-                                encrypted_features, niu);
-                        inequalityHolds = !inequalityHolds;
-                    }
-                    else {
-                        inequalityHolds = compare(ls, ls.comparisonType,
-                                encrypted_features, niu);
-                    }
+                    inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
 
                     if (inequalityHolds) {
                         equalsFound = true;
@@ -152,7 +144,7 @@ public class shared {
             Niu.writeInt(1);
             Niu.setDGKMode(true);
         }
-        else if (comparisonType == 1) {
+        else if (comparisonType == 1 || comparisonType == 6) {
             encrypted_thresh = ld.getDGK();
             encrypted_client_value = encrypted_values.integerValueDGK();
             Niu.writeInt(2);
@@ -162,14 +154,21 @@ public class shared {
         assert encrypted_client_value != null;
         long start_time = System.nanoTime();
         if (comparisonType == 1) {
-            // Also factors in type 6, just need it to the negated result
             logger.info("Using encrypted equals check");
             answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
         }
+        else if (comparisonType == 6) {
+            // Also factors in type 6, just need it to the negated result
+            logger.info("Using encrypted inequality check");
+            answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
+            answer = !answer;
+        }
+        // only seen type 4 in the wild
         else if ((comparisonType == 4) || (comparisonType == 5)) {
             // Test Y >= X or Y > X
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
+        // only seen type 3 in the wild
         else {
             // Test X >= Y or X > Y
             answer = Niu.Protocol2(encrypted_client_value, encrypted_thresh);

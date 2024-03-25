@@ -71,7 +71,7 @@ public final class features implements Serializable {
         BigInteger integerValueDGK;
         BigInteger temp;
         HashMap<String, BigIntegers> values = new HashMap<>();
-        double double_value = -1;
+        double double_value;
 
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
@@ -84,14 +84,14 @@ public final class features implements Serializable {
                 // I need to refer to label encoder after training to know what I am doing...
                 try {
                     double_value = Double.parseDouble(value);
-                    logger.info("Initial value:" + value);
+                    logger.info("Initial value: " + value);
                 }
                 catch (NumberFormatException e) {
                     double_value = encoder.encode(value).doubleValue();
-                    logger.info("Encoded value:" + double_value + " from " + value);
+                    logger.info("Encoding value: " + value + " to " + double_value);
                 }
                 temp = NodeInfo.set_precision(double_value, precision);
-                logger.info("Value to be compared with:" + temp);
+                logger.info("Value to be compared with: " + temp);
 
                 integerValuePaillier = PaillierCipher.encrypt(temp, paillier_public_key);
                 integerValueDGK = DGKOperations.encrypt(temp, dgk_public_key);
