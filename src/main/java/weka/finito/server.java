@@ -40,7 +40,7 @@ import weka.finito.utils.LabelEncoder;
 
 public final class server implements Runnable {
 	private static final Logger logger = LogManager.getLogger(server.class);
-	private final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+	private static final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	private final String training_data;
@@ -132,7 +132,7 @@ public final class server implements Runnable {
 
 	private void run_server_site(int port) throws IOException, HomomorphicException, ClassNotFoundException {
 		int count = 0;
-		try (SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(port)) {
+		try (SSLServerSocket serverSocket = createServerSocket(port)) {
 			serverSocket.setEnabledProtocols(protocols);
 			serverSocket.setEnabledCipherSuites(cipher_suites);
 
@@ -189,7 +189,7 @@ public final class server implements Runnable {
 
 	// Talk to Client to get the Public Keys. Give client hashed classes and complete Label Encoder
 	private void client_communication() throws Exception {
-		SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(server_port);
+		SSLServerSocket serverSocket = createServerSocket(server_port);
 		logger.info("Server ready to get public keys from client on port: " + server_port);
 
 		try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
@@ -548,6 +548,20 @@ public final class server implements Runnable {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	public static SSLServerSocket createServerSocket(int serverPort) {
+		SSLServerSocket serverSocket;
+		try {
+			// Step: 1
+			serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
+			serverSocket.setEnabledProtocols(protocols);
+			serverSocket.setEnabledCipherSuites(cipher_suites);
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Cannot open port " + serverPort, e);
+		}
+		return serverSocket;
 	}
 
 	public static SSLSocket createSocket(String hostname, int port) {

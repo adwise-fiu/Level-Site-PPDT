@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -23,6 +24,7 @@ import static weka.finito.utils.shared.*;
 public class level_site_evaluation_thread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(level_site_evaluation_thread.class);
 	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+	protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 	private final SSLSocket client_socket;
 	private SSLSocket next_level_site_socket;
 	private SSLSocket previous_level_site_socket;
@@ -44,7 +46,7 @@ public class level_site_evaluation_thread implements Runnable {
 
 	protected void init() throws IOException {
 		if (level_site_data.get_level() != 0) {
-			//previous_level_site_listener = openServerSocket(this.level_site_data.get_listen_port());
+			previous_level_site_listener = createServerSocket(this.level_site_data.get_listen_port());
 			previous_level_site_socket = (SSLSocket) previous_level_site_listener.accept();
 			previous_level_site_socket.setKeepAlive(true);
 			previous_site = get_ois(previous_level_site_socket);
@@ -53,9 +55,8 @@ public class level_site_evaluation_thread implements Runnable {
 		// All the level-sites should do this step though, except level-site d
 		// Create a persistent connection to next level-site and oos to send the next stuff down
 		if (level_site_data.get_next_level_site() != null) {
-			//next_level_site_socket = createSocket(
-			//		level_site_data.get_next_level_site(),
-			//		level_site_data.get_next_level_site_port());
+			next_level_site_socket = createSocket(level_site_data.get_next_level_site(),
+					level_site_data.get_next_level_site_port());
 			next_level_site_socket.setKeepAlive(true);
 			next_level_site = new ObjectOutputStream(next_level_site_socket.getOutputStream());
 		}
@@ -138,6 +139,20 @@ public class level_site_evaluation_thread implements Runnable {
 				logger.info("IO Exception in closing Level-Site Connection in Evaluation", e);
 			}
 		}
+	}
+
+	public static SSLServerSocket createServerSocket(int serverPort) {
+		SSLServerSocket serverSocket;
+		try {
+			// Step: 1
+			serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
+			serverSocket.setEnabledProtocols(protocols);
+			serverSocket.setEnabledCipherSuites(cipher_suites);
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Cannot open port " + serverPort, e);
+		}
+		return serverSocket;
 	}
 
 	public static SSLSocket createSocket(String hostname, int port) {

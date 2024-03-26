@@ -24,7 +24,7 @@ public class level_site_server implements Runnable {
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
     protected level_order_site level_site_parameters = null;
-    protected SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+    protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
     private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
     private SSLSocket next_level_site;
 
@@ -61,7 +61,7 @@ public class level_site_server implements Runnable {
         synchronized(this) {
             this.runningThread = Thread.currentThread();
         }
-        openServerSocket();
+        createServerSocket();
         ValidatingObjectInputStream ois;
         ObjectOutputStream oos;
         Object o;
@@ -135,7 +135,7 @@ public class level_site_server implements Runnable {
         }
     }
 
-    private void openServerSocket() {
+    private void createServerSocket() {
         try {
             // Step: 1
             serverSocket = (SSLServerSocket) factory.createServerSocket(this.serverPort);
