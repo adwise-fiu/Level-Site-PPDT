@@ -28,7 +28,7 @@ import weka.finito.utils.LabelEncoder;
 
 public final class client implements Runnable {
 	private static final Logger logger = LogManager.getLogger(client.class);
-	private final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private final String classes_file = "classes.txt";
 	private final String features_file;
 	private final int key_size;
@@ -219,7 +219,7 @@ public final class client implements Runnable {
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
 		logger.info("Connecting to " + server_ip + ":" + server_port + " for set-up");
-		try (SSLSocket server_site = (SSLSocket) factory.createSocket(server_ip, server_port)) {
+		try (SSLSocket server_site = createSocket(server_ip, server_port)) {
 			// Step: 3
 			server_site.setEnabledProtocols(protocols);
 			server_site.setEnabledCipherSuites(cipher_suites);
@@ -410,7 +410,7 @@ public final class client implements Runnable {
 
 		// If you are just evaluating directly with the server-site
 		if (level_site_ips == null) {
-			try(SSLSocket server_site = (SSLSocket) factory.createSocket(server_ip, server_port)) {
+			try(SSLSocket server_site = createSocket(server_ip, server_port)) {
 				// Step: 3
 				server_site.setEnabledProtocols(protocols);
 				server_site.setEnabledCipherSuites(cipher_suites);
@@ -447,7 +447,7 @@ public final class client implements Runnable {
 					connection_port = port;
 				}
 
-				try(SSLSocket level_site = (SSLSocket) factory.createSocket(level_site_ips[i], connection_port)) {
+				try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
 					// Step: 3
 					level_site.setEnabledProtocols(protocols);
 					level_site.setEnabledCipherSuites(cipher_suites);
@@ -484,5 +484,19 @@ public final class client implements Runnable {
 				writer.write("\n");
 			}
 		}
+	}
+
+	public static SSLSocket createSocket(String hostname, int port) {
+		SSLSocket client_socket;
+		try {
+			// Step: 1
+			client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
+			client_socket.setEnabledProtocols(protocols);
+			client_socket.setEnabledCipherSuites(cipher_suites);
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Cannot open port " + port, e);
+		}
+		return client_socket;
 	}
 }

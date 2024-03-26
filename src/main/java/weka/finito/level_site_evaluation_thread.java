@@ -16,11 +16,13 @@ import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 import static weka.finito.utils.shared.*;
 
 public class level_site_evaluation_thread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(level_site_evaluation_thread.class);
+	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private final SSLSocket client_socket;
 	private SSLSocket next_level_site_socket;
 	private SSLSocket previous_level_site_socket;
@@ -136,5 +138,19 @@ public class level_site_evaluation_thread implements Runnable {
 				logger.info("IO Exception in closing Level-Site Connection in Evaluation", e);
 			}
 		}
+	}
+
+	public static SSLSocket createSocket(String hostname, int port) {
+		SSLSocket client_socket;
+		try {
+			// Step: 1
+			client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
+			client_socket.setEnabledProtocols(protocols);
+			client_socket.setEnabledCipherSuites(cipher_suites);
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Cannot open port " + port, e);
+		}
+		return client_socket;
 	}
 }

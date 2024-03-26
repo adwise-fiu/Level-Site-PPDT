@@ -25,7 +25,7 @@ public class level_site_server implements Runnable {
     protected Thread       runningThread= null;
     protected level_order_site level_site_parameters = null;
     protected SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-    private final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+    private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
     private SSLSocket next_level_site;
 
     public static void main(String[] args) {
@@ -145,5 +145,19 @@ public class level_site_server implements Runnable {
         catch (IOException e) {
             throw new RuntimeException("Cannot open port " + this.serverPort, e);
         }
+    }
+
+    public static SSLSocket createSocket(String hostname, int port) {
+        SSLSocket client_socket;
+        try {
+            // Step: 1
+            client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
+            client_socket.setEnabledProtocols(protocols);
+            client_socket.setEnabledCipherSuites(cipher_suites);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Cannot open port " + port, e);
+        }
+        return client_socket;
     }
 }

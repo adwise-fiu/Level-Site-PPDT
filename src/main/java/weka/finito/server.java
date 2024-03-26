@@ -41,7 +41,7 @@ import weka.finito.utils.LabelEncoder;
 public final class server implements Runnable {
 	private static final Logger logger = LogManager.getLogger(server.class);
 	private final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	private final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	private final String training_data;
 	private final String [] level_site_ips;
@@ -525,7 +525,7 @@ public final class server implements Runnable {
 
 			}
 
-			try(SSLSocket level_site = (SSLSocket) socket_factory.createSocket(level_site_ips[i], connection_port)) {
+			try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
 				// Step: 3
 				level_site.setEnabledProtocols(protocols);
 				level_site.setEnabledCipherSuites(cipher_suites);
@@ -548,5 +548,19 @@ public final class server implements Runnable {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	public static SSLSocket createSocket(String hostname, int port) {
+		SSLSocket client_socket;
+		try {
+			// Step: 1
+			client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
+			client_socket.setEnabledProtocols(protocols);
+			client_socket.setEnabledCipherSuites(cipher_suites);
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Cannot open port " + port, e);
+		}
+		return client_socket;
 	}
 }
