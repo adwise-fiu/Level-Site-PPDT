@@ -61,7 +61,7 @@ public class level_site_server implements Runnable {
         synchronized(this) {
             this.runningThread = Thread.currentThread();
         }
-        createServerSocket();
+        serverSocket = createServerSocket(this.serverPort);
         ValidatingObjectInputStream ois;
         ObjectOutputStream oos;
         Object o;
@@ -135,16 +135,18 @@ public class level_site_server implements Runnable {
         }
     }
 
-    private void createServerSocket() {
+    public static SSLServerSocket createServerSocket(int serverPort) {
+        SSLServerSocket serverSocket;
         try {
             // Step: 1
-            serverSocket = (SSLServerSocket) factory.createServerSocket(this.serverPort);
+            serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
             serverSocket.setEnabledProtocols(protocols);
             serverSocket.setEnabledCipherSuites(cipher_suites);
-        } 
-        catch (IOException e) {
-            throw new RuntimeException("Cannot open port " + this.serverPort, e);
         }
+        catch (IOException e) {
+            throw new RuntimeException("Cannot open port " + serverPort, e);
+        }
+        return serverSocket;
     }
 
     public static SSLSocket createSocket(String hostname, int port) {

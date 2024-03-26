@@ -133,9 +133,6 @@ public final class server implements Runnable {
 	private void run_server_site(int port) throws IOException, HomomorphicException, ClassNotFoundException {
 		int count = 0;
 		try (SSLServerSocket serverSocket = createServerSocket(port)) {
-			serverSocket.setEnabledProtocols(protocols);
-			serverSocket.setEnabledCipherSuites(cipher_suites);
-
 			logger.info("Server will be waiting for direct evaluation from client");
 			while (count < evaluations) {
 				try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
@@ -526,13 +523,6 @@ public final class server implements Runnable {
 			}
 
 			try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
-				// Step: 3
-				level_site.setEnabledProtocols(protocols);
-				level_site.setEnabledCipherSuites(cipher_suites);
-
-				// Step: 4 {optional}
-				level_site.startHandshake();
-
 				logger.info("training level-site " + i + " on port:" + connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = get_ois(level_site);

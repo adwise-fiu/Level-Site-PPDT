@@ -220,13 +220,6 @@ public final class client implements Runnable {
 			throws IOException, ClassNotFoundException {
 		logger.info("Connecting to " + server_ip + ":" + server_port + " for set-up");
 		try (SSLSocket server_site = createSocket(server_ip, server_port)) {
-			// Step: 3
-			server_site.setEnabledProtocols(protocols);
-			server_site.setEnabledCipherSuites(cipher_suites);
-
-			// Step: 4 {optional}
-			server_site.startHandshake();
-
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
 			ValidatingObjectInputStream from_server_site = get_ois(server_site);
 
@@ -411,13 +404,6 @@ public final class client implements Runnable {
 		// If you are just evaluating directly with the server-site
 		if (level_site_ips == null) {
 			try(SSLSocket server_site = createSocket(server_ip, server_port)) {
-				// Step: 3
-				server_site.setEnabledProtocols(protocols);
-				server_site.setEnabledCipherSuites(cipher_suites);
-
-				// Step: 4 {optional}
-				server_site.startHandshake();
-
 				logger.info("Client connected to sever-site with PPDT");
 				evaluate_with_server_site(server_site);
 				long end_time = System.nanoTime();
@@ -448,12 +434,6 @@ public final class client implements Runnable {
 				}
 
 				try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
-					// Step: 3
-					level_site.setEnabledProtocols(protocols);
-					level_site.setEnabledCipherSuites(cipher_suites);
-
-					// Step: 4 {optional}
-					level_site.startHandshake();
 					logger.info("Client connected to level " + i);
 					communicate_with_level_site(level_site);
 				}
@@ -486,6 +466,7 @@ public final class client implements Runnable {
 		}
 	}
 
+	// For some reason, the moment I move this to shared.java, it just fails
 	public static SSLSocket createSocket(String hostname, int port) {
 		SSLSocket client_socket;
 		try {
