@@ -27,7 +27,7 @@ public class level_site_server implements Runnable {
     protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
     private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
     private SSLSocket next_level_site;
-    private Thread level_site_evaluation;
+    private Thread level_site_evaluation = null;
     private level_site_evaluation_thread current_level_site_class;
 
     public static void main(String[] args) {
@@ -135,8 +135,10 @@ public class level_site_server implements Runnable {
         this.isStopped = true;
         try {
             this.serverSocket.close();
-            if (level_site_evaluation.isAlive()) {
-                this.level_site_evaluation.interrupt();
+            if (level_site_evaluation != null) {
+                if (level_site_evaluation.isAlive()) {
+                    this.level_site_evaluation.interrupt();
+                }
             }
         }
         catch (IOException e) {
