@@ -27,6 +27,8 @@ public class level_site_server implements Runnable {
     protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
     private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
     private SSLSocket next_level_site;
+    private Thread level_site_evaluation;
+    private level_site_evaluation_thread current_level_site_class;
 
     public static void main(String[] args) {
         setup_tls();
@@ -89,13 +91,17 @@ public class level_site_server implements Runnable {
                     // Traffic from Server, collect the level-site data
                     this.level_site_parameters = (level_order_site) o;
                     oos.writeBoolean(true);
-                    // Create a persistent connection to next level-site and oos to send the next stuff down
+
+
+                    // Create an evaluation thread for level-site 1, 2, ..., d
+                    // These will need no interaction and will just be looping in the background
+                    // They should all be starting to wait for acceptance if they are
+                    // level-site 1, 2, ..., d
                     /*
-                    if(level_site_parameters.get_next_level_site() != null) {
-                        next_level_site = (SSLSocket) socket_factory.createSocket(
-                                level_site_parameters.get_next_level_site(), level_site_parameters.get_next_level_site_port());
-                    }
-                     */
+                    current_level_site_class = new level_site_evaluation_thread(this.level_site_parameters);
+                    level_site_evaluation = new Thread(current_level_site_class);
+                    level_site_evaluation.start();
+                    */
                     closeConnection(oos, ois, client_socket);
                 }
                 else if (o instanceof features) {
@@ -129,6 +135,9 @@ public class level_site_server implements Runnable {
         this.isStopped = true;
         try {
             this.serverSocket.close();
+            if (level_site_evaluation.isAlive()) {
+                this.level_site_evaluation.interrupt();
+            }
         }
         catch (IOException e) {
         	throw new RuntimeException("Error closing server on port " + this.serverPort, e);

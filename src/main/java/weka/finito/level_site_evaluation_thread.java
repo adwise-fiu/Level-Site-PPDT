@@ -25,7 +25,7 @@ public class level_site_evaluation_thread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(level_site_evaluation_thread.class);
 	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	private final SSLSocket client_socket;
+	private SSLSocket client_socket;
 	private SSLSocket next_level_site_socket;
 	private SSLSocket previous_level_site_socket;
 	private final level_order_site level_site_data;
@@ -34,7 +34,7 @@ public class level_site_evaluation_thread implements Runnable {
 	private ObjectInputStream previous_site;
 	private SSLServerSocket previous_level_site_listener;
 
-	// This thread is ONLY to handle evaluations
+	// This thread is only for level-site 0
 	public level_site_evaluation_thread(SSLSocket client_socket, level_order_site level_site_data,
 										features encrypted_features, ObjectOutputStream next_level_site) {
 		// Have encrypted copy of thresholds if not done already for all nodes in level-site
@@ -42,6 +42,12 @@ public class level_site_evaluation_thread implements Runnable {
 		this.level_site_data = level_site_data;
 		this.encrypted_features = encrypted_features;
 		this.next_level_site = next_level_site;
+	}
+
+	// For all other levels
+	public level_site_evaluation_thread(level_order_site level_site_data) throws IOException {
+		this.level_site_data = level_site_data;
+		init();
 	}
 
 	protected void init() throws IOException {
