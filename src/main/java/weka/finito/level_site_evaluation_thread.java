@@ -51,12 +51,11 @@ public class level_site_evaluation_thread implements Runnable {
 	}
 
 	protected void init() throws IOException {
-		if (level_site_data.get_level() != 0) {
-			previous_level_site_listener = createServerSocket(this.level_site_data.get_listen_port());
-			previous_level_site_socket = (SSLSocket) previous_level_site_listener.accept();
-			previous_level_site_socket.setKeepAlive(true);
-			previous_site = get_ois(previous_level_site_socket);
-		}
+		// All level-sites except 0 (already checked in constructor), must do this.
+		previous_level_site_listener = createServerSocket(this.level_site_data.get_listen_port());
+		previous_level_site_socket = (SSLSocket) previous_level_site_listener.accept();
+		previous_level_site_socket.setKeepAlive(true);
+		previous_site = get_ois(previous_level_site_socket);
 
 		// All the level-sites should do this step though, except level-site d
 		// Create a persistent connection to next level-site and oos to send the next stuff down
@@ -106,10 +105,7 @@ public class level_site_evaluation_thread implements Runnable {
 
         try {
 			if (level_site_data.get_level() != 0) {
-				evaluate();
-				/*
-
-				// Loop read object and evaluate. On interrupt, close server socket
+				// Loop read object and evaluate. On interrupt, close everything
 				while (!Thread.interrupted()) {
 					// Previous level-site sends data for comparison
 					o = previous_site.readObject();
@@ -128,9 +124,9 @@ public class level_site_evaluation_thread implements Runnable {
 				closeConnection(previous_level_site_listener);
 				closeConnection(previous_level_site_socket);
 				closeConnection(next_level_site_socket);
-				 */
 			}
 			else {
+				// I already got client socket and features, so evaluate thread now and close
 				evaluate();
 			}
 		}

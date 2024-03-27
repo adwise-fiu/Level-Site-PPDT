@@ -26,9 +26,9 @@ public class level_site_server implements Runnable {
     protected level_order_site level_site_parameters = null;
     protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
     private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-    private SSLSocket next_level_site;
+    private SSLSocket next_level_site_socket;
+    private ObjectOutputStream next_level_site;
     private Thread level_site_evaluation = null;
-    private level_site_evaluation_thread current_level_site_class;
 
     public static void main(String[] args) {
         setup_tls();
@@ -87,28 +87,36 @@ public class level_site_server implements Runnable {
                 oos = new ObjectOutputStream(client_socket.getOutputStream());
                 ois = get_ois(client_socket);
                 o = ois.readObject();
+                level_site_evaluation_thread current_level_site_class;
                 if (o instanceof level_order_site) {
                     // Traffic from Server, collect the level-site data
                     this.level_site_parameters = (level_order_site) o;
-                    oos.writeBoolean(true);
-
 
                     // Create an evaluation thread for level-site 1, 2, ..., d
                     // These will need no interaction and will just be looping in the background
                     // They should all be starting to wait for acceptance if they are
                     // level-site 1, 2, ..., d
-                    /*
-                    current_level_site_class = new level_site_evaluation_thread(this.level_site_parameters);
-                    level_site_evaluation = new Thread(current_level_site_class);
-                    level_site_evaluation.start();
-                    */
+                    if (level_site_parameters.get_level() != 0) {
+                        current_level_site_class = new level_site_evaluation_thread(this.level_site_parameters);
+                        level_site_evaluation = new Thread(current_level_site_class);
+                        level_site_evaluation.start();
+                    }
+                    else {
+                        // level-site 0 has a connection to level-site 1, I do want to wait JUST a little bit
+                        // so that level-site 1 is ready!
+                        next_level_site_socket = createSocket(level_site_parameters.get_next_level_site(),
+                                level_site_parameters.get_next_level_site_port());
+                        next_level_site_socket.setKeepAlive(true);
+                        next_level_site = new ObjectOutputStream(next_level_site_socket.getOutputStream());
+                    }
+                    oos.writeBoolean(true);
                     closeConnection(oos, ois, client_socket);
                 }
                 else if (o instanceof features) {
-                    // Start evaluating with the client
-                    level_site_evaluation_thread current_level_site_class =
+                    // This should really only occur with level-site 0
+                    current_level_site_class =
                             new level_site_evaluation_thread(client_socket, this.level_site_parameters,
-                                    (features) o, oos);
+                                    (features) o, next_level_site);
                     new Thread(current_level_site_class).start();
                 }
                 else {
@@ -139,6 +147,9 @@ public class level_site_server implements Runnable {
                 if (level_site_evaluation.isAlive()) {
                     this.level_site_evaluation.interrupt();
                 }
+            }
+            if (next_level_site_socket != null) {
+                closeConnection(next_level_site_socket);
             }
         }
         catch (IOException e) {

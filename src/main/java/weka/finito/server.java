@@ -210,8 +210,12 @@ public final class server implements Runnable {
 
 			// Train level-sites
 			get_level_site_data(ppdt, all_level_sites);
+			logger.info("Server trained DT");
 
-			logger.info("Server trained DT and created level-sites");
+			if (this.level_site_ips != null) {
+				train_level_sites();
+			}
+			logger.info("Server just trained all the level-sites");
 
 			// Now I know the leaves to send back to the client
 			String [] leaf_array = leaves.toArray(new String[0]);
@@ -463,7 +467,6 @@ public final class server implements Runnable {
 
 		// If we are testing without level-sites do this...
 		if (this.level_site_ips != null) {
-			train_level_sites();
 			// If running on a cluster, might as well train be able to run server-site too.
 			// If running locally, this.evaluations is set to 1 by default for local testing.
 			if (this.evaluations != 1) {
@@ -504,8 +507,7 @@ public final class server implements Runnable {
 
 			if (port == -1) {
 				connection_port = this.level_site_ports[i];
-			}
-			else {
+			} else {
 				connection_port = this.port;
 			}
 
@@ -514,12 +516,22 @@ public final class server implements Runnable {
 				if (port == -1) {
 					current_level_site.set_next_level_site_port(level_site_ports[(i + 1) % level_site_ports.length]);
 					current_level_site.set_listen_port(level_site_ports[i]);
-				}
-				else {
+				} else {
 					current_level_site.set_next_level_site_port(connection_port);
 					current_level_site.set_listen_port(connection_port);
 				}
+			}
+		}
 
+		// I think it is SAFER if I create level-sites from d and go up, so all accepts are ready...
+		for (int i = all_level_sites.size() - 1; i >= 0; i--) {
+			level_order_site current_level_site = all_level_sites.get(i);
+
+			if (port == -1) {
+				connection_port = this.level_site_ports[i];
+			}
+			else {
+				connection_port = this.port;
 			}
 
 			try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
