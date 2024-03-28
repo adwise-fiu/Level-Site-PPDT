@@ -22,7 +22,7 @@ public class level_site_server implements Runnable {
     protected int          serverPort;
     protected SSLServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
-    protected Thread       runningThread= null;
+    protected Thread       runningThread = null;
     protected level_order_site level_site_parameters = null;
     protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
     private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -71,8 +71,22 @@ public class level_site_server implements Runnable {
         while(! isStopped()) {
             SSLSocket client_socket;
             try {
-            	logger.info("Ready to accept connections at: " + this.serverPort);
-                client_socket = (SSLSocket) this.serverSocket.accept();
+            	// logger.info("[Main Level-Site Server] Ready to accept connections at: " + this.serverPort);
+                if (level_site_parameters == null) {
+                    // You need the training data...
+                    client_socket = (SSLSocket) this.serverSocket.accept();
+                    logger.info("Received data likely to start training...");
+                }
+                else {
+                    // Wait for any incoming clients
+                    if (level_site_parameters.get_level() == 0) {
+                        client_socket = (SSLSocket) this.serverSocket.accept();
+                        logger.info("Level 0 received data likely from a client...");
+                    }
+                    else {
+                        continue;
+                    }
+                }
             }
             catch (IOException e) {
                 if(isStopped()) {
@@ -96,8 +110,10 @@ public class level_site_server implements Runnable {
                     // These will need no interaction and will just be looping in the background
                     // They should all be starting to wait for acceptance if they are
                     // level-site 1, 2, ..., d
+                    logger.info("Received training data, creating evaluation thread...");
                     if (level_site_parameters.get_level() != 0) {
-                        current_level_site_class = new level_site_evaluation_thread(this.level_site_parameters);
+                        current_level_site_class = new level_site_evaluation_thread(
+                                level_site_parameters, serverSocket);
                         level_site_evaluation = new Thread(current_level_site_class);
                         level_site_evaluation.start();
                     }

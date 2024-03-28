@@ -502,27 +502,6 @@ public final class server implements Runnable {
 		}
 
 		// Send the data to each level site, use data in-transit encryption
-		for (int i = 0; i < all_level_sites.size(); i++) {
-			level_order_site current_level_site = all_level_sites.get(i);
-
-			if (port == -1) {
-				connection_port = this.level_site_ports[i];
-			} else {
-				connection_port = this.port;
-			}
-
-			if (i + 1 != all_level_sites.size()) {
-				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
-				if (port == -1) {
-					current_level_site.set_next_level_site_port(level_site_ports[(i + 1) % level_site_ports.length]);
-					current_level_site.set_listen_port(level_site_ports[i]);
-				} else {
-					current_level_site.set_next_level_site_port(connection_port);
-					current_level_site.set_listen_port(connection_port);
-				}
-			}
-		}
-
 		// I think it is SAFER if I create level-sites from d and go up, so all accepts are ready...
 		for (int i = all_level_sites.size() - 1; i >= 0; i--) {
 			level_order_site current_level_site = all_level_sites.get(i);
@@ -534,11 +513,42 @@ public final class server implements Runnable {
 				connection_port = this.port;
 			}
 
+			// level-site d
+			if (i == all_level_sites.size() - 1) {
+				if (port == -1) {
+					current_level_site.set_listen_port(level_site_ports[i]);
+				}
+				else {
+					current_level_site.set_listen_port(connection_port);
+				}
+			}
+			else if (i == 0) {
+				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
+				if (port == -1) {
+					current_level_site.set_next_level_site_port(level_site_ports[(i + 1) % level_site_ports.length]);
+				}
+				else {
+					current_level_site.set_next_level_site_port(connection_port);
+				}
+			}
+			else {
+				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
+				if (port == -1) {
+					current_level_site.set_next_level_site_port(level_site_ports[(i + 1) % level_site_ports.length]);
+					current_level_site.set_listen_port(level_site_ports[i]);
+				}
+				else {
+					current_level_site.set_next_level_site_port(connection_port);
+					current_level_site.set_listen_port(connection_port);
+				}
+			}
+
 			try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
 				logger.info("training level-site " + i + " on port:" + connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = get_ois(level_site);
 				to_level_site.writeObject(current_level_site);
+				to_level_site.flush();
 				if(from_level_site.readBoolean()) {
 					logger.info("Training Successful on port:" + connection_port);
 				}

@@ -39,26 +39,21 @@ public final class level_order_site implements Serializable {
 	public void set_listen_port(int level_site_listening_port) {
 		this.level_site_listening_port = level_site_listening_port;
 	}
-
 	public List<NodeInfo> get_node_data() {
     	return this.node_level_data;
     }
-
 	public void set_next_level_site(String next_level_site) {
 		this.next_level_site = next_level_site;
 	}
-
 	public String get_next_level_site() {
 		return this.next_level_site;
 	}
 	public void set_next_level_site_port(int next_level_site_port) {
 		this.next_level_site_port = next_level_site_port;
 	}
-
 	public int get_next_level_site_port() {
 		return this.next_level_site_port;
 	}
-
     public void append_data(NodeInfo info) {
     	node_level_data.add(info);
     }
@@ -66,9 +61,11 @@ public final class level_order_site implements Serializable {
     public String toString() {
     	StringBuilder output = new StringBuilder();
     	int num = 0;
-    	output.append("level: ");
-    	output.append(get_level());
-    	output.append('\n');
+    	output.append("level: ").append(get_level()).append("\n");
+		output.append("Listening from previous level-site at port: ").append(get_listen_port()).append("\n");
+		output.append("Next Level-Site: ").append(get_next_level_site()).append(
+				":").append(get_next_level_site_port()).append("\n");
+
     	for (NodeInfo i: node_level_data) {
     		output.append("Index ");
     		output.append(num);

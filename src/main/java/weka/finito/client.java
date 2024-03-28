@@ -415,7 +415,6 @@ public final class client implements Runnable {
 
 		// However, if you are evaluating with level-sites, you are running this code.
 		try {
-
 			if (port == -1) {
 				assert level_site_ports != null;
 				connection_port = level_site_ports[0];
