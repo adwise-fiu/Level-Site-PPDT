@@ -1,5 +1,6 @@
 package weka.finito;
 
+import java.io.EOFException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.System;
@@ -147,6 +148,9 @@ public class level_site_evaluation_thread implements Runnable {
 				// I already got client socket and features, so evaluate thread now and close
 				evaluate();
 			}
+		}
+		catch (EOFException e) {
+			// ... this is fine, will occur when stuck on readObject() and interrupted.
 		}
         catch (Exception e) {
 			logger.error("Exception found", e);
