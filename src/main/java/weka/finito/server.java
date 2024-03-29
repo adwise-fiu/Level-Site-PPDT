@@ -331,13 +331,13 @@ public final class server implements Runnable {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
 					leaves.add(variable);
 					node_info = new NodeInfo(true, hash(variable), 0);
+					logger.info("Testing Idea to encrypt leaf: " + base64_to_big_integer(hash(variable)));
 					Level_Order_S.append_data(node_info);
 				}
 				else {
 					double threshold;
 
 					for (int i = 0; i < p.getSons().length; i++) {
-
 						// Determine which type of comparison is occurring.
 						String leftSide = p.getLocalModel().leftSide(p.getTrainingData());
 						String rightSide = p.getLocalModel().rightSide(i, p.getTrainingData());

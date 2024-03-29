@@ -53,12 +53,23 @@ public class shared {
             "TLS_RSA_WITH_AES_128_CBC_SHA"
     };
 
-
     // Used by server-site to hash leaves and client-site to find the leaf
     public static String hash(String text) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hash);
+    }
+
+    // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
+    public static BigInteger base64_to_big_integer(String text) {
+        byte [] decodedBytes = Base64.getDecoder().decode(text);
+        BigInteger bigInteger = new BigInteger(1, decodedBytes);
+        return bigInteger;
+    }
+
+    public static String big_integer_to_base64(BigInteger bigInteger) {
+        byte [] bytes = bigInteger.toByteArray();
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
     public static void setup_tls() {
