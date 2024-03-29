@@ -133,14 +133,15 @@ public class shared {
         BigInteger encrypted_thresh = null;
         logger.info(String.format("Using comparison type %d", comparisonType));
 
-        // Encrypt the thresh-hold correctly
-        if ((comparisonType == 2) || (comparisonType == 4)) {
+        // Encrypt the thresh-hold correct
+        // Note only types 1, 3, 4, 6 have been known to exist
+        if ((comparisonType == 2) || (comparisonType == 5)) {
             encrypted_thresh = ld.getPaillier();
             encrypted_client_value = encrypted_values.integerValuePaillier();
             Niu.writeInt(0);
             Niu.setDGKMode(false);
         }
-        else if ((comparisonType == 3) || (comparisonType == 5)) {
+        else if ((comparisonType == 3) || (comparisonType == 4)) {
             encrypted_thresh = ld.getDGK();
             encrypted_client_value = encrypted_values.integerValueDGK();
             Niu.writeInt(1);
