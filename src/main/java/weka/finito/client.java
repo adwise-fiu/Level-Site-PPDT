@@ -298,27 +298,39 @@ public final class client implements Runnable {
 	}
 
 	// Function used to Evaluate for each level-site
-	private void evaluate_with_level_site(SSLSocket level_site)
+	private void evaluate_with_level_site(SSLSocket level_site, int level)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
 		Object o;
 		bob_joye client;
+		ObjectInputStream from_level_site = null;
 
-		// Create I/O stream and send features
-		ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-		ObjectInputStream from_level_site = get_ois(level_site);
-		to_level_site.writeObject(this.feature);
-		to_level_site.flush();
+		// Create I/O stream and send features, only need to send features once to level-site 0...
+		// Level-site 0 will take care of passing it down
+		if (level == 0) {
+			ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+			to_level_site.writeObject(this.feature);
+			to_level_site.flush();
+		}
 
 		// Send the Public Keys using Alice and Bob
 		client = new bob_joye(paillier, dgk);
 		client.set_socket(level_site);
+		if (level == 0) {
+			from_level_site = get_ois(level_site);
+		}
 
 		// Get the comparison
 		// I am not sure why I need this loop, but you will only need 1 comparison.
 		int comparison_type;
 		while (true) {
-			comparison_type = from_level_site.readInt();
+			if (level == 0) {
+				comparison_type = from_level_site.readInt();
+			}
+			else {
+				comparison_type = client.readInt();
+			}
+
 			logger.info(String.format("Using comparison type %d", comparison_type));
 			if (comparison_type == -1) {
 				this.classification_complete = true;
@@ -427,15 +439,15 @@ public final class client implements Runnable {
 			try(SSLServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
 				// For level-site 0, just connect and evaluate now.
 				try(SSLSocket level_site = createSocket(level_site_ips[level], connection_port)) {
-					evaluate_with_level_site(level_site);
+					evaluate_with_level_site(level_site, level);
 				}
 
 				// For every other level, the level-site will reach out to you
 				while(!classification_complete) {
 					logger.info("Completed evaluation with level " + level);
-					SSLSocket level_site = (SSLSocket) level_site_listener.accept();
-					evaluate_with_level_site(level_site);
 					++level;
+					SSLSocket level_site = (SSLSocket) level_site_listener.accept();
+					evaluate_with_level_site(level_site, level);
 				}
 			}
 

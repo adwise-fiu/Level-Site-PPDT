@@ -79,7 +79,7 @@ public class level_site_evaluation_thread implements Runnable {
 		}
 	}
 
-	public final void evaluate() throws IOException, HomomorphicException, ClassNotFoundException {
+	private void evaluate() throws IOException, HomomorphicException, ClassNotFoundException {
 		long start_time = System.nanoTime();
 		alice_joye niu = new alice_joye();
 
@@ -119,18 +119,23 @@ public class level_site_evaluation_thread implements Runnable {
 			init();
 			if (level_site_data.get_level() != 0) {
 				// Loop read object and evaluate. On interrupt, close everything
+				logger.info("Level-site " + level_site_data.get_level() + " is now waiting for evaluations");
 				while (!Thread.interrupted()) {
 					// Previous level-site sends data for comparison
 					o = previous_site.readObject();
+					logger.info("Level-site " + level_site_data.get_level() + " got an object");
 					if (o instanceof features) {
 						encrypted_features = (features) o;
 					} else {
 						throw new RuntimeException("I received an object that should be features!");
 					}
+					logger.info("Level-site " + level_site_data.get_level() + " got encrypted features!");
 					// Create connection to the client
 					client_socket = createSocket(
 							encrypted_features.get_client_ip(),
 							encrypted_features.get_client_port());
+					logger.info("Level-site " + level_site_data.get_level() + " connected to the client: " +
+							encrypted_features.get_client_ip() + ":" + encrypted_features.get_client_port());
 					evaluate();
 				}
 				// Close everything
