@@ -162,7 +162,6 @@ public final class server implements Runnable {
 			input = (features) client_input;
 		}
 		assert input != null;
-
 		long start_time = System.nanoTime();
 
 		// Traverse DT until you hit a leaf, the client has to track the index...
@@ -331,7 +330,6 @@ public final class server implements Runnable {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
 					leaves.add(variable);
 					node_info = new NodeInfo(true, hash(variable), 0);
-					logger.info("Testing Idea to encrypt leaf: " + base64_to_big_integer(hash(variable)));
 					Level_Order_S.append_data(node_info);
 				}
 				else {
@@ -405,11 +403,9 @@ public final class server implements Runnable {
 						catch (NumberFormatException e) {
 							// Use Label Encoder, only type 1 and 6 though
 							threshold = label_encoder.encode(threshold_string).doubleValue();
-							logger.info("Encoding " + threshold_string + " to " + temp_thresh);
 						}
 						temp_thresh = NodeInfo.set_precision(threshold, precision);
 						node_info = new NodeInfo(false, leftSide, type);
-						logger.info("Updated threshold is: " + temp_thresh);
 						node_info.encrypt(temp_thresh, paillier_public, dgk_public);
 						q.add(p.getSons()[i]);
 					}
@@ -497,7 +493,7 @@ public final class server implements Runnable {
         assert this.level_site_ips != null;
         if(this.level_site_ips.length < all_level_sites.size()) {
 			String error = String.format("Please create more level-sites for the " +
-					"decision tree trained from %s", training_data);
+					"decision tree trained from %s, create %d level-sites", training_data, all_level_sites.size());
 			throw new RuntimeException(error);
 		}
 

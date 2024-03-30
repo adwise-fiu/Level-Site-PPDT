@@ -1,6 +1,7 @@
 # Always checkout with LF
 *.sh            text eol=lf
 *.txt           text eol=lf
+*.values        text eol=lf
 gradelw         text eol=lf
 .env            text eol=lf
 

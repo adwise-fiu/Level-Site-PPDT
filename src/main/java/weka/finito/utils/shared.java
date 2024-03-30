@@ -63,8 +63,7 @@ public class shared {
     // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
     public static BigInteger base64_to_big_integer(String text) {
         byte [] decodedBytes = Base64.getDecoder().decode(text);
-        BigInteger bigInteger = new BigInteger(1, decodedBytes);
-        return bigInteger;
+        return new BigInteger(1, decodedBytes);
     }
 
     public static String big_integer_to_base64(BigInteger bigInteger) {
@@ -140,6 +139,9 @@ public class shared {
         boolean answer;
 
         BigIntegers encrypted_values = encrypted_features.get_thresholds(ld.variable_name);
+        if (encrypted_values == null) {
+            throw new RuntimeException(String.format("Seems like the feature %s is not known", ld.variable_name));
+        }
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
         logger.info(String.format("Using comparison type %d", comparisonType));
