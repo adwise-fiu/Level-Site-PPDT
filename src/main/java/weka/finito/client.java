@@ -274,17 +274,17 @@ public final class client implements Runnable {
 				break;
 			}
 			else if (comparison_type == 0) {
-				logger.info("Comparing two Paillier Values");
+				logger.debug("Comparing two Paillier Values");
 				client.setDGKMode(false);
 				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
-				logger.info("Comparing two DGK Values");
+				logger.debug("Comparing two DGK Values");
 				client.setDGKMode(true);
 				client.Protocol2();
 			}
 			else if (comparison_type == 2) {
-				logger.info("Comparing two DGK Values, Encrypted Equals!");
+				logger.debug("Comparing two DGK Values, Encrypted Equals!");
 				client.setDGKMode(true);
 				client.encrypted_equals();
 			}
@@ -337,17 +337,17 @@ public final class client implements Runnable {
 				break;
 			}
 			else if (comparison_type == 0) {
-				logger.info("Comparing two Paillier Values");
+				logger.debug("Comparing two Paillier Values");
 				client.setDGKMode(false);
 				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
-				logger.info("Comparing two DGK Values");
+				logger.debug("Comparing two DGK Values");
 				client.setDGKMode(true);
 				client.Protocol2();
 			}
 			else if (comparison_type == 2) {
-				logger.info("Comparing two DGK Values, Encrypted Equals!");
+				logger.debug("Comparing two DGK Values, Encrypted Equals!");
 				client.setDGKMode(true);
 				client.encrypted_equals();
 			}

@@ -53,7 +53,7 @@ public class level_site_evaluation_thread implements Runnable {
 	protected void init() throws IOException {
 		// All level-sites except 0 (already checked in constructor), must do this.
 		if(previous_site == null) {
-			logger.info("Evaluation thread will now do the listening");
+			logger.debug("Evaluation thread will now do the listening");
 			if (previous_level_site_listener != null) {
 				// Likely level-site 0, so no previous socket would exist.
 				previous_level_site_socket = (SSLSocket) previous_level_site_listener.accept();
@@ -62,7 +62,7 @@ public class level_site_evaluation_thread implements Runnable {
 			}
 		}
 		else {
-			logger.info("Connection to previous level-site already exists!");
+			logger.debug("Connection to previous level-site already exists!");
 		}
 
 		// All the level-sites should do this step though, except level-site d
@@ -76,7 +76,7 @@ public class level_site_evaluation_thread implements Runnable {
 			}
 		}
 		else {
-			logger.info("Connection to the next level-site already exists");
+			logger.debug("Connection to the next level-site already exists");
 		}
 	}
 
@@ -112,8 +112,8 @@ public class level_site_evaluation_thread implements Runnable {
 
 	// This will run the communication with client and next level site
 	public final void run() {
-		logger.info("Showing level-site");
-		logger.info(level_site_data.toString());
+		logger.debug("Showing level-site");
+		logger.debug(level_site_data.toString());
 		Object o;
 
         try {
@@ -127,8 +127,10 @@ public class level_site_evaluation_thread implements Runnable {
 					logger.info("Level-site " + level_site_data.get_level() + " got an object");
 					if (o instanceof features) {
 						encrypted_features = (features) o;
-					} else {
-						throw new RuntimeException("I received an object that should be features!");
+					}
+					else {
+						throw new RuntimeException("Level-site " + level_site_data.get_level()
+								+ "received an object that should be features!");
 					}
 					logger.info("Level-site " + level_site_data.get_level() + " got encrypted features!");
 					// Create connection to the client
@@ -153,7 +155,7 @@ public class level_site_evaluation_thread implements Runnable {
 			// ... this is fine, will occur when stuck on readObject() and interrupted.
 		}
         catch (Exception e) {
-			logger.error("Exception found", e);
+			throw new RuntimeException(e);
 		}
 		finally {
 			try {
