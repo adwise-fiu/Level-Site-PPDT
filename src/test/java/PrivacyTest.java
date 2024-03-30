@@ -82,32 +82,14 @@ public final class PrivacyTest {
 	@Test
 	public void test_all_level_sites() throws Exception {
 		String answer_path = new File(data_directory, "answers.csv").toString();
-		// Parse CSV file with various tests
-		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
-		    String line;
-		    while ((line = br.readLine()) != null) {
-		        String [] values = line.split(",");
-		        String data_set = values[0];
-		        String features = values[1];
-		        String expected_classification = values[2];
-				String full_feature_path = new File(data_directory, features).toString();
-				String full_data_set_path = new File(data_directory, data_set).toString();
-				logger.info(full_data_set_path);
-				logger.info("Feature Vector Path: " + full_feature_path);
-				String classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
-		        		level_site_ips, level_site_ports_string, server_ip, server_port);
-				logger.info(expected_classification + " =!= " + classification);
-				assertEquals(expected_classification, classification);
-		    }
-		}
+		run_test(answer_path, true);
 	}
 
-	@Test
-	public void test_single_site() throws Exception {
-		String answer_path = new File(data_directory, "answers.csv").toString();
+	public void run_test(String answer_path, boolean use_level_sites) throws Exception {
 		// Parse CSV file with various tests
 		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
 			String line;
+			String classification;
 			while ((line = br.readLine()) != null) {
 				String [] values = line.split(",");
 				String data_set = values[0];
@@ -116,13 +98,30 @@ public final class PrivacyTest {
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
 				logger.info(full_data_set_path);
-				logger.info("Features Vector: " + full_feature_path);
-				String classification = test_server_case(full_data_set_path, full_feature_path, key_size, precision,
-						server_ip, server_port);
+				logger.info("Feature Vector Path: " + full_feature_path);
+				if (use_level_sites) {
+					classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
+							level_site_ips, level_site_ports_string, server_ip, server_port);
+				}
+				else {
+					classification = test_server_case(full_data_set_path, full_feature_path, key_size, precision,
+							server_ip, server_port);
+				}
+
 				logger.info(expected_classification + " =!= " + classification);
 				assertEquals(expected_classification, classification);
 			}
 		}
+	}
+
+	@Test
+	public void test_single_site() throws Exception {
+		String answer_path = new File(data_directory, "answers.csv").toString();
+		run_test(answer_path, false);
+
+		// Because of the depth of these trees from Liu et al. we will use a test and not for level-site
+		// answer_path = new File(data_directory, "answers_liu.csv").toString();
+		// run_test(answer_path, false);
 	}
 
 	public static String test_level_site(String training_data, String features_file, int levels,

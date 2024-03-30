@@ -1,8 +1,8 @@
 parents	usual
 has_nurs	very_crit
-form	complete
+form	foster
 children	1
 housing	convenient
 finance	convenient
 social	non-prob
-health	not_recom
+health	priority
