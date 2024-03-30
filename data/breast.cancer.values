@@ -1,0 +1,9 @@
+age	10-19
+menopause	lt40
+tumor-size	0-4
+inv-nodes	0-2
+node-caps	yes
+deg-malig	1
+breast	left
+breast-quad	left-up
+irradiat	yes
