@@ -98,12 +98,16 @@ public class shared {
         NodeInfo ls;
         NodeInfo to_return = null;
 
+        // The n index tells you when you are in scope in regard to level-site
+        // Level-sites are made of leaves, and split the inequality into two nodes,
+        // so you have a '<=' and '>' node and '=' and '!=' in pairs
         while ((!equalsFound) && (!terminalLeafFound)) {
             ls = node_level_data.get(node_level_index);
-            logger.info("j=" + node_level_index);
+            logger.debug("j=" + node_level_index);
             if (ls.isLeaf()) {
                 if (n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1) {
+                    logger.debug("Found the leaf at node=" + n + " to be used: " + ls);
                     terminalLeafFound = true;
                     to_return = ls;
                 }
@@ -113,13 +117,17 @@ public class shared {
                 if ((n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1)) {
 
+                    logger.debug("At node=" + n + ", I need to compare");
                     inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
 
+                    equalsFound = true;
                     if (inequalityHolds) {
-                        equalsFound = true;
                         encrypted_features.set_next_index(next_index);
-                        logger.info("New index: " + encrypted_features.get_next_index());
                     }
+                    else {
+                        encrypted_features.set_next_index(next_index + 1);
+                    }
+                    logger.debug("New index: " + encrypted_features.get_next_index());
                 }
                 n++;
                 next_index++;
