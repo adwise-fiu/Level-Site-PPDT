@@ -3,7 +3,7 @@ menopause	premeno
 tumor-size	0-4
 inv-nodes	0-2
 node-caps	yes
-deg-malig	1
+deg-malig	3
 breast	right
 breast-quad	left-up
 irradiat	no
