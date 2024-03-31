@@ -1,3 +1,3 @@
-nursery.arff,nursery.values,spec_prior (648.0)
-breast.cancer.arff,breast.cancer.values,recurrence-events (5.0/1.0)
-spambase.arff,spambase.values,hello
+nursery.model,nursery.values,spec_prior (648.0)
+breast.cancer.model,breast.cancer.values,recurrence-events (5.0/1.0)
+spambase.model,spambase.values,hello

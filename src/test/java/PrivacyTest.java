@@ -120,8 +120,8 @@ public final class PrivacyTest {
 		run_test(answer_path, false);
 
 		// Because of the depth of these trees from Liu et al. we will use a test and not for level-site
-		// answer_path = new File(data_directory, "answers_liu.csv").toString();
-		// run_test(answer_path, false);
+		answer_path = new File(data_directory, "answers_liu.csv").toString();
+		run_test(answer_path, false);
 	}
 
 	public static String test_level_site(String training_data, String features_file, int levels,
