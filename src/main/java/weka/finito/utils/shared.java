@@ -127,7 +127,7 @@ public class shared {
                     else {
                         encrypted_features.set_next_index(next_index + 1);
                     }
-                    logger.debug("New index: " + encrypted_features.get_next_index());
+                    logger.info("New index: " + encrypted_features.get_next_index());
                 }
                 n++;
                 next_index++;
