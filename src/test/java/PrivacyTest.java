@@ -116,11 +116,13 @@ public final class PrivacyTest {
 
 	@Test
 	public void test_single_site() throws Exception {
-		String answer_path = new File(data_directory, "answers.csv").toString();
-		run_test(answer_path, false);
+		String answer_path;
 
 		// Because of the depth of these trees from Liu et al. we will use a test and not for level-site
 		answer_path = new File(data_directory, "answers_liu.csv").toString();
+		run_test(answer_path, false);
+
+		answer_path = new File(data_directory, "answers.csv").toString();
 		run_test(answer_path, false);
 	}
 
