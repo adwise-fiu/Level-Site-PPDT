@@ -255,8 +255,8 @@ public final class server implements Runnable {
 
 	// Reference:
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
-	// Build J48 as it uses C45?
-	// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
+	// I reversed engineered this line of code
+	// https://git.cms.waikato.ac.nz/weka/weka/-/blob/main/trunk/weka/src/main/java/weka/classifiers/trees/J48.java#L164
 	private static ClassifierTree train_decision_tree(String arff_file)
 			throws Exception {
 		File training_file = new File(arff_file);
@@ -288,7 +288,7 @@ public final class server implements Runnable {
 		assert train != null;
 		train.setClassIndex(train.numAttributes() - 1);
 
-		// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
+		// https://git.cms.waikato.ac.nz/weka/weka/-/blob/main/trunk/weka/src/main/java/weka/classifiers/trees/j48/BinC45ModelSelection.java
 		// J48 -B -C 0.25 -M 2
 		// -M 2 is minimum 2, DEFAULT
 		// -B this tree ONLY works for binary split is true, so pick this model...

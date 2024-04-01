@@ -29,7 +29,6 @@ public final class PrivacyTest {
 	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub", "classes.txt"};
 	@Before
 	public void read_properties() throws IOException {
-
 		setup_tls();
 
 		// Arguments:

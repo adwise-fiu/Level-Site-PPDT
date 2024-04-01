@@ -1,3 +1,3 @@
 nursery.model,nursery.values,spec_prior (648.0)
 breast-cancer.model,breast-cancer.values,recurrence-events (5.0/1.0)
-spambase.model,spambase.values,O (2.0)
+spambase.model,spambase.values,0 (2.0)

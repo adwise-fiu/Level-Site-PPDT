@@ -2,7 +2,8 @@
 *.sh            text eol=lf
 *.txt           text eol=lf
 *.values        text eol=lf
-gradelw         text eol=lf
+*.csv           text eol=lf
+gradlew         text eol=lf
 .env            text eol=lf
 
 # Always checkout with CRLF
