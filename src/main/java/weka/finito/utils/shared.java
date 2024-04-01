@@ -101,9 +101,14 @@ public class shared {
         // The n index tells you when you are in scope in regard to level-site
         // Level-sites are made of leaves, and split the inequality into two nodes,
         // so you have a '<=' and '>' node and '=' and '!=' in pairs
+        logger.debug("In-scope index should be: " +
+                (2 * encrypted_features.get_current_index()) + " and " +
+                (2 * encrypted_features.get_current_index() + 1));
+
         while ((!equalsFound) && (!terminalLeafFound)) {
             ls = node_level_data.get(node_level_index);
             logger.debug("j=" + node_level_index);
+            logger.debug("n=" + n);
             if (ls.isLeaf()) {
                 if (n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1) {

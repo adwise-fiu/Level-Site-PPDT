@@ -55,6 +55,10 @@ jacocoTestReport {
     }
 }
 
+clean {
+    delete 'logs/ppdt.log'
+}
+
 check.dependsOn jacocoTestReport
 
 application {

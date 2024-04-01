@@ -42,7 +42,8 @@ public final class NodeInfo implements Serializable {
 		if (dgk_public_key != null) {
 			this.setDGK(DGKOperations.encrypt(temp_thresh, dgk_public_key));
 		}
-		this.threshold = temp_thresh.doubleValue();
+		// Be sure to comment this out, just used for debugging to more easily identify nodes
+		// this.threshold = temp_thresh.doubleValue();
 	}
 
 	public static BigInteger set_precision(double threshold, int precision) {
