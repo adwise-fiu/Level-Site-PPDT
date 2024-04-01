@@ -331,7 +331,6 @@ public final class client implements Runnable {
 				comparison_type = client.readInt();
 			}
 
-			logger.info(String.format("Using comparison type %d", comparison_type));
 			if (comparison_type == -1) {
 				this.classification_complete = true;
 				break;

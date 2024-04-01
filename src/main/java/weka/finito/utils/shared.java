@@ -150,6 +150,9 @@ public class shared {
         if (encrypted_values == null) {
             throw new RuntimeException(String.format("Seems like the feature %s is not known", ld.variable_name));
         }
+        else {
+            logger.debug("Parsing the node: " + ld.variable_name);
+        }
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
         logger.info(String.format("Using comparison type %d", comparisonType));
@@ -189,7 +192,7 @@ public class shared {
         }
         // only seen type 4 in the wild
         else if ((comparisonType == 4) || (comparisonType == 5)) {
-            // Test Y >= X or Y > X
+            // Test Y >= X or Y > X turns to X < Y or X <= Y
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
         // only seen type 3 in the wild
