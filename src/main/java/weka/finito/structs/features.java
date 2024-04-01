@@ -10,12 +10,12 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.HashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
 import weka.finito.utils.LabelEncoder;
 
 public final class features implements Serializable {
-    private static final Logger logger = LogManager.getLogger(features.class);
+    // private static final Logger logger = LogManager.getLogger(features.class);
     @Serial
     private static final long serialVersionUID = 6000706455545108960L;
     private String client_ip;
@@ -90,17 +90,15 @@ public final class features implements Serializable {
                 String[] split = line.split("\\t");
                 key = split[0];
                 value = split[1];
+
                 // I need to refer to label encoder after training to know what I am doing...
                 try {
                     double_value = Double.parseDouble(value);
-                    logger.info("Initial value: " + value);
                 }
                 catch (NumberFormatException e) {
                     double_value = encoder.encode(value).doubleValue();
-                    logger.info("Encoding value: " + value + " to " + double_value);
                 }
                 temp = NodeInfo.set_precision(double_value, precision);
-                logger.info("Value to be compared with: " + temp);
 
                 integerValuePaillier = PaillierCipher.encrypt(temp, paillier_public_key);
                 integerValueDGK = DGKOperations.encrypt(temp, dgk_public_key);

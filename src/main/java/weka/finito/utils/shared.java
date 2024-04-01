@@ -53,12 +53,22 @@ public class shared {
             "TLS_RSA_WITH_AES_128_CBC_SHA"
     };
 
-
     // Used by server-site to hash leaves and client-site to find the leaf
     public static String hash(String text) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hash);
+    }
+
+    // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
+    public static BigInteger base64_to_big_integer(String text) {
+        byte [] decodedBytes = Base64.getDecoder().decode(text);
+        return new BigInteger(1, decodedBytes);
+    }
+
+    public static String big_integer_to_base64(BigInteger bigInteger) {
+        byte [] bytes = bigInteger.toByteArray();
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
     public static void setup_tls() {
@@ -88,12 +98,16 @@ public class shared {
         NodeInfo ls;
         NodeInfo to_return = null;
 
+        // The n index tells you when you are in scope in regard to level-site
+        // Level-sites are made of leaves, and split the inequality into two nodes,
+        // so you have a '<=' and '>' node and '=' and '!=' in pairs
         while ((!equalsFound) && (!terminalLeafFound)) {
             ls = node_level_data.get(node_level_index);
-            logger.info("j=" + node_level_index);
+            logger.debug("j=" + node_level_index);
             if (ls.isLeaf()) {
                 if (n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1) {
+                    logger.debug("Found the leaf at node=" + n + " to be used: " + ls);
                     terminalLeafFound = true;
                     to_return = ls;
                 }
@@ -103,13 +117,17 @@ public class shared {
                 if ((n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1)) {
 
+                    logger.debug("At node=" + n + ", I need to compare");
                     inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
 
+                    equalsFound = true;
                     if (inequalityHolds) {
-                        equalsFound = true;
                         encrypted_features.set_next_index(next_index);
-                        logger.info("New index: " + encrypted_features.get_next_index());
                     }
+                    else {
+                        encrypted_features.set_next_index(next_index + 1);
+                    }
+                    logger.info("New index: " + encrypted_features.get_next_index());
                 }
                 n++;
                 next_index++;
@@ -129,18 +147,25 @@ public class shared {
         boolean answer;
 
         BigIntegers encrypted_values = encrypted_features.get_thresholds(ld.variable_name);
+        if (encrypted_values == null) {
+            throw new RuntimeException(String.format("Seems like the feature %s is not known", ld.variable_name));
+        }
+        else {
+            logger.debug("Parsing the node: " + ld.variable_name);
+        }
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
         logger.info(String.format("Using comparison type %d", comparisonType));
 
-        // Encrypt the thresh-hold correctly
-        if ((comparisonType == 2) || (comparisonType == 4)) {
+        // Encrypt the thresh-hold correct
+        // Note only types 1, 3, 4, 6 have been known to exist
+        if ((comparisonType == 2) || (comparisonType == 5)) {
             encrypted_thresh = ld.getPaillier();
             encrypted_client_value = encrypted_values.integerValuePaillier();
             Niu.writeInt(0);
             Niu.setDGKMode(false);
         }
-        else if ((comparisonType == 3) || (comparisonType == 5)) {
+        else if ((comparisonType == 3) || (comparisonType == 4)) {
             encrypted_thresh = ld.getDGK();
             encrypted_client_value = encrypted_values.integerValueDGK();
             Niu.writeInt(1);
@@ -167,7 +192,7 @@ public class shared {
         }
         // only seen type 4 in the wild
         else if ((comparisonType == 4) || (comparisonType == 5)) {
-            // Test Y >= X or Y > X
+            // Test Y >= X or Y > X turns to X < Y or X <= Y
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
         // only seen type 3 in the wild

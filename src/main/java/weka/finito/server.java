@@ -162,7 +162,6 @@ public final class server implements Runnable {
 			input = (features) client_input;
 		}
 		assert input != null;
-
 		long start_time = System.nanoTime();
 
 		// Traverse DT until you hit a leaf, the client has to track the index...
@@ -210,8 +209,12 @@ public final class server implements Runnable {
 
 			// Train level-sites
 			get_level_site_data(ppdt, all_level_sites);
+			logger.info("Server trained DT");
 
-			logger.info("Server trained DT and created level-sites");
+			if (this.level_site_ips != null) {
+				train_level_sites();
+			}
+			logger.info("Server just trained all the level-sites");
 
 			// Now I know the leaves to send back to the client
 			String [] leaf_array = leaves.toArray(new String[0]);
@@ -252,8 +255,8 @@ public final class server implements Runnable {
 
 	// Reference:
 	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
-	// Build J48 as it uses C45?
-	// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
+	// I reversed engineered this line of code
+	// https://git.cms.waikato.ac.nz/weka/weka/-/blob/main/trunk/weka/src/main/java/weka/classifiers/trees/J48.java#L164
 	private static ClassifierTree train_decision_tree(String arff_file)
 			throws Exception {
 		File training_file = new File(arff_file);
@@ -285,7 +288,7 @@ public final class server implements Runnable {
 		assert train != null;
 		train.setClassIndex(train.numAttributes() - 1);
 
-		// https://weka.sourceforge.io/doc.dev/weka/classifiers/trees/j48/C45ModelSelection.html
+		// https://git.cms.waikato.ac.nz/weka/weka/-/blob/main/trunk/weka/src/main/java/weka/classifiers/trees/j48/BinC45ModelSelection.java
 		// J48 -B -C 0.25 -M 2
 		// -M 2 is minimum 2, DEFAULT
 		// -B this tree ONLY works for binary split is true, so pick this model...
@@ -333,7 +336,6 @@ public final class server implements Runnable {
 					double threshold;
 
 					for (int i = 0; i < p.getSons().length; i++) {
-
 						// Determine which type of comparison is occurring.
 						String leftSide = p.getLocalModel().leftSide(p.getTrainingData());
 						String rightSide = p.getLocalModel().rightSide(i, p.getTrainingData());
@@ -401,11 +403,9 @@ public final class server implements Runnable {
 						catch (NumberFormatException e) {
 							// Use Label Encoder, only type 1 and 6 though
 							threshold = label_encoder.encode(threshold_string).doubleValue();
-							logger.info("Encoding " + threshold_string + " to " + temp_thresh);
 						}
 						temp_thresh = NodeInfo.set_precision(threshold, precision);
 						node_info = new NodeInfo(false, leftSide, type);
-						logger.info("Updated threshold is: " + temp_thresh);
 						node_info.encrypt(temp_thresh, paillier_public, dgk_public);
 						q.add(p.getSons()[i]);
 					}
@@ -463,7 +463,6 @@ public final class server implements Runnable {
 
 		// If we are testing without level-sites do this...
 		if (this.level_site_ips != null) {
-			train_level_sites();
 			// If running on a cluster, might as well train be able to run server-site too.
 			// If running locally, this.evaluations is set to 1 by default for local testing.
 			if (this.evaluations != 1) {
@@ -494,12 +493,13 @@ public final class server implements Runnable {
         assert this.level_site_ips != null;
         if(this.level_site_ips.length < all_level_sites.size()) {
 			String error = String.format("Please create more level-sites for the " +
-					"decision tree trained from %s", training_data);
+					"decision tree trained from %s, create %d level-sites", training_data, all_level_sites.size());
 			throw new RuntimeException(error);
 		}
 
 		// Send the data to each level site, use data in-transit encryption
-		for (int i = 0; i < all_level_sites.size(); i++) {
+		// I think it is SAFER if I create level-sites from d and go up, so all accepts are ready...
+		for (int i = all_level_sites.size() - 1; i >= 0; i--) {
 			level_order_site current_level_site = all_level_sites.get(i);
 
 			if (port == -1) {
@@ -509,7 +509,25 @@ public final class server implements Runnable {
 				connection_port = this.port;
 			}
 
-			if (i + 1 != all_level_sites.size()) {
+			// level-site d
+			if (i == all_level_sites.size() - 1) {
+				if (port == -1) {
+					current_level_site.set_listen_port(level_site_ports[i]);
+				}
+				else {
+					current_level_site.set_listen_port(connection_port);
+				}
+			}
+			else if (i == 0) {
+				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
+				if (port == -1) {
+					current_level_site.set_next_level_site_port(level_site_ports[(i + 1) % level_site_ports.length]);
+				}
+				else {
+					current_level_site.set_next_level_site_port(connection_port);
+				}
+			}
+			else {
 				current_level_site.set_next_level_site(level_site_ips[(i + 1) % level_site_ips.length]);
 				if (port == -1) {
 					current_level_site.set_next_level_site_port(level_site_ports[(i + 1) % level_site_ports.length]);
@@ -519,7 +537,6 @@ public final class server implements Runnable {
 					current_level_site.set_next_level_site_port(connection_port);
 					current_level_site.set_listen_port(connection_port);
 				}
-
 			}
 
 			try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
@@ -527,6 +544,7 @@ public final class server implements Runnable {
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = get_ois(level_site);
 				to_level_site.writeObject(current_level_site);
+				to_level_site.flush();
 				if(from_level_site.readBoolean()) {
 					logger.info("Training Successful on port:" + connection_port);
 				}

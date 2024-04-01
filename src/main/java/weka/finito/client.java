@@ -17,6 +17,8 @@ import security.paillier.PaillierPublicKey;
 import security.socialistmillionaire.bob_joye;
 import weka.finito.structs.features;
 
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -28,6 +30,7 @@ import weka.finito.utils.LabelEncoder;
 
 public final class client implements Runnable {
 	private static final Logger logger = LogManager.getLogger(client.class);
+	private static final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	private final String classes_file = "classes.txt";
 	private final String features_file;
@@ -271,17 +274,17 @@ public final class client implements Runnable {
 				break;
 			}
 			else if (comparison_type == 0) {
-				logger.info("Comparing two Paillier Values");
+				logger.debug("Comparing two Paillier Values");
 				client.setDGKMode(false);
 				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
-				logger.info("Comparing two DGK Values");
+				logger.debug("Comparing two DGK Values");
 				client.setDGKMode(true);
 				client.Protocol2();
 			}
 			else if (comparison_type == 2) {
-				logger.info("Comparing two DGK Values, Encrypted Equals!");
+				logger.debug("Comparing two DGK Values, Encrypted Equals!");
 				client.setDGKMode(true);
 				client.encrypted_equals();
 			}
@@ -295,45 +298,55 @@ public final class client implements Runnable {
 	}
 
 	// Function used to Evaluate for each level-site
-	private void communicate_with_level_site(SSLSocket level_site)
+	private void evaluate_with_level_site(SSLSocket level_site, int level)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
 		Object o;
 		bob_joye client;
+		ObjectInputStream from_level_site = null;
 
-		// Create I/O stream and send features
-		// this.feature.set_next_index(next_index);
-		ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
-		ObjectInputStream from_level_site = get_ois(level_site);
-		to_level_site.writeObject(this.feature);
-		to_level_site.flush();
+		// Create I/O stream and send features, only need to send features once to level-site 0...
+		// Level-site 0 will take care of passing it down
+		if (level == 0) {
+			ObjectOutputStream to_level_site = new ObjectOutputStream(level_site.getOutputStream());
+			to_level_site.writeObject(this.feature);
+			to_level_site.flush();
+		}
 
 		// Send the Public Keys using Alice and Bob
-		client = new bob_joye(paillier, dgk, null);
+		client = new bob_joye(paillier, dgk);
 		client.set_socket(level_site);
+		if (level == 0) {
+			from_level_site = get_ois(level_site);
+		}
 
 		// Get the comparison
 		// I am not sure why I need this loop, but you will only need 1 comparison.
 		int comparison_type;
 		while (true) {
-			comparison_type = from_level_site.readInt();
-			logger.info(String.format("Using comparison type %d", comparison_type));
+			if (level == 0) {
+				comparison_type = from_level_site.readInt();
+			}
+			else {
+				comparison_type = client.readInt();
+			}
+
 			if (comparison_type == -1) {
 				this.classification_complete = true;
 				break;
 			}
 			else if (comparison_type == 0) {
-				logger.info("Comparing two Paillier Values");
+				logger.debug("Comparing two Paillier Values");
 				client.setDGKMode(false);
 				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
-				logger.info("Comparing two DGK Values");
+				logger.debug("Comparing two DGK Values");
 				client.setDGKMode(true);
 				client.Protocol2();
 			}
 			else if (comparison_type == 2) {
-				logger.info("Comparing two DGK Values, Encrypted Equals!");
+				logger.debug("Comparing two DGK Values, Encrypted Equals!");
 				client.setDGKMode(true);
 				client.encrypted_equals();
 			}
@@ -344,16 +357,11 @@ public final class client implements Runnable {
 		// false - get encrypted AES index for next round
 		classification_complete = client.readBoolean();
 		if (classification_complete) {
+			// Should never happen tbh
 			o = client.readObject();
 			if (o instanceof String) {
 				classification = (String) o;
 				classification = hashed_classification.get(classification);
-			}
-		}
-		else {
-			o = from_level_site.readObject();
-			if (o instanceof features) {
-				this.feature = (features) o;
 			}
 		}
 	}
@@ -382,9 +390,6 @@ public final class client implements Runnable {
 				for (String aClass : classes) {
 					hashed_classification.put(hash(aClass), aClass);
 				}
-
-				// Make sure level-sites got everything...
-				Thread.sleep(2200);
 			}
 			else {
 				logger.info("Not contacting server-site. Seems you just want to test on the" +
@@ -419,25 +424,32 @@ public final class client implements Runnable {
 			return;
 		}
 
+		// However, if you are evaluating with level-sites, you are running this code.
 		try {
-			for (int i = 0; i < level_site_ips.length; i++) {
-				if (classification_complete) {
-					break;
-				}
-				if (port == -1) {
-					assert level_site_ports != null;
-					connection_port = level_site_ports[i];
-					logger.info("Local Test: " + level_site_ips[i] + ":" + level_site_ports[i]);
-				}
-				else {
-					connection_port = port;
+			if (port == -1) {
+				assert level_site_ports != null;
+				connection_port = level_site_ports[0];
+			}
+			else {
+				connection_port = port;
+			}
+
+			int level = 0;
+			try(SSLServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
+				// For level-site 0, just connect and evaluate now.
+				try(SSLSocket level_site = createSocket(level_site_ips[level], connection_port)) {
+					evaluate_with_level_site(level_site, level);
 				}
 
-				try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
-					logger.info("Client connected to level " + i);
-					communicate_with_level_site(level_site);
+				// For every other level, the level-site will reach out to you
+				while(!classification_complete) {
+					logger.info("Completed evaluation with level " + level);
+					++level;
+					SSLSocket level_site = (SSLSocket) level_site_listener.accept();
+					evaluate_with_level_site(level_site, level);
 				}
 			}
+
             long end_time = System.nanoTime();
 			logger.info("The Classification is: " + classification);
 			double run_time = (double) (end_time - start_time);
@@ -479,5 +491,19 @@ public final class client implements Runnable {
 			throw new RuntimeException("Cannot open port " + port, e);
 		}
 		return client_socket;
+	}
+
+	public static SSLServerSocket createServerSocket(int serverPort) {
+		SSLServerSocket serverSocket;
+		try {
+			// Step: 1
+			serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
+			serverSocket.setEnabledProtocols(protocols);
+			serverSocket.setEnabledCipherSuites(cipher_suites);
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Cannot open port " + serverPort, e);
+		}
+		return serverSocket;
 	}
 }
