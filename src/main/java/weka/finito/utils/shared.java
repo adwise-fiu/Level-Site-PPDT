@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
@@ -67,7 +68,20 @@ public class shared {
     }
 
     public static String big_integer_to_base64(BigInteger bigInteger) {
-        byte [] bytes = bigInteger.toByteArray();
+        // Convert BigInteger to a byte array
+        byte[] bytes = bigInteger.toByteArray();
+
+        // Ensure the byte array has a fixed length
+        if (bytes[0] == 0) {
+            // Remove the leading zero byte if present
+            bytes = Arrays.copyOfRange(bytes, 1, bytes.length);
+        } else {
+            // Add a zero byte at the beginning to ensure positive interpretation
+            byte[] temp = new byte[bytes.length + 1];
+            System.arraycopy(bytes, 0, temp, 1, bytes.length);
+            bytes = temp;
+        }
+        // Encode byte array to Base64 string
         return Base64.getEncoder().encodeToString(bytes);
     }
 
