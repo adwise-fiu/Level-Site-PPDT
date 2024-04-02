@@ -73,7 +73,7 @@ public class shared {
 
         // Ensure the byte array has a fixed length
         if (bytes[0] == 0) {
-            // Remove the leading zero byte if present
+            // Remove the leading zero bytes if present
             bytes = Arrays.copyOfRange(bytes, 1, bytes.length);
         } else {
             // Add a zero byte at the beginning to ensure positive interpretation

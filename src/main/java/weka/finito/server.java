@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import security.dgk.DGKPublicKey;
 import security.misc.HomomorphicException;
+import security.paillier.PaillierCipher;
 import security.socialistmillionaire.alice_joye;
 import security.paillier.PaillierPublicKey;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
@@ -329,7 +330,11 @@ public final class server implements Runnable {
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
 					leaves.add(variable);
-					node_info = new NodeInfo(true, hash(variable), 0);
+					String hashed_leaf = hash(variable);
+					// BigInteger temp = base64_to_big_integer(hashed_leaf);
+					// logger.debug("Leaf: " + variable + " hashed to " + hashed_leaf);
+					// BigInteger encryption = PaillierCipher.encrypt(temp, paillier_public);
+					node_info = new NodeInfo(true, hashed_leaf, 0);
 					Level_Order_S.append_data(node_info);
 				}
 				else {
