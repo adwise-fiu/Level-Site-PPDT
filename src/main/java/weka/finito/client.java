@@ -2,6 +2,7 @@ package weka.finito;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -295,8 +296,9 @@ public final class client implements Runnable {
 		o = client.readObject();
 		if (o instanceof String) {
 			classification = (String) o;
-			// classification = big_integer_to_base64(PaillierCipher.decrypt(new BigInteger(classification), paillier_private_key));
-			classification = hashed_classification.get(classification);
+			BigInteger temp = PaillierCipher.decrypt(new BigInteger(classification), paillier_private_key);
+			// classification = hashed_classification.get(classification);
+			classification = new String(temp.toByteArray(), StandardCharsets.UTF_8);
 		}
 	}
 
@@ -364,8 +366,9 @@ public final class client implements Runnable {
 			o = client.readObject();
 			if (o instanceof String) {
 				classification = (String) o;
-				// classification = big_integer_to_base64(PaillierCipher.decrypt(new BigInteger(classification), paillier_private_key));
-				classification = hashed_classification.get(classification);
+				BigInteger temp = PaillierCipher.decrypt(new BigInteger(classification), paillier_private_key);
+				// classification = hashed_classification.get(classification);
+				classification = new String(temp.toByteArray(), StandardCharsets.UTF_8);
 			}
 		}
 	}

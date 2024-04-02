@@ -330,11 +330,9 @@ public final class server implements Runnable {
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
 					leaves.add(variable);
-					String hashed_leaf = hash(variable);
-					// BigInteger temp = base64_to_big_integer(hashed_leaf);
-					// logger.debug("Leaf: " + variable + " hashed to " + hashed_leaf);
-					// BigInteger encryption = PaillierCipher.encrypt(temp, paillier_public);
-					node_info = new NodeInfo(true, hashed_leaf, 0);
+					// String hashed_leaf = hash(variable);
+					BigInteger encryption = PaillierCipher.encrypt(hash_to_big_integer(variable), paillier_public);
+					node_info = new NodeInfo(true, encryption.toString(), 0);
 					Level_Order_S.append_data(node_info);
 				}
 				else {

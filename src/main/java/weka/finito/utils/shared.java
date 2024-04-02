@@ -62,27 +62,9 @@ public class shared {
     }
 
     // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
-    public static BigInteger base64_to_big_integer(String text) {
-        byte [] decodedBytes = Base64.getDecoder().decode(text);
-        return new BigInteger(1, decodedBytes);
-    }
-
-    public static String big_integer_to_base64(BigInteger bigInteger) {
-        // Convert BigInteger to a byte array
-        byte[] bytes = bigInteger.toByteArray();
-
-        // Ensure the byte array has a fixed length
-        if (bytes[0] == 0) {
-            // Remove the leading zero bytes if present
-            bytes = Arrays.copyOfRange(bytes, 1, bytes.length);
-        } else {
-            // Add a zero byte at the beginning to ensure positive interpretation
-            byte[] temp = new byte[bytes.length + 1];
-            System.arraycopy(bytes, 0, temp, 1, bytes.length);
-            bytes = temp;
-        }
-        // Encode byte array to Base64 string
-        return Base64.getEncoder().encodeToString(bytes);
+    public static BigInteger hash_to_big_integer(String text) throws NoSuchAlgorithmException {
+        byte [] hash = text.getBytes(StandardCharsets.UTF_8);
+        return new BigInteger(1, hash);
     }
 
     public static void setup_tls() {
