@@ -108,7 +108,7 @@ public class shared {
             if (ls.isLeaf()) {
                 if (n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1) {
-                    logger.debug("Found the leaf at node=" + n + " to be used: " + ls);
+                    logger.debug("Found the leaf at node=" + n + " to be used");
                     terminalLeafFound = true;
                     to_return = ls;
                 }

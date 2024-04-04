@@ -86,7 +86,12 @@ public final class NodeInfo implements Serializable {
     	output.append(comparisonType);
     	output.append('\n');
     	output.append("threshold: ");
-    	output.append(threshold);
+		if (is_leaf) {
+			output.append("Encrypted-Value");
+		}
+    	else {
+			output.append(threshold);
+		}
     	output.append('\n');
     	return output.toString();
     }
