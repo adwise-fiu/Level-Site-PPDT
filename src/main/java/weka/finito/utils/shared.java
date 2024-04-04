@@ -61,7 +61,7 @@ public class shared {
     }
 
     // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
-    public static BigInteger hash_to_big_integer(String text) throws NoSuchAlgorithmException {
+    public static BigInteger hash_to_big_integer(String text) {
         byte [] hash = text.getBytes(StandardCharsets.UTF_8);
         return new BigInteger(1, hash);
     }
