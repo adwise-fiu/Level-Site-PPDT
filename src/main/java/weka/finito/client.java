@@ -224,7 +224,7 @@ public final class client implements Runnable {
 	// Used for set-up
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
-		logger.info("Connecting to " + server_ip + ":" + server_port + " for set-up");
+        logger.info("Connecting to {}:{} for set-up", server_ip, server_port);
 		try (SSLSocket server_site = createSocket(server_ip, server_port)) {
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
 			ValidatingObjectInputStream from_server_site = get_ois(server_site);
@@ -341,17 +341,14 @@ public final class client implements Runnable {
 				break;
 			}
 			else if (comparison_type == 0) {
-				logger.debug("Comparing two Paillier Values");
 				client.setDGKMode(false);
 				client.Protocol2();
 			}
 			else if (comparison_type == 1) {
-				logger.debug("Comparing two DGK Values");
 				client.setDGKMode(true);
 				client.Protocol2();
 			}
 			else if (comparison_type == 2) {
-				logger.debug("Comparing two DGK Values, Encrypted Equals!");
 				client.setDGKMode(true);
 				client.encrypted_equals();
 			}
@@ -403,6 +400,7 @@ public final class client implements Runnable {
 						" same PPDT but different VALUES");
 			}
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision, label_encoder);
+            logger.debug("Client Feature Vector\n{}", feature);
 			feature.set_client_ip("127.0.0.1");
 			feature.set_client_port(10000);
 		}
@@ -419,7 +417,7 @@ public final class client implements Runnable {
 				logger.info("Client connected to sever-site with PPDT");
 				evaluate_with_server_site(server_site);
 				long end_time = System.nanoTime();
-				logger.info("The Classification is: " + classification);
+                logger.info("[Server] The Classification is: {}", classification);
 				double run_time = (double) (end_time - start_time);
 				run_time = run_time/1000000;
 				logger.info(String.format("It took %f ms to classify\n", run_time));
@@ -450,7 +448,7 @@ public final class client implements Runnable {
 
 				// For every other level, the level-site will reach out to you
 				while(!classification_complete) {
-					logger.info("Completed evaluation with level " + level);
+                    logger.info("Completed evaluation with level {}", level);
 					++level;
 					SSLSocket level_site = (SSLSocket) level_site_listener.accept();
 					evaluate_with_level_site(level_site, level);
@@ -458,7 +456,7 @@ public final class client implements Runnable {
 			}
 
             long end_time = System.nanoTime();
-			logger.info("The Classification is: " + classification);
+            logger.info("[Level-Site] The Classification is: {}", classification);
 			double run_time = (double) (end_time - start_time);
 			run_time = run_time/1000000;
             logger.info(String.format("It took %f ms to classify\n", run_time));
