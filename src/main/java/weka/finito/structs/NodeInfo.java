@@ -79,10 +79,10 @@ public final class NodeInfo implements Serializable {
     	StringBuilder output;
 		output = new StringBuilder();
 		if (is_leaf) {
-			output.append("attribute name: ").append(this.variable_name).append('\n');
+			output.append("Encrypted value\n");
 		}
 		else {
-			output.append("Encrypted value");
+			output.append("attribute name: ").append(this.variable_name).append('\n');
 		}
     	output.append("Leaf: ");
     	output.append(this.is_leaf);
