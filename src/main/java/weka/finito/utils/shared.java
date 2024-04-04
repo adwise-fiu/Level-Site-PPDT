@@ -15,7 +15,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
@@ -97,18 +96,17 @@ public class shared {
         // The n index tells you when you are in scope in regard to level-site
         // Level-sites are made of leaves, and split the inequality into two nodes,
         // so you have a '<=' and '>' node and '=' and '!=' in pairs
-        logger.debug("In-scope index should be: " +
-                (2 * encrypted_features.get_current_index()) + " and " +
-                (2 * encrypted_features.get_current_index() + 1));
+        logger.debug("In-scope index should be: {} and {}",
+                2 * encrypted_features.get_current_index(), 2 * encrypted_features.get_current_index() + 1);
 
         while ((!equalsFound) && (!terminalLeafFound)) {
             ls = node_level_data.get(node_level_index);
-            logger.debug("j=" + node_level_index);
-            logger.debug("n=" + n);
+            logger.debug("j={}", node_level_index);
+            logger.debug("n={}", n);
             if (ls.isLeaf()) {
                 if (n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1) {
-                    logger.debug("Found the leaf at node=" + n + " to be used");
+                    logger.debug("Found the leaf at node={} to be used", n);
                     terminalLeafFound = true;
                     to_return = ls;
                 }
@@ -118,7 +116,8 @@ public class shared {
                 if ((n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1)) {
 
-                    logger.debug("At node=" + n + ", I need to compare");
+                    logger.debug("At node={}, I need to compare", n);
+                    logger.debug("I am comparing at node {}", ls);
                     inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
 
                     equalsFound = true;
@@ -128,7 +127,7 @@ public class shared {
                     else {
                         encrypted_features.set_next_index(next_index + 1);
                     }
-                    logger.info("New index: " + encrypted_features.get_next_index());
+                    logger.info("New index: {}", encrypted_features.get_next_index());
                 }
                 n++;
                 next_index++;
@@ -152,7 +151,7 @@ public class shared {
             throw new RuntimeException(String.format("Seems like the feature %s is not known", ld.variable_name));
         }
         else {
-            logger.debug("Parsing the node: " + ld.variable_name);
+            logger.debug("Parsing the Attribute: {}", ld.variable_name);
         }
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
