@@ -78,7 +78,12 @@ public final class NodeInfo implements Serializable {
     public String toString() {
     	StringBuilder output;
 		output = new StringBuilder();
-		output.append("var_name: ").append(this.variable_name).append('\n');
+		if (is_leaf) {
+			output.append("attribute name: ").append(this.variable_name).append('\n');
+		}
+		else {
+			output.append("Encrypted value");
+		}
     	output.append("Leaf: ");
     	output.append(this.is_leaf);
     	output.append('\n');
@@ -87,7 +92,7 @@ public final class NodeInfo implements Serializable {
     	output.append('\n');
     	output.append("threshold: ");
 		if (is_leaf) {
-			output.append("Encrypted-Value");
+			output.append("No threshold on a leaf");
 		}
     	else {
 			output.append(threshold);
