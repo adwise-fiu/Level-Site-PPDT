@@ -125,8 +125,14 @@ public class shared {
                         if (ls.comparisonType == 4) {
                             logger.debug("[DT-Threshold] <= [VALUES] is TRUE");
                         }
-                        else {
+                        else if (ls.comparisonType == 3) {
+                            logger.debug("[DT-Threshold] > [VALUES] is TRUE");
+                        }
+                        else if (ls.comparisonType == 1) {
                             logger.debug("[DT-Threshold] == [VALUES] is TRUE");
+                        }
+                        else if (ls.comparisonType == 6) {
+                            logger.debug("[DT-Threshold] != [VALUES] is TRUE");
                         }
                         encrypted_features.set_next_index(next_index);
                         System.out.println("New index: " + encrypted_features.get_next_index());
@@ -135,8 +141,14 @@ public class shared {
                         if (ls.comparisonType == 4) {
                             logger.debug("[DT-Threshold] <= [VALUES] is FALSE");
                         }
-                        else {
+                        else if (ls.comparisonType == 3) {
+                            logger.debug("[DT-Threshold] > [VALUES] is FALSE");
+                        }
+                        else if (ls.comparisonType == 1){
                             logger.debug("[DT-Threshold] == [VALUES] is FALSE");
+                        }
+                        else if (ls.comparisonType == 6) {
+                            logger.debug("[DT-Threshold] != [VALUES] is FALSE");
                         }
                     }
                 }
