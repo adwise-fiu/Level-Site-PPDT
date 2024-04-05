@@ -122,9 +122,21 @@ public class shared {
 
                     equalsFound = true;
                     if (inequalityHolds) {
+                        if (ls.comparisonType == 4) {
+                            logger.debug("<= is TRUE");
+                        }
+                        else {
+                            logger.debug("== is TRUE");
+                        }
                         encrypted_features.set_next_index(next_index);
                     }
                     else {
+                        if (ls.comparisonType == 4) {
+                            logger.debug("<= is FALSE");
+                        }
+                        else {
+                            logger.debug("== is FALSE");
+                        }
                         encrypted_features.set_next_index(next_index + 1);
                     }
                     logger.info("New index: {}", encrypted_features.get_next_index());
@@ -193,6 +205,7 @@ public class shared {
         // only seen type 4 in the wild
         else if ((comparisonType == 4) || (comparisonType == 5)) {
             // Remember, X >= Y is the same as Y <= X. Which is what you want for DTs
+            // Do NOT flip this, it will break horribly!
             // 4800 >= 4000, TRUE
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }

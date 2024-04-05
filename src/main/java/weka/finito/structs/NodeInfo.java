@@ -100,11 +100,12 @@ public final class NodeInfo implements Serializable {
     	output.append("comparison_type: ");
     	output.append(comparisonType);
     	output.append('\n');
-    	output.append("threshold: ");
 		if (is_leaf) {
+			output.append("Leaf: ");
 			output.append(real_leaf);
 		}
     	else {
+			output.append("threshold: ");
 			output.append(threshold);
 		}
     	output.append('\n');
