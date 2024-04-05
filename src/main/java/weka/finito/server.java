@@ -187,7 +187,7 @@ public final class server implements Runnable {
 	// Talk to Client to get the Public Keys. Give client hashed classes and complete Label Encoder
 	private void client_communication() throws Exception {
 		SSLServerSocket serverSocket = createServerSocket(server_port);
-		logger.info("Server ready to get public keys from client on port: " + server_port);
+        logger.info("Server ready to get public keys from client on port: {}", server_port);
 
 		try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
 			// Step: 3
@@ -543,16 +543,16 @@ public final class server implements Runnable {
 			}
 
 			try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
-				logger.info("training level-site " + i + " on port:" + connection_port);
+                logger.info("training level-site {} on port:{}", i, connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = get_ois(level_site);
 				to_level_site.writeObject(current_level_site);
 				to_level_site.flush();
 				if(from_level_site.readBoolean()) {
-					logger.info("Training Successful on port:" + connection_port);
+                    logger.info("Training Successful on port:{}", connection_port);
 				}
 				else {
-					logger.error("Training NOT Successful on port:" + connection_port);
+                    logger.error("Training NOT Successful on port:{}", connection_port);
 				}
 			}
 			catch (IOException e) {

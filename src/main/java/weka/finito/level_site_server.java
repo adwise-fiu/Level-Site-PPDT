@@ -90,7 +90,7 @@ public class level_site_server implements Runnable {
             }
             catch (IOException e) {
                 if(isStopped()) {
-                    logger.info("Server Stopped on port " + this.serverPort);
+                    logger.info("Server Stopped on port {}", this.serverPort);
                     return;
                 }
                 throw new RuntimeException("Error accepting client connection", e);
@@ -136,16 +136,16 @@ public class level_site_server implements Runnable {
                     new Thread(current_level_site_class).start();
                 }
                 else {
-                    logger.error("The level site received the wrong object: " + o.getClass().getName());
+                    logger.error("The level site received the wrong object: {}", o.getClass().getName());
                     closeConnection(oos, ois, client_socket);
                 }
             }
            catch (ClassNotFoundException | IOException e) {
-                logger.error("Yikes! A bad connection from " + client_socket.getInetAddress().getHostAddress());
+               logger.error("Yikes! A bad connection from {}", client_socket.getInetAddress().getHostAddress());
                 logger.error(e.getStackTrace());
             }
         }
-        logger.info("Server Stopped on port: " + this.serverPort); ;
+        logger.info("Server Stopped on port: {}", this.serverPort); ;
         long stop_time = System.nanoTime();
         double run_time = (double) (stop_time - start_time)/1000000;
         logger.info(String.format("Time to start up: %f\n", run_time));
