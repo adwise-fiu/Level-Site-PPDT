@@ -144,7 +144,7 @@ public class shared {
                         else if (ls.comparisonType == 3) {
                             logger.debug("[DT-Threshold] > [VALUES] is FALSE");
                         }
-                        else if (ls.comparisonType == 1){
+                        else if (ls.comparisonType == 1) {
                             logger.debug("[DT-Threshold] == [VALUES] is FALSE");
                         }
                         else if (ls.comparisonType == 6) {
