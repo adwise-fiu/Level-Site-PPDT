@@ -120,8 +120,8 @@ public class shared {
                     logger.debug("I am comparing at node {}", ls);
                     inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
 
-                    equalsFound = true;
                     if (inequalityHolds) {
+                        equalsFound = true;
                         if (ls.comparisonType == 4) {
                             logger.debug("[DT-Threshold] <= [VALUES] is TRUE");
                         }
@@ -129,6 +129,7 @@ public class shared {
                             logger.debug("[DT-Threshold] == [VALUES] is TRUE");
                         }
                         encrypted_features.set_next_index(next_index);
+                        System.out.println("New index: " + encrypted_features.get_next_index());
                     }
                     else {
                         if (ls.comparisonType == 4) {
@@ -137,9 +138,7 @@ public class shared {
                         else {
                             logger.debug("[DT-Threshold] == [VALUES] is FALSE");
                         }
-                        encrypted_features.set_next_index(next_index + 1);
                     }
-                    logger.info("New index: {}", encrypted_features.get_next_index());
                 }
                 n++;
                 next_index++;
