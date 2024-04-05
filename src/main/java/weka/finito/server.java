@@ -332,7 +332,7 @@ public final class server implements Runnable {
 					leaves.add(variable);
 					// String hashed_leaf = hash(variable);
 					BigInteger encryption = PaillierCipher.encrypt(hash_to_big_integer(variable), paillier_public);
-					node_info = new NodeInfo(true, encryption.toString(), 0);
+					node_info = new NodeInfo(true, encryption.toString(), 0, variable);
 					Level_Order_S.append_data(node_info);
 				}
 				else {

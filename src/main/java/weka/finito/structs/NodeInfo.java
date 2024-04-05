@@ -24,13 +24,23 @@ public final class NodeInfo implements Serializable {
     public double threshold;
 	private BigInteger paillier;
 	private BigInteger dgk;
+	private final String real_leaf;
 
     public NodeInfo(boolean is_leaf, String variable_name, int comparisonType) {
     	this.is_leaf = is_leaf;
     	this.variable_name = variable_name;
 		this.comparisonType = comparisonType;
 		this.threshold = 0;
+		this.real_leaf = "";
     }
+
+	public NodeInfo(boolean is_leaf, String variable_name, int comparisonType, String real_leaf) {
+		this.is_leaf = is_leaf;
+		this.variable_name = variable_name;
+		this.comparisonType = comparisonType;
+		this.threshold = 0;
+		this.real_leaf = real_leaf;
+	}
 
 	public void encrypt(BigInteger temp_thresh,
 						PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key)
@@ -92,7 +102,7 @@ public final class NodeInfo implements Serializable {
     	output.append('\n');
     	output.append("threshold: ");
 		if (is_leaf) {
-			output.append("No threshold on a leaf");
+			output.append(real_leaf);
 		}
     	else {
 			output.append(threshold);

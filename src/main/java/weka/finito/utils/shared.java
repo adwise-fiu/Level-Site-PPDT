@@ -193,6 +193,7 @@ public class shared {
         // only seen type 4 in the wild
         else if ((comparisonType == 4) || (comparisonType == 5)) {
             // Remember, X >= Y is the same as Y <= X. Which is what you want for DTs
+            // 4800 >= 4000, TRUE
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
         // only seen type 3 in the wild
