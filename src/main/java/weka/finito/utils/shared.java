@@ -123,19 +123,19 @@ public class shared {
                     equalsFound = true;
                     if (inequalityHolds) {
                         if (ls.comparisonType == 4) {
-                            logger.debug("<= is TRUE");
+                            logger.debug("[DT-Threshold] <= [VALUES] is TRUE");
                         }
                         else {
-                            logger.debug("== is TRUE");
+                            logger.debug("[DT-Threshold] == [VALUES] is TRUE");
                         }
                         encrypted_features.set_next_index(next_index);
                     }
                     else {
                         if (ls.comparisonType == 4) {
-                            logger.debug("<= is FALSE");
+                            logger.debug("[DT-Threshold] <= [VALUES] is FALSE");
                         }
                         else {
-                            logger.debug("== is FALSE");
+                            logger.debug("[DT-Threshold] == [VALUES] is FALSE");
                         }
                         encrypted_features.set_next_index(next_index + 1);
                     }
