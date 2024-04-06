@@ -118,8 +118,11 @@ public class shared {
 
                     logger.debug("At node={}, I need to compare", n);
                     logger.debug("I am comparing at node {}", ls);
-                    inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
 
+                    // Niu.Protocol2(encrypted_thresh, encrypted_client_value);
+                    // encrypted_thresh >= encrypted_client_value
+                    // encrypted_client_value <= encrypted_thresh
+                    inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
                     if (inequalityHolds) {
                         equalsFound = true;
                         if (ls.comparisonType == 4) {
@@ -135,7 +138,6 @@ public class shared {
                             logger.debug("[DT-Threshold] != [VALUES] is TRUE");
                         }
                         encrypted_features.set_next_index(next_index);
-                        System.out.println("New index: " + encrypted_features.get_next_index());
                     }
                     else {
                         if (ls.comparisonType == 4) {
@@ -150,7 +152,9 @@ public class shared {
                         else if (ls.comparisonType == 6) {
                             logger.debug("[DT-Threshold] != [VALUES] is FALSE");
                         }
+                        encrypted_features.set_next_index(next_index + 1);
                     }
+                    logger.debug("New index: {}", encrypted_features.get_next_index());
                 }
                 n++;
                 next_index++;
@@ -215,14 +219,15 @@ public class shared {
         }
         // only seen type 4 in the wild
         else if ((comparisonType == 4) || (comparisonType == 5)) {
-            // Remember, X >= Y is the same as Y <= X. Which is what you want for DTs
-            // Do NOT flip this, it will break horribly!
-            // 4800 >= 4000, TRUE
+            // Remember, X >= Y is the same as Y <= X
+            // encrypted_thresh >= client_value
+            // client_value <= encrypted_thresh
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
         // only seen type 3 in the wild
         else {
-            // Test X >= Y or X > Y
+            // client_value >= encrypted_thresh
+            // encrypted_thresh <= client_value
             answer = Niu.Protocol2(encrypted_client_value, encrypted_thresh);
         }
         long stop_time = System.nanoTime();
