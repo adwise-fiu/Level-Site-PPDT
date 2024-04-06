@@ -118,13 +118,13 @@ public class shared {
 
                     logger.debug("At node={}, I need to compare", n);
                     logger.debug("I am comparing at node {}", ls);
+                    equalsFound = true;
 
                     // Niu.Protocol2(encrypted_thresh, encrypted_client_value);
                     // encrypted_thresh >= encrypted_client_value
                     // encrypted_client_value <= encrypted_thresh
                     inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
                     if (inequalityHolds) {
-                        equalsFound = true;
                         if (ls.comparisonType == 4) {
                             logger.debug("[DT-Threshold] <= [VALUES] is TRUE");
                         }
