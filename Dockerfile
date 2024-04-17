@@ -1,6 +1,8 @@
 # Use the same base image as your GitHub Actions workflow
 FROM adoptopenjdk:17-jdk-hotspot
 
+ENV PATH="/scripts:${PATH}"
+
 # Set environment variables
 ENV GRADLE_VERSION=7.3.3 \
     GRADLE_HOME=/opt/gradle \
@@ -20,22 +22,25 @@ RUN wget -q --show-progress --progress=bar:force:noscroll --no-check-certificate
 # Verify installation
 RUN gradle --version
 
-# Set up workspace directory
-WORKDIR /code
+# Create directories
+RUN mkdir /code
+RUN mkdir /scripts
+RUN mkdir /data
 
 # Copy your project files into the container
 COPY . /code
 
-# Create directories
-RUN mkdir /scripts
-RUN mkdir /data
-
 # Move scripts and data to appropriate directories
 RUN mv /code/scripts/* /scripts/
 RUN mv /code/data/* /data/
-
-# Set permissions
 RUN chmod +x /scripts/*
+WORKDIR /code
+
+RUN useradd tree-user
+# Set permissions
+RUN chown -R tree-user:tree-user /scripts/
+RUN chown -R tree-user:tree-user /code/
+USER tree-user
 
 # Define entrypoint
 CMD ["entrypoint.sh"]
