@@ -1,5 +1,5 @@
 # Use the same base image as your GitHub Actions workflow
-FROM gradle:8.7.0-jdk-alpine
+FROM gradle:8.7.0-jdk17-alpine
 
 ENV PATH="/scripts:${PATH}"
 
