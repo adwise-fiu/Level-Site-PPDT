@@ -8,6 +8,8 @@ RUN mkdir /data
 
 ADD . /code/
 
+RUN apt install nmap
+
 RUN mv /code/scripts/* /scripts/
 RUN mv /code/data/* /data/
 RUN chmod +x /scripts/*

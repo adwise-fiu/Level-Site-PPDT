@@ -4,14 +4,14 @@ import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 import java.lang.System;
 
+import static weka.finito.client.createServerSocket;
+import static weka.finito.client.createSocket;
 import static weka.finito.utils.shared.*;
 
 import org.apache.logging.log4j.LogManager;
@@ -24,8 +24,6 @@ public class level_site_server implements Runnable {
     protected boolean      isStopped    = false;
     protected Thread       runningThread = null;
     protected level_order_site level_site_parameters = null;
-    protected static SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-    private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
     private SSLSocket next_level_site_socket;
     private ObjectOutputStream next_level_site;
     private Thread level_site_evaluation = null;
@@ -155,7 +153,7 @@ public class level_site_server implements Runnable {
         return this.isStopped;
     }
 
-    public synchronized void stop(){
+    public synchronized void stop() {
         this.isStopped = true;
         try {
             this.serverSocket.close();
@@ -171,33 +169,5 @@ public class level_site_server implements Runnable {
         catch (IOException e) {
         	throw new RuntimeException("Error closing server on port " + this.serverPort, e);
         }
-    }
-
-    public static SSLServerSocket createServerSocket(int serverPort) {
-        SSLServerSocket serverSocket;
-        try {
-            // Step: 1
-            serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
-            serverSocket.setEnabledProtocols(protocols);
-            serverSocket.setEnabledCipherSuites(cipher_suites);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Cannot open port " + serverPort, e);
-        }
-        return serverSocket;
-    }
-
-    public static SSLSocket createSocket(String hostname, int port) {
-        SSLSocket client_socket;
-        try {
-            // Step: 1
-            client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
-            client_socket.setEnabledProtocols(protocols);
-            client_socket.setEnabledCipherSuites(cipher_suites);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Cannot open port " + port, e);
-        }
-        return client_socket;
     }
 }
