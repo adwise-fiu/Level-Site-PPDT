@@ -1,12 +1,7 @@
 # Use the same base image as your GitHub Actions workflow
-FROM gradle:jdk17-jammy
+FROM gradle:8.7.0-jdk-alpine
 
 ENV PATH="/scripts:${PATH}"
-
-# Install necessary tools
-RUN apt-get update \
-    && apt-get install -y wget unzip \
-    && rm -rf /var/lib/apt/lists/*
 
 # Verify installation
 RUN gradle --version
