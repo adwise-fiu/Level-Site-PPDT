@@ -47,7 +47,7 @@ jobs:
 
   # Only create a release on main branch, should update to adwise-fiu eventually.
   upload_dockerhub:
-    if: github.repository == 'AndrewQuijano/Level-Site-PPDT' && github.ref == 'refs/heads/main'
+    # if: github.repository == 'AndrewQuijano/Level-Site-PPDT' && github.ref == 'refs/heads/main'
     needs: [ build-gradle-project ]
     runs-on: ubuntu-latest
     steps:
