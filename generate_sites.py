@@ -3,6 +3,7 @@ import sys
 import os
 from configobj import ConfigObj
 
+
 def deep_key_update(dict_to_update: dict, key_path: list, value) -> dict:
     key = key_path.pop(0)
     if len(key_path) == 0:
@@ -36,7 +37,7 @@ for level in range(1, level_sites):
     all_level_site_domains.append(level_site)
     port_number = 9000 + level - 1
     ports.append(str(port_number))
-all_domains_env = {'name': 'LEVEL_SITE_DOMAINS', 'value': ','.join(all_level_site_domains) }
+all_domains_env = {'name': 'LEVEL_SITE_DOMAINS', 'value': ','.join(all_level_site_domains)}
 
 # Update all values for service - LEVEL-SITE
 for level in range(1, level_sites):
