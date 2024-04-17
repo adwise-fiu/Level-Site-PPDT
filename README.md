@@ -175,12 +175,12 @@ and wait for an output in standard output saying `Ready to accept connections at
 
 
 To verify that the server site is ready, use the following command to confirm the server_site is _running_
-and check the logs to confirm we see `Server ready to get public keys from client-site`.
+and check the logs to confirm we see `Server ready to get public keys from client-site`. Alternatively, you can connect via bash directly as follows `kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- /bin/bash`.
 
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
 
 **In a NEW terminal**, start the client, run the following commands to complete an evaluation. 
-You would point values to something like `/data/hypothyroid.values`
+You would point values to something like `/data/hypothyroid.values`. Alternatively, you can connect via bash directly as follows `kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- /bin/bash`.
 
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 
