@@ -4,11 +4,9 @@
 Implementation of the PPDT in the paper "Evaluating Outsourced Decision Trees by a Level-Based Approach"
 
 ## Libraries
-* crypto.jar library is from this [repository](https://github.com/AndrewQuijano/Homomorphic_Encryption)
+* crypto.jar library is from this [repository](https://github.com/adwise-fiu/Homomorphic_Encryption)
 * weka.jar library is from [SourceForge](https://sourceforge.net/projects/weka/files/weka-3-9/3.9.5/),
-  download the ZIP file and import the weka.jar file**
-
-** To be confirmed/tested again...
+  download the ZIP file and import the weka.jar file
 
 ## Installation
 It is a requirement to install [SDK](https://sdkman.io/install) to install Gradle.
@@ -47,13 +45,13 @@ fi
 wget "https://github.com/bitnami-labs/sealed-secrets/releases/download/v${KUBESEAL_VERSION}/kubeseal-${KUBESEAL_VERSION}-linux-amd64.tar.gz"
 tar -xvzf kubeseal-"${KUBESEAL_VERSION}"-linux-amd64.tar.gz kubeseal
 sudo install -m 755 kubeseal /usr/local/bin/kubeseal
-rm kubeseal
+rm kubeseal*
 
 # Install Helm
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
-rm get_helm
+rm ./get_helm.sh
 
 # Add Sealed Secret Cluster
 helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
@@ -113,7 +111,7 @@ You will need to start and configure minikube. When writing the paper, we provid
 
 - Run the following command to create the cluster
 ```bash
-eksctl create cluster --config-file eks-config/config.yaml
+eksctl create cluster --config-file eks-config/single-cluster.yaml
 ```
 
 - Confirm the EKS cluster exists using the following
@@ -204,7 +202,7 @@ Then repeat the instructions on the previous section.
 ### Clean up
 Destroy the EKS cluster using the following:
 ```bash
-eksctl delete cluster --config-file eks-config/config.yaml --wait
+eksctl delete cluster --config-file eks-config/single-cluster.yaml --wait
 docker system prune --force
 ```
 
