@@ -22,6 +22,9 @@ spec:
           ports:
             - containerPort: 9000
           env:
+            - name: CLIENT_HOSTNAME
+              value: "ppdt-client-service"
+
             - name: TREE_ROLE
               value: "CLIENT"
 
@@ -45,6 +48,12 @@ spec:
 
             - name: KEYSTORE
               value: "keystore"
+
+            - name: ALIAS
+              value: "appsec"
+
+            - name: CERTIFICATE
+              value: "ppdt-certificate"
 
             - name: PASSWORD
               valueFrom:

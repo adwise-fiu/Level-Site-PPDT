@@ -1,7 +1,6 @@
 # Making certificates, dont mess around here
 logs
 .env
-ppdt-certificate
 
 # No Binaries
 bin

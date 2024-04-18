@@ -54,6 +54,7 @@ public final class client implements Runnable {
 	private PaillierPrivateKey paillier_private_key;
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final String server_ip;
+	private String client_ip;
 	private final int server_port;
 	private LabelEncoder label_encoder;
 
@@ -103,10 +104,16 @@ public final class client implements Runnable {
 			System.exit(1);
 		}
 
+		client_ip = System.getenv("CLIENT_HOSTNAME");
+		if(client_ip == null || client_ip.isEmpty()) {
+			logger.fatal("No client hostname provided.");
+			System.exit(1);
+		}
+
 		client test = null;
 		if (args.length == 1) {
 			// Test with level-sites
-			test = new client(key_size, args[0], level_domains, port, precision, server_ip, port);
+			test = new client(key_size, args[0], level_domains, port, precision, server_ip, port, client_ip);
 		}
 		else if (args.length == 2) {
 			// Test with just a server-site directly
@@ -114,7 +121,7 @@ public final class client implements Runnable {
 				test = new client(key_size, args[0], precision, server_ip, port);
 			}
 			else {
-				test = new client(key_size, args[0], level_domains, port, precision, server_ip, port);
+				test = new client(key_size, args[0], level_domains, port, precision, server_ip, port, client_ip);
 			}
 		}
 		else {
@@ -139,7 +146,7 @@ public final class client implements Runnable {
 
 	// Testing using Kubernetes
 	public client(int key_size, String features_file, String [] level_site_ips, int port,
-				  int precision, String server_ip, int server_port) {
+				  int precision, String server_ip, int server_port, String client_ip) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
@@ -148,6 +155,7 @@ public final class client implements Runnable {
 		this.port = port;
 		this.server_ip = server_ip;
 		this.server_port = server_port;
+		this.client_ip = client_ip;
 	}
 
 	// Testing using only a single server, no level-sites
@@ -401,8 +409,6 @@ public final class client implements Runnable {
 			}
 			feature = read_features(features_file, paillier_public_key, dgk_public_key, precision, label_encoder);
             logger.debug("Client Feature Vector\n{}", feature);
-			feature.set_client_ip("127.0.0.1");
-			feature.set_client_port(10000);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
@@ -438,6 +444,8 @@ public final class client implements Runnable {
 			else {
 				connection_port = port;
 			}
+			feature.set_client_ip(client_ip);
+			feature.set_client_port(connection_port);
 
 			int level = 0;
 			try(SSLServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
