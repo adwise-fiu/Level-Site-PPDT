@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import java.math.BigInteger;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 import java.lang.System;
 import java.util.concurrent.TimeUnit;
@@ -27,9 +29,6 @@ import weka.core.SerializationHelper;
 import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 import weka.finito.structs.NodeInfo;
-
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
 
 import static weka.finito.client.createServerSocket;
 import static weka.finito.client.createSocket;
@@ -130,10 +129,10 @@ public final class server implements Runnable {
 
 	private void run_server_site(int port) throws IOException, HomomorphicException, ClassNotFoundException {
 		int count = 0;
-		try (SSLServerSocket serverSocket = createServerSocket(port)) {
+		try (ServerSocket serverSocket = createServerSocket(port)) {
 			logger.info("Server will be waiting for direct evaluation from client");
 			while (count < evaluations) {
-				try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
+				try (Socket client_site = serverSocket.accept()) {
 					evaluate_with_client_directly(client_site);
 				}
 				++count;
@@ -143,7 +142,7 @@ public final class server implements Runnable {
 
 	// This is essentially the same as running all level-sites on one server, But
 	// you will lose timing attack protection, see the paper
-	private void evaluate_with_client_directly(SSLSocket client_site)
+	private void evaluate_with_client_directly(Socket client_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 
 		Object client_input;
@@ -183,16 +182,10 @@ public final class server implements Runnable {
 
 	// Talk to Client to get the Public Keys. Give client hashed classes and complete Label Encoder
 	private void client_communication() throws Exception {
-		SSLServerSocket serverSocket = createServerSocket(server_port);
+		ServerSocket serverSocket = createServerSocket(server_port);
         logger.info("Server ready to get public keys from client on port: {}", server_port);
 
-		try (SSLSocket client_site = (SSLSocket) serverSocket.accept()) {
-			// Step: 3
-			client_site.setEnabledProtocols(protocols);
-			client_site.setEnabledCipherSuites(cipher_suites);
-
-			// Step: 4 {optional}
-			client_site.startHandshake();
+		try (Socket client_site = serverSocket.accept()) {
 
 			ObjectOutputStream to_client_site = new ObjectOutputStream(client_site.getOutputStream());
 			ValidatingObjectInputStream from_client_site = get_ois(client_site);
@@ -533,7 +526,7 @@ public final class server implements Runnable {
 				}
 			}
 
-			try(SSLSocket level_site = createSocket(level_site_ips[i], connection_port)) {
+			try(Socket level_site = createSocket(level_site_ips[i], connection_port)) {
                 logger.info("training level-site {} on port:{}", i, connection_port);
 				to_level_site = new ObjectOutputStream(level_site.getOutputStream());
 				from_level_site = get_ois(level_site);

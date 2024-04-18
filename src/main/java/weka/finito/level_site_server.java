@@ -3,12 +3,13 @@ package weka.finito;
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
 import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
+
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 import java.lang.System;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 import static weka.finito.client.createServerSocket;
 import static weka.finito.client.createSocket;
@@ -20,11 +21,11 @@ import org.apache.logging.log4j.Logger;
 public class level_site_server implements Runnable {
     private static final Logger logger = LogManager.getLogger(level_site_server.class);
     protected int          serverPort;
-    protected SSLServerSocket serverSocket = null;
+    protected ServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
     protected Thread       runningThread = null;
     protected level_order_site level_site_parameters = null;
-    private SSLSocket next_level_site_socket;
+    private Socket next_level_site_socket;
     private ObjectOutputStream next_level_site;
     private Thread level_site_evaluation = null;
 
@@ -67,18 +68,18 @@ public class level_site_server implements Runnable {
         Object o;
 
         while(! isStopped()) {
-            SSLSocket client_socket;
+            Socket client_socket;
             try {
             	// logger.info("[Main Level-Site Server] Ready to accept connections at: " + this.serverPort);
                 if (level_site_parameters == null) {
                     // You need the training data...
-                    client_socket = (SSLSocket) this.serverSocket.accept();
+                    client_socket = this.serverSocket.accept();
                     logger.info("Received data likely to start training...");
                 }
                 else {
                     // Wait for any incoming clients
                     if (level_site_parameters.get_level() == 0) {
-                        client_socket = (SSLSocket) this.serverSocket.accept();
+                        client_socket = this.serverSocket.accept();
                         logger.info("Level 0 received data likely from a client...");
                     }
                     else {

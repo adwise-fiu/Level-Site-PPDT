@@ -12,43 +12,20 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
+
+
 
 public class shared {
     private static final Logger logger = LogManager.getLogger(shared.class);
     public static final String[] protocols = new String[]{ "TLSv1.2", "TLSv1.3"};
-    public static final String[] cipher_suites = new String[] {
-            "TLS_AES_128_GCM_SHA256",
-
-            // Done with bleeding edge, back to TLS v1.2 and below
-            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
-
-            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
-
-            // RSA key transport sucks, but they are needed as a fallback.
-            // For example, microsoft.com fails under all versions of TLS
-            // if they are not included. If only TLS 1.0 is available in
-            // the client, then google.com will fail too. TLS v1.3 is
-            // trying to deprecate them, so it will be interesting to see
-            // what happens.
-            "TLS_RSA_WITH_AES_256_CBC_SHA256",
-            "TLS_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_RSA_WITH_AES_128_CBC_SHA"
-    };
 
     // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
     public static BigInteger hash_to_big_integer(String text) {
@@ -60,9 +37,6 @@ public class shared {
         // If you get a null pointer, you forgot to populate environment variables...
         String keystore = System.getenv("KEYSTORE");
         String password = System.getenv("PASSWORD");
-        logger.info("My keystore is at {}", keystore);
-        System.out.println("My keystore is at " + keystore);
-        System.out.println("Working Directory = " + System.getProperty("user.dir"));
         Properties systemProps = System.getProperties();
         systemProps.put("javax.net.ssl.keyStorePassword", password);
         systemProps.put("javax.net.ssl.keyStore", keystore);
@@ -70,7 +44,7 @@ public class shared {
         systemProps.put("javax.net.ssl.trustStorePassword", password);
 
         // Enable verbose SSL handshake debugging
-        systemProps.put("javax.net.debug", "ssl,handshake,data");
+        // systemProps.put("javax.net.debug", "ssl,handshake,data");
         System.setProperties(systemProps);
     }
 
@@ -234,7 +208,7 @@ public class shared {
     }
 
     public static void closeConnection(ObjectOutputStream oos, 
-                    ObjectInputStream ois, SSLSocket client_socket) throws IOException {
+                    ObjectInputStream ois, Socket client_socket) throws IOException {
         if (oos != null) {
             oos.close();
         }
@@ -246,11 +220,11 @@ public class shared {
 		}
 	}
 
-    public static void closeConnection(SSLSocket client_socket) throws IOException {
+    public static void closeConnection(Socket client_socket) throws IOException {
         closeConnection(null, null, client_socket);
     }
 
-    public static ValidatingObjectInputStream get_ois(SSLSocket socket) throws IOException {
+    public static ValidatingObjectInputStream get_ois(Socket socket) throws IOException {
         ValidatingObjectInputStream ois = new ValidatingObjectInputStream(socket.getInputStream());
         ois.accept(
                 weka.finito.structs.NodeInfo.class,
@@ -274,7 +248,7 @@ public class shared {
         return ois;
     }
 
-    public static void closeConnection(SSLServerSocket server_socket) throws IOException {
+    public static void closeConnection(ServerSocket server_socket) throws IOException {
         if (server_socket != null) {
             server_socket.close();
         }

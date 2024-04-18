@@ -12,28 +12,28 @@ import weka.finito.structs.features;
 import weka.finito.structs.level_order_site;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
 
 import static weka.finito.client.createSocket;
 import static weka.finito.utils.shared.*;
 
 public class level_site_evaluation_thread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(level_site_evaluation_thread.class);
-	private SSLSocket client_socket;
-	private SSLSocket next_level_site_socket;
-	private SSLSocket previous_level_site_socket;
+	private Socket client_socket;
+	private Socket next_level_site_socket;
+	private Socket previous_level_site_socket;
 	private final level_order_site level_site_data;
 	private features encrypted_features;
 	private ObjectOutputStream next_level_site = null;
 	private ObjectInputStream previous_site = null;
-	private SSLServerSocket previous_level_site_listener;
+	private ServerSocket previous_level_site_listener;
 
 	// This thread is only for level-site 0
-	public level_site_evaluation_thread(SSLSocket client_socket, level_order_site level_site_data,
+	public level_site_evaluation_thread(Socket client_socket, level_order_site level_site_data,
 										features encrypted_features, ObjectOutputStream next_level_site) {
 		// Have encrypted copy of thresholds if not done already for all nodes in level-site
 		this.client_socket = client_socket;
@@ -44,7 +44,7 @@ public class level_site_evaluation_thread implements Runnable {
 
 	// For all other levels
 	public level_site_evaluation_thread(level_order_site level_site_data,
-										SSLServerSocket previous_level_site_listener) throws IOException {
+										ServerSocket previous_level_site_listener) throws IOException {
 		this.level_site_data = level_site_data;
 		this.previous_level_site_listener = previous_level_site_listener;
 	}
@@ -55,7 +55,7 @@ public class level_site_evaluation_thread implements Runnable {
 			logger.debug("Evaluation thread will now do the listening");
 			if (previous_level_site_listener != null) {
 				// Likely level-site 0, so no previous socket would exist.
-				previous_level_site_socket = (SSLSocket) previous_level_site_listener.accept();
+				previous_level_site_socket = previous_level_site_listener.accept();
 				previous_level_site_socket.setKeepAlive(true);
 				previous_site = get_ois(previous_level_site_socket);
 			}

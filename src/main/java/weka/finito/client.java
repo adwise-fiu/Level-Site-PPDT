@@ -2,6 +2,8 @@ package weka.finito;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.lang.System;
@@ -209,7 +211,7 @@ public final class client implements Runnable {
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
         logger.info("Connecting to {}:{} for set-up", server_ip, server_port);
-		try (SSLSocket server_site = createSocket(server_ip, server_port)) {
+		try (Socket server_site = createSocket(server_ip, server_port)) {
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
 			ValidatingObjectInputStream from_server_site = get_ois(server_site);
 
@@ -234,7 +236,7 @@ public final class client implements Runnable {
         return new features(path, precision, paillier_public_key, dgk_public_key, encoder);
 	}
 
-	private void evaluate_with_server_site(SSLSocket server_site)
+	private void evaluate_with_server_site(Socket server_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 		// Communicate with each Level-Site
 		Object o;
@@ -284,7 +286,7 @@ public final class client implements Runnable {
 	}
 
 	// Function used to Evaluate for each level-site
-	private void evaluate_with_level_site(SSLSocket level_site, int level)
+	private void evaluate_with_level_site(Socket level_site, int level)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
 		Object o;
@@ -389,7 +391,7 @@ public final class client implements Runnable {
 
 		// If you are just evaluating directly with the server-site
 		if (level_site_ips == null) {
-			try(SSLSocket server_site = createSocket(server_ip, server_port)) {
+			try(Socket server_site = createSocket(server_ip, server_port)) {
 				logger.info("Client connected to sever-site with PPDT");
 				evaluate_with_server_site(server_site);
 				long end_time = System.nanoTime();
@@ -421,9 +423,9 @@ public final class client implements Runnable {
 			;
 
 			int level = 0;
-			try(SSLServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
+			try(ServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
 				// For level-site 0, just connect and evaluate now.
-				try(SSLSocket level_site = createSocket(level_site_ips[level], connection_port)) {
+				try(Socket level_site = createSocket(level_site_ips[level], connection_port)) {
 					evaluate_with_level_site(level_site, level);
 				}
 
@@ -431,7 +433,7 @@ public final class client implements Runnable {
 				while(!classification_complete) {
                     logger.info("Completed evaluation with level {}", level);
 					++level;
-					SSLSocket level_site = (SSLSocket) level_site_listener.accept();
+					Socket level_site = level_site_listener.accept();
 					evaluate_with_level_site(level_site, level);
 				}
 			}
@@ -457,13 +459,12 @@ public final class client implements Runnable {
 	}
 
 	// For some reason, the moment I move this to shared.java, it just fails
-	public static SSLSocket createSocket(String hostname, int port) {
+	public static Socket createSocket(String hostname, int port) {
 		SSLSocket client_socket;
 		try {
 			// Step: 1
 			client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
 			client_socket.setEnabledProtocols(protocols);
-			client_socket.setEnabledCipherSuites(cipher_suites);
 		}
 		catch (IOException e) {
 			throw new RuntimeException("Cannot open port " + port, e);
@@ -471,13 +472,12 @@ public final class client implements Runnable {
 		return client_socket;
 	}
 
-	public static SSLServerSocket createServerSocket(int serverPort) {
+	public static ServerSocket createServerSocket(int serverPort) {
 		SSLServerSocket serverSocket;
 		try {
 			// Step: 1
 			serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
 			serverSocket.setEnabledProtocols(protocols);
-			serverSocket.setEnabledCipherSuites(cipher_suites);
 		}
 		catch (IOException e) {
 			throw new RuntimeException("Cannot open port " + serverPort, e);
