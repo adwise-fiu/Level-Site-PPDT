@@ -460,11 +460,11 @@ public final class client implements Runnable {
 
 	// For some reason, the moment I move this to shared.java, it just fails
 	public static Socket createSocket(String hostname, int port) {
-		SSLSocket client_socket;
+		Socket client_socket;
 		try {
-			// Step: 1
-			client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
-			client_socket.setEnabledProtocols(protocols);
+			client_socket = new Socket(hostname, port);
+			// client_socket = (SSLSocket) socket_factory.createSocket(hostname, port);
+			// client_socket.setEnabledProtocols(protocols);
 		}
 		catch (IOException e) {
 			throw new RuntimeException("Cannot open port " + port, e);
@@ -473,11 +473,11 @@ public final class client implements Runnable {
 	}
 
 	public static ServerSocket createServerSocket(int serverPort) {
-		SSLServerSocket serverSocket;
+		ServerSocket serverSocket;
 		try {
-			// Step: 1
-			serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
-			serverSocket.setEnabledProtocols(protocols);
+			serverSocket = new ServerSocket(serverPort);
+			// serverSocket = (SSLServerSocket) factory.createServerSocket(serverPort);
+			// serverSocket.setEnabledProtocols(protocols);
 		}
 		catch (IOException e) {
 			throw new RuntimeException("Cannot open port " + serverPort, e);
