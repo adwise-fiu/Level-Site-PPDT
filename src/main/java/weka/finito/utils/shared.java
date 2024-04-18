@@ -70,8 +70,7 @@ public class shared {
         systemProps.put("javax.net.ssl.trustStorePassword", password);
 
         // Enable verbose SSL handshake debugging
-        //systemProps.put("javax.net.debug", "ssl,handshake,data");
-
+        systemProps.put("javax.net.debug", "ssl,handshake,data");
         System.setProperties(systemProps);
     }
 
