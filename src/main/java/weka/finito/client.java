@@ -392,7 +392,6 @@ public final class client implements Runnable {
 			if (talk_to_server_site) {
 				logger.info("Need to generate keys...");
 				generate_keys();
-				save_keys_and_classes();
 			}
 			else {
 				logger.info("I already read the keys from a file made from a previous run...");
@@ -406,6 +405,7 @@ public final class client implements Runnable {
 				for (String aClass : classes) {
 					hashed_classification.put(hash(aClass), aClass);
 				}
+				save_keys_and_classes();
 			}
 			else {
 				logger.info("Not contacting server-site. Seems you just want to test on the" +
