@@ -70,6 +70,7 @@ public class shared {
         // If you get a null pointer, you forgot to populate environment variables...
         String keystore = System.getenv("KEYSTORE");
         String password = System.getenv("PASSWORD");
+        logger.info("My keystore is at {}", keystore);
         Properties systemProps = System.getProperties();
         systemProps.put("javax.net.ssl.keyStorePassword", password);
         systemProps.put("javax.net.ssl.keyStore", keystore);
