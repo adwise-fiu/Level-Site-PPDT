@@ -26,11 +26,11 @@ RUN mv /code/data/* /data/
 RUN chmod +x /scripts/*
 WORKDIR /code
 
-RUN useradd tree-user
 # Set permissions
-RUN chown -R tree-user:tree-user /scripts/
-RUN chown -R tree-user:tree-user /code/
-USER tree-user
+# RUN useradd tree-user
+# RUN chown -R tree-user:tree-user /scripts/
+# RUN chown -R tree-user:tree-user /code/
+# USER tree-user
 
 # Define entrypoint
 CMD ["entrypoint.sh"]
