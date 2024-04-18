@@ -200,6 +200,9 @@ public final class client implements Runnable {
 			paillier_private_key = PaillierPrivateKey.readKey("paillier");
 			dgk = new KeyPair(dgk_public_key, dgk_private_key);
 			paillier = new KeyPair(paillier_public_key, paillier_private_key);
+			try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("label_encoder.bin"))) {
+				label_encoder = (LabelEncoder) inputStream.readObject();
+			}
 			return false;
 		}
 		catch (IOException | ClassNotFoundException e) {
@@ -219,6 +222,7 @@ public final class client implements Runnable {
 			to_server_site.writeObject(paillier);
 			to_server_site.writeObject(dgk);
 			to_server_site.flush();
+			logger.info("Just sent keys over, if this is slow, do not worry, server is training level-sites now.");
 
 			// Get Label Encoder of leaves from Server-site
 			Object o = from_server_site.readObject();
@@ -280,7 +284,6 @@ public final class client implements Runnable {
 		if (o instanceof String) {
 			classification = (String) o;
 			BigInteger temp = PaillierCipher.decrypt(new BigInteger(classification), paillier_private_key);
-			// classification = hashed_classification.get(classification);
 			classification = new String(temp.toByteArray(), StandardCharsets.UTF_8);
 		}
 	}
@@ -342,12 +345,10 @@ public final class client implements Runnable {
 		// false - get encrypted AES index for next round
 		classification_complete = client.readBoolean();
 		if (classification_complete) {
-			// Should never happen tbh
 			o = client.readObject();
 			if (o instanceof String) {
 				classification = (String) o;
 				BigInteger temp = PaillierCipher.decrypt(new BigInteger(classification), paillier_private_key);
-				// classification = hashed_classification.get(classification);
 				classification = new String(temp.toByteArray(), StandardCharsets.UTF_8);
 			}
 		}
@@ -399,7 +400,7 @@ public final class client implements Runnable {
 				double run_time = (double) (end_time - start_time);
 				run_time = run_time/1000000;
 				logger.info(String.format("It took %f ms to classify\n", run_time));
-				save_keys();
+				save_keys_and_encoder();
 			}
 			catch (HomomorphicException | IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -443,19 +444,23 @@ public final class client implements Runnable {
 			double run_time = (double) (end_time - start_time);
 			run_time = run_time/1000000;
             logger.info(String.format("It took %f ms to classify\n", run_time));
-			save_keys();
+			save_keys_and_encoder();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private void save_keys() throws IOException {
+	private void save_keys_and_encoder() throws IOException {
 		// At the end, write your keys...
 		dgk_public_key.writeKey("dgk.pub");
 		paillier_public_key.writeKey("paillier.pub");
 		dgk_private_key.writeKey("dgk");
 		paillier_private_key.writeKey("paillier");
+
+		try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream("label_encoder.bin"))) {
+			outputStream.writeObject(label_encoder);
+		}
 	}
 
 	// For some reason, the moment I move this to shared.java, it just fails
