@@ -4,7 +4,7 @@
 # Generate the self-signed certificate and place it in the KeyStore
 keytool -genkey -noprompt \
  -alias "${ALIAS}" \
- -dname "CN=mqttserver.ibm.com, OU=ID, O=IBM, L=Hursley, S=Hants, C=US" \
+ -dname "CN=kubernetes-services, OU=CSE, O=NYU, L=New York, S=NY, C=US" \
  -keystore "${KEYSTORE}" \
  -storepass "${PASSWORD}" \
  -keypass "${PASSWORD}" \
