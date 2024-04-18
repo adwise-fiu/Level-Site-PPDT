@@ -62,7 +62,7 @@ public final class PrivacyTest {
 		server.start();
 
 		// Create client
-		client evaluate = new client(key_size, features_file, precision, server_ip, server_port);
+		client evaluate = new client(key_size, features_file, precision, server_ip, server_port, "127.0.0.1");
 		Thread client = new Thread(evaluate);
 		client.start();
 
@@ -148,7 +148,7 @@ public final class PrivacyTest {
 
 		// Create client
     	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision,
-				server_ip, server_port);
+				server_ip, server_port, "127.0.0.1");
     	Thread client = new Thread(evaluate);
 		client.start();
 

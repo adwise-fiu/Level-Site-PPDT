@@ -54,7 +54,7 @@ public final class client implements Runnable {
 	private PaillierPrivateKey paillier_private_key;
 	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final String server_ip;
-	private String client_ip;
+	private final String client_ip;
 	private final int server_port;
 	private LabelEncoder label_encoder;
 
@@ -68,6 +68,7 @@ public final class client implements Runnable {
 		int port = -1;
         String level_site_string;
 		String server_ip;
+		String client_ip;
 
         // Read in our environment variables.
         level_site_string = System.getenv("LEVEL_SITE_DOMAINS");
@@ -118,7 +119,7 @@ public final class client implements Runnable {
 		else if (args.length == 2) {
 			// Test with just a server-site directly
 			if (args[1].equalsIgnoreCase("--server")) {
-				test = new client(key_size, args[0], precision, server_ip, port);
+				test = new client(key_size, args[0], precision, server_ip, port, client_ip);
 			}
 			else {
 				test = new client(key_size, args[0], level_domains, port, precision, server_ip, port, client_ip);
@@ -131,9 +132,9 @@ public final class client implements Runnable {
 		test.run();
     }
 
-	// For local host testing with GitHub Actions
+	// For local host testing with GitHub Actions, used in PrivacyTest.java
 	public client(int key_size, String features_file, String [] level_site_ips, int [] level_site_ports,
-				  int precision, String server_ip, int server_port) {
+				  int precision, String server_ip, int server_port, String client_ip) {
 		this.key_size = key_size;
 		this.features_file = features_file;
 		this.level_site_ips = level_site_ips;
@@ -142,9 +143,10 @@ public final class client implements Runnable {
 		this.port = -1;
 		this.server_ip = server_ip;
 		this.server_port = server_port;
+		this.client_ip = client_ip;
 	}
 
-	// Testing using Kubernetes
+	// Testing using Kubernetes, NOT used in PrivacyTest.java
 	public client(int key_size, String features_file, String [] level_site_ips, int port,
 				  int precision, String server_ip, int server_port, String client_ip) {
 		this.key_size = key_size;
@@ -158,17 +160,18 @@ public final class client implements Runnable {
 		this.client_ip = client_ip;
 	}
 
-	// Testing using only a single server, no level-sites
+	// Testing using only a single server, no level-sites, used in PrivacyTest.java and in main()
 	public client(int key_size, String features_file,
-				  int precision, String server_ip, int server_port) {
+                  int precision, String server_ip, int server_port, String client_ip) {
 		this.key_size = key_size;
 		this.features_file = features_file;
-		this.level_site_ips = null;
+        this.level_site_ips = null;
 		this.level_site_ports = null;
 		this.port = -1;
 		this.precision = precision;
 		this.server_ip = server_ip;
 		this.server_port = server_port;
+		this.client_ip = client_ip;
 	}
 
 	// Get Classification after Evaluation
