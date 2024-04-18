@@ -392,6 +392,7 @@ public final class client implements Runnable {
 			if (talk_to_server_site) {
 				logger.info("Need to generate keys...");
 				generate_keys();
+				save_keys_and_classes();
 			}
 			else {
 				logger.info("I already read the keys from a file made from a previous run...");
@@ -430,7 +431,6 @@ public final class client implements Runnable {
 				double run_time = (double) (end_time - start_time);
 				run_time = run_time/1000000;
 				logger.info(String.format("It took %f ms to classify\n", run_time));
-				finish_evaluation();
 			}
 			catch (HomomorphicException | IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -474,14 +474,13 @@ public final class client implements Runnable {
 			double run_time = (double) (end_time - start_time);
 			run_time = run_time/1000000;
             logger.info(String.format("It took %f ms to classify\n", run_time));
-			finish_evaluation();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private void finish_evaluation() throws IOException {
+	private void save_keys_and_classes() throws IOException {
 		// At the end, write your keys...
 		dgk_public_key.writeKey("dgk.pub");
 		paillier_public_key.writeKey("paillier.pub");
