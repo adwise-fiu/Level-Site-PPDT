@@ -13,9 +13,6 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
@@ -53,13 +50,6 @@ public class shared {
             "TLS_RSA_WITH_AES_128_CBC_SHA"
     };
 
-    // Used by server-site to hash leaves and client-site to find the leaf
-    public static String hash(String text) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(hash);
-    }
-
     // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
     public static BigInteger hash_to_big_integer(String text) {
         byte [] hash = text.getBytes(StandardCharsets.UTF_8);
@@ -80,7 +70,7 @@ public class shared {
         systemProps.put("javax.net.ssl.trustStorePassword", password);
 
         // Enable verbose SSL handshake debugging
-        systemProps.put("javax.net.debug", "ssl,handshake,data");
+        //systemProps.put("javax.net.debug", "ssl,handshake,data");
 
         System.setProperties(systemProps);
     }

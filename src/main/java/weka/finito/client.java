@@ -4,8 +4,6 @@ import java.io.*;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.lang.System;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
@@ -35,7 +33,6 @@ public final class client implements Runnable {
 	private static final Logger logger = LogManager.getLogger(client.class);
 	private static final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-	private final String classes_file = "classes.txt";
 	private final String features_file;
 	private final int key_size;
 	private final int precision;
@@ -47,12 +44,10 @@ public final class client implements Runnable {
 	private KeyPair paillier;
 	private features feature = null;
 	private boolean classification_complete = false;
-	private String [] classes;
 	private DGKPublicKey dgk_public_key;
 	private PaillierPublicKey paillier_public_key;
 	private DGKPrivateKey dgk_private_key;
 	private PaillierPrivateKey paillier_private_key;
-	private final HashMap<String, String> hashed_classification = new HashMap<>();
 	private final String server_ip;
 	private final String client_ip;
 	private final int server_port;
@@ -203,34 +198,12 @@ public final class client implements Runnable {
 			paillier_private_key = PaillierPrivateKey.readKey("paillier");
 			dgk = new KeyPair(dgk_public_key, dgk_private_key);
 			paillier = new KeyPair(paillier_public_key, paillier_private_key);
-			classes = read_classes();
-			for (String aClass : classes) {
-				hashed_classification.put(hash(aClass), aClass);
-			}
 			return false;
 		}
-		catch (NoSuchAlgorithmException | IOException | ClassNotFoundException e) {
+		catch (IOException | ClassNotFoundException e) {
 			return true;
 		}
     }
-
-	private String [] read_classes() {
-		// Remember the classes of DT as well
-		StringBuilder content = new StringBuilder();
-		String line;
-
-		try (BufferedReader reader =
-					 new BufferedReader(new FileReader(classes_file))) {
-			while ((line = reader.readLine()) != null) {
-				content.append(line);
-				content.append(System.lineSeparator());
-			}
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return content.toString().split(System.lineSeparator());
-	}
 
 	// Used for set-up
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
@@ -245,11 +218,8 @@ public final class client implements Runnable {
 			to_server_site.writeObject(dgk);
 			to_server_site.flush();
 
-			// Get leaves from Server-site
+			// Get Label Encoder of leaves from Server-site
 			Object o = from_server_site.readObject();
-			classes = (String []) o;
-
-			o = from_server_site.readObject();
 			label_encoder = (LabelEncoder) o;
 		}
 		logger.info("Completed set-up with server");
@@ -402,10 +372,6 @@ public final class client implements Runnable {
 			if (talk_to_server_site) {
 				// Don't send keys to server-site to ask for classes now it is assumed level-sites are up
 				setup_with_server_site(paillier_public_key, dgk_public_key);
-				for (String aClass : classes) {
-					hashed_classification.put(hash(aClass), aClass);
-				}
-				save_keys_and_classes();
 			}
 			else {
 				logger.info("Not contacting server-site. Seems you just want to test on the" +
@@ -431,6 +397,7 @@ public final class client implements Runnable {
 				double run_time = (double) (end_time - start_time);
 				run_time = run_time/1000000;
 				logger.info(String.format("It took %f ms to classify\n", run_time));
+				save_keys();
 			}
 			catch (HomomorphicException | IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -444,7 +411,7 @@ public final class client implements Runnable {
 				assert level_site_ports != null;
 				connection_port = level_site_ports[0];
 				// Level-Site 0 is listening to 9000 locally, so use 10,000
-				feature.set_client_port(10000);
+				feature.set_client_port(server_port);
 			}
 			else {
 				connection_port = port;
@@ -474,26 +441,19 @@ public final class client implements Runnable {
 			double run_time = (double) (end_time - start_time);
 			run_time = run_time/1000000;
             logger.info(String.format("It took %f ms to classify\n", run_time));
+			save_keys();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private void save_keys_and_classes() throws IOException {
+	private void save_keys() throws IOException {
 		// At the end, write your keys...
 		dgk_public_key.writeKey("dgk.pub");
 		paillier_public_key.writeKey("paillier.pub");
 		dgk_private_key.writeKey("dgk");
 		paillier_private_key.writeKey("paillier");
-
-		// Remember the classes as well too...
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(classes_file, true))) {
-			for (String aClass: classes) {
-				writer.write(aClass);
-				writer.write("\n");
-			}
-		}
 	}
 
 	// For some reason, the moment I move this to shared.java, it just fails

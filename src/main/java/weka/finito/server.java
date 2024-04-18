@@ -50,7 +50,6 @@ public final class server implements Runnable {
 	private DGKPublicKey dgk_public;
 	private final int precision;
 	private ClassifierTree ppdt = null;
-	private final List<String> leaves = new ArrayList<>();
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
 	private final int server_port;
 	private int evaluations = 1;
@@ -215,10 +214,6 @@ public final class server implements Runnable {
 			}
 			logger.info("Server just trained all the level-sites");
 
-			// Now I know the leaves to send back to the client
-			String [] leaf_array = leaves.toArray(new String[0]);
-			to_client_site.writeObject(leaf_array);
-
 			// Also, I know the labels used for PPDT; the client must know
 			to_client_site.writeObject(label_encoder);
 			logger.info("Server sent the leaves and label encoder back to the client");
@@ -327,8 +322,6 @@ public final class server implements Runnable {
 				assert p != null;
 				if (p.isLeaf()) {
 					String variable = p.getLocalModel().dumpLabel(0, p.getTrainingData());
-					leaves.add(variable);
-					// String hashed_leaf = hash(variable);
 					BigInteger encryption = PaillierCipher.encrypt(hash_to_big_integer(variable), paillier_public);
 					node_info = new NodeInfo(true, encryption.toString(), 0, variable);
 					Level_Order_S.append_data(node_info);
