@@ -133,7 +133,7 @@ kubectl apply -f ppdt-sealedsecret.yaml
 
 Alternatively, you can create a new sealed secret as follows:
 ```bash
-kubectl create secret generic ppdt-secrets  --from-literal=keystore-pass=<SECRET_VALUE>
+kubectl create secret generic ppdt-secrets --from-literal=keystore-pass=<SECRET_VALUE>
 kubectl get secret ppdt-secrets -o yaml | kubeseal > ppdt-sealedsecret.yaml
 ```
 However, if you make a new sealed secret, you should re-make the keystore as well.
@@ -164,20 +164,20 @@ ppdt-level-site-08-deploy-6d596967b8-mh9hz   1/1     Running     1 (2m39s ago)  
 ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)     16h
 ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
 ```
-The next step is to start the server site. To do this, run the following command.
-
-    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
-
 It does take time for the level-site to be able to accept connections. Run the following command on the first level-site,
 and wait for an output in standard output saying `Ready to accept connections at: 9000`. Use CTRL+C to exit the pod.
 
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-01-deploy" -o name)
-
+    kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-10-deploy" -o name)
 
 To verify that the server site is ready, use the following command to confirm the server_site is _running_
 and check the logs to confirm we see `Server ready to get public keys from client-site`. Alternatively, you can connect via bash directly as follows `kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- /bin/bash`.
 
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
+
+The next step is to start the server site. To do this, run the following command:
+
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
 
 **In a NEW terminal**, start the client, run the following commands to complete an evaluation. 
 You would point values to something like `/data/hypothyroid.values`. Alternatively, you can connect via bash directly as follows `kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- /bin/bash`.

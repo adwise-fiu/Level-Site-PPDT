@@ -18,6 +18,7 @@ spec:
       containers:
         - name: ppdt-client-deploy
           image: andrewquijano92/ppdt
+          imagePullPolicy: Always
           ports:
             - containerPort: 9000
           env:
