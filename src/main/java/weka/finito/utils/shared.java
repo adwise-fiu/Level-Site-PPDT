@@ -72,6 +72,7 @@ public class shared {
         String password = System.getenv("PASSWORD");
         logger.info("My keystore is at {}", keystore);
         System.out.println("My keystore is at " + keystore);
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
         Properties systemProps = System.getProperties();
         systemProps.put("javax.net.ssl.keyStorePassword", password);
         systemProps.put("javax.net.ssl.keyStore", keystore);

@@ -33,7 +33,7 @@ public final class PrivacyTest {
 
 		// Arguments:
 		logger.info("Running Full Local Test...");
-		logger.info("Working Directory = " + System.getProperty("user.dir"));
+        logger.info("Working Directory = {}", System.getProperty("user.dir"));
 
 		Properties config = new Properties();
 		try (FileReader in = new FileReader("config.properties")) {
@@ -97,7 +97,7 @@ public final class PrivacyTest {
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
 				logger.info(full_data_set_path);
-				logger.info("Feature Vector Path: " + full_feature_path);
+                logger.info("Feature Vector Path: {}", full_feature_path);
 				if (use_level_sites) {
 					classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
 							level_site_ips, level_site_ports_string, server_ip, server_port);
@@ -107,7 +107,7 @@ public final class PrivacyTest {
 							server_ip, server_port);
 				}
 
-				logger.info(expected_classification + " =!= " + classification);
+                logger.info("{} =!= {}", expected_classification, classification);
 				assertEquals(expected_classification, classification);
 			}
 		}
@@ -171,9 +171,9 @@ public final class PrivacyTest {
 	public static void delete_file(String file_name){
 		File myObj = new File(file_name);
 		if (myObj.delete()) {
-			logger.info("Deleted the file: " + myObj.getName());
+            logger.info("Deleted the file: {}", myObj.getName());
 		} else {
-			logger.info("Failed to delete the file: " + myObj.getName());
+            logger.info("Failed to delete the file: {}", myObj.getName());
 		}
 	}
 }
