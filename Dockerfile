@@ -6,6 +6,9 @@ ENV PATH="/scripts:${PATH}"
 # Verify installation
 RUN gradle --version
 
+RUN apt-get install vim
+RUN apt-get install graphviz
+
 # Create directories
 RUN mkdir /code
 RUN mkdir /scripts
