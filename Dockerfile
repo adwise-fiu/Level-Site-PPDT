@@ -8,10 +8,10 @@ ENV CERTIFICATE="ppdt-certificate"
 # Verify installation
 RUN gradle --version
 
+# Get VIM if I need to debug a bit on container/pod
 RUN apt-get update
 RUN apt-get install -y vim
 RUN apt-get install -y graphviz
-
 RUN vim -h
 
 # Create directories
