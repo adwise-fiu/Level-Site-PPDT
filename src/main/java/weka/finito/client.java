@@ -443,12 +443,15 @@ public final class client implements Runnable {
 			if (port == -1) {
 				assert level_site_ports != null;
 				connection_port = level_site_ports[0];
+				// Level-Site 0 is listening to 9000 locally, so just use 10,000
+				feature.set_client_port(10000);
 			}
 			else {
 				connection_port = port;
+				feature.set_client_port(connection_port);
 			}
 			feature.set_client_ip(client_ip);
-			feature.set_client_port(connection_port);
+			;
 
 			int level = 0;
 			try(SSLServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
