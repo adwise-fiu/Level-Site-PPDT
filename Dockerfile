@@ -29,13 +29,16 @@ RUN chmod +x /scripts/*
 WORKDIR /code
 
 # Apparently for Amazon to be happy, I need to import the certificate too, ugh.
+# Might as well update openssl certificates for good measure
 RUN keytool -import -alias ${ALIAS} -file ${CERTIFICATE} -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
+RUN cp ${CERTIFICATE} /etc/ssl/certs/
+RUN update-ca-certificates
 
 # Set permissions
-RUN useradd tree-user
-RUN chown -R tree-user:tree-user /scripts/
-RUN chown -R tree-user:tree-user /code/
-USER tree-user
+# RUN useradd tree-user
+# RUN chown -R tree-user:tree-user /scripts/
+# RUN chown -R tree-user:tree-user /code/
+# USER tree-user
 
 # Define entrypoint
 CMD ["entrypoint.sh"]
