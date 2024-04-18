@@ -10,6 +10,8 @@ RUN apt-get update
 RUN apt-get install -y vim
 RUN apt-get install -y graphviz
 
+RUN vim -h
+
 # Create directories
 RUN mkdir /code
 RUN mkdir /scripts
