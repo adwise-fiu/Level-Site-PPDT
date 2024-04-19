@@ -14,7 +14,6 @@ def deep_key_update(dict_to_update: dict, key_path: list, value) -> dict:
 
 
 template_yaml_directory = 'template_yaml'
-k8_directory = '.'
 k8_client = os.path.join('k8', 'client')
 k8_server = os.path.join('k8', 'server_site')
 k8_level_site = os.path.join('k8', 'level_sites')
@@ -47,7 +46,7 @@ for level in range(1, level_sites):
 
     # Create new file
     current_level_site_service_file = f"level_site_{level:02}_service.yaml"
-    with open(os.path.join(k8_directory, current_level_site_service_file), 'w') as fd:
+    with open(os.path.join(k8_level_site, current_level_site_service_file), 'w') as fd:
         yaml.dump(level_site_service, fd)
 
 # Update all values for deployment - LEVEL-SITE
@@ -63,7 +62,7 @@ for level in range(1, level_sites):
 
     # Create a new file
     current_level_site_deploy_file = f"level_site_{level:02}_deploy.yaml"
-    with open(os.path.join(k8_directory, current_level_site_deploy_file), 'w') as fd:
+    with open(os.path.join(k8_level_site, current_level_site_deploy_file), 'w') as fd:
         yaml.dump(level_site_deployment, fd)
 
 # -------------------------------Update Client Template--------------------------------------------
@@ -73,7 +72,7 @@ with open(os.path.join(template_yaml_directory, 'client_deployment_template.yaml
 deep_key_update(client_site_deployment, ['spec', 'template', 'spec', 'containers', 0, 'env', 5],
                 all_domains_env)
 
-with open(os.path.join(k8_directory, 'client_deployment.yaml'), 'w') as fd:
+with open(os.path.join(k8_client, 'client_deployment.yaml'), 'w') as fd:
     yaml.dump(client_site_deployment, fd)
 
 # -------------------------------Update Server Template-------------------------------------------
@@ -83,7 +82,7 @@ with open(os.path.join(template_yaml_directory, 'server_site_deployment_template
 deep_key_update(server_site_deployment, ['spec', 'template', 'spec', 'containers', 0, 'env', 3],
                 all_domains_env)
 
-with open(os.path.join(k8_directory, 'server_site_deployment.yaml'), 'w') as fd:
+with open(os.path.join(k8_server, 'server_site_deployment.yaml'), 'w') as fd:
     yaml.dump(client_site_deployment, fd)
 
 # -------------------------------Might as well Update Properties File-----------------------------
