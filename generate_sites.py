@@ -76,14 +76,14 @@ with open(os.path.join(k8_client, 'client_deployment.yaml'), 'w') as fd:
     yaml.dump(client_site_deployment, fd)
 
 # -------------------------------Update Server Template-------------------------------------------
-with open(os.path.join(template_yaml_directory, 'server_site_deployment_template.yaml'), 'r') as fd:
+with open(os.path.join(template_yaml_directory, 'server_deployment_template.yaml'), 'r') as fd:
     server_site_deployment = yaml.safe_load(fd)
 
 deep_key_update(server_site_deployment, ['spec', 'template', 'spec', 'containers', 0, 'env', 3],
                 all_domains_env)
 
 with open(os.path.join(k8_server, 'server_deployment.yaml'), 'w') as fd:
-    yaml.dump(client_site_deployment, fd)
+    yaml.dump(server_site_deployment, fd)
 
 # -------------------------------Might as well Update Properties File-----------------------------
 config = ConfigObj("config.properties")
