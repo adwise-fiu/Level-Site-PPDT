@@ -125,7 +125,7 @@ aws eks update-kubeconfig --name ppdt --region us-east-2
 ```
 
 ### Using/Creating a Kubernetes Sealed Secret
-It is suggested you use the existing sealed secret. The password in this secret is aligned with what is on the keystore,
+It is suggested you use the existing sealed secret. The password in this secret is aligned with what is on the keystore.
 
 ```commandline
 kubectl apply -f ppdt-sealedsecret.yaml
@@ -165,27 +165,38 @@ ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)    
 ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
 ```
 It does take time for the level-site to be able to accept connections. Run the following command on the first level-site,
-and wait for an output in standard output saying `Ready to accept connections at: 9000`. Use CTRL+C to exit the pod.
+and wait for an output in standard output saying `LEVEL SITE SERVER STARTED!`. Use CTRL+C to exit the pod.
 
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-01-deploy" -o name)
     kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-10-deploy" -o name)
 
-To verify that the server site is ready, use the following command to confirm the server_site is _running_
-and check the logs to confirm we see `Server ready to get public keys from client-site`. Alternatively, you can connect via bash directly as follows `kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- /bin/bash`.
+Next, you need to run the server to create Decision Tree and split the model among the level-sites. 
+You can run it either connecting via a terminal to the pod using the commands below.
 
-    kubectl logs -f $(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- /bin/bash
+    gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>
 
-The next step is to start the server site. To do this, run the following command:
+Alternatively, you can combine the above commands as follows:
 
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
 
+Once you see this output `Server ready to get public keys from client-site`, you need to run the client.
+
 **In a NEW terminal**, start the client, run the following commands to complete an evaluation. 
-You would point values to something like `/data/hypothyroid.values`. Alternatively, you can connect via bash directly as follows `kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- /bin/bash`.
+You would point values to something like `/data/hypothyroid.values`.
+
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- /bin/bash`.
+    gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>
+    
+    # Test WITHOUT level-sites
+    gradle run -PchooseRole=weka.finito.client --args '<VALUES-FILE> --server'
+
+Alternatively, you can combine both commands in one go as follows:
 
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 
     # Test WITHOUT level-sites
-    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE> --server"
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args '<VALUES-FILE> --server'"
 
 ### Re-running with different experiments
 If you are just re-running the client with the same or different values file, just re-run the above command again. 
@@ -203,13 +214,11 @@ Then repeat the instructions on the previous section.
 Destroy the EKS cluster using the following:
 ```bash
 eksctl delete cluster --config-file eks-config/single-cluster.yaml --wait
-docker system prune --force
 ```
 
 Destroy the MiniKube environment as follows:
 ```bash
 minikube delete
-docker system prune --force
 ```
 
 ## Authors and Acknowledgement
@@ -219,4 +228,7 @@ Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
 [MIT](https://choosealicense.com/licenses/mit/)
 
 ## Project status
-Fully tested and completed. Although I believe I need a label encoder to compare two strings.
+The project is fully tested. 
+Not sure why the encryption library seems to have a bug in comparisons, 
+and TLS Sockets do not work on EKS, but I will fix this eventually.
+Also, I should probably look into a nicer way to make arbitrary YAML files for level-sites.
