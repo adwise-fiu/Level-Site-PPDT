@@ -185,7 +185,7 @@ Once you see this output `Server ready to get public keys from client-site`, you
 **In a NEW terminal**, start the client, run the following commands to complete an evaluation. 
 You would point values to something like `/data/hypothyroid.values`.
 
-    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- /bin/bash`.
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- /bin/bash
     gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>
     
     # Test WITHOUT level-sites
