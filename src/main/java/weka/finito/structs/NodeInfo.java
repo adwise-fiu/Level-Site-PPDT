@@ -6,6 +6,7 @@ import security.misc.HomomorphicException;
 import security.paillier.PaillierCipher;
 import security.paillier.PaillierPublicKey;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigInteger;
 
@@ -15,36 +16,49 @@ import java.math.BigInteger;
  */
 
 public final class NodeInfo implements Serializable {
-
+	@Serial
 	private static final long serialVersionUID = -3569139531917752891L;
 	public final boolean is_leaf;
 	public final String variable_name;
 	public final int comparisonType;
-    public float threshold;
-
+    public double threshold;
 	private BigInteger paillier;
 	private BigInteger dgk;
+	private final String real_leaf;
 
     public NodeInfo(boolean is_leaf, String variable_name, int comparisonType) {
     	this.is_leaf = is_leaf;
     	this.variable_name = variable_name;
 		this.comparisonType = comparisonType;
 		this.threshold = 0;
+		this.real_leaf = "";
     }
 
-	public void encrypt(float threshold, int precision,
+	public NodeInfo(boolean is_leaf, String variable_name, int comparisonType, String real_leaf) {
+		this.is_leaf = is_leaf;
+		this.variable_name = variable_name;
+		this.comparisonType = comparisonType;
+		this.threshold = 0;
+		this.real_leaf = real_leaf;
+	}
+
+	public void encrypt(BigInteger temp_thresh,
 						PaillierPublicKey paillier_public_key, DGKPublicKey dgk_public_key)
 			throws HomomorphicException {
 
-		int intermediateInteger = (int) (threshold * Math.pow(10, precision));
-		BigInteger temp_thresh = BigInteger.valueOf(intermediateInteger);
 		if (paillier_public_key != null) {
 			this.setPaillier(PaillierCipher.encrypt(temp_thresh, paillier_public_key));
 		}
 		if (dgk_public_key != null) {
 			this.setDGK(DGKOperations.encrypt(temp_thresh, dgk_public_key));
 		}
-		this.threshold = threshold;
+		// TODO: Be sure to comment this out, just used for debugging to more easily identify nodes
+		this.threshold = temp_thresh.doubleValue();
+	}
+
+	public static BigInteger set_precision(double threshold, int precision) {
+		int intermediateInteger = (int) (threshold * Math.pow(10, precision));
+        return BigInteger.valueOf(intermediateInteger);
 	}
 
 	public void setDGK(BigInteger dgk){
@@ -62,7 +76,6 @@ public final class NodeInfo implements Serializable {
 	public BigInteger getPaillier() {
 		return this.paillier;
 	}
-
     
     public boolean isLeaf() {
     	return this.is_leaf;
@@ -75,15 +88,26 @@ public final class NodeInfo implements Serializable {
     public String toString() {
     	StringBuilder output;
 		output = new StringBuilder();
-		output.append("var_name: ").append(this.variable_name).append('\n');
+		if (is_leaf) {
+			output.append("Encrypted value\n");
+		}
+		else {
+			output.append("attribute name: ").append(this.variable_name).append('\n');
+		}
     	output.append("Leaf: ");
     	output.append(this.is_leaf);
     	output.append('\n');
     	output.append("comparison_type: ");
     	output.append(comparisonType);
     	output.append('\n');
-    	output.append("threshold: ");
-    	output.append(threshold);
+		if (is_leaf) {
+			output.append("Leaf: ");
+			output.append(real_leaf);
+		}
+    	else {
+			output.append("threshold: ");
+			output.append(threshold);
+		}
     	output.append('\n');
     	return output.toString();
     }

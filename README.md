@@ -1,14 +1,12 @@
 # Level-Site-PPDT
-[![Build Gradle project](https://github.com/AndrewQuijano/MPC-PPDT/actions/workflows/build-gradle-project.yml/badge.svg)](https://github.com/AndrewQuijano/MPC-PPDT/actions/workflows/build-gradle-project.yml)  
-[![codecov](https://codecov.io/gh/AndrewQuijano/MPC-PPDT/branch/main/graph/badge.svg?token=eEtEvBZYu9)](https://codecov.io/gh/AndrewQuijano/MPC-PPDT)  
+[![Build Gradle project](https://github.com/adwise-fiu/Level-Site-PPDT/actions/workflows/build-gradle-project.yml/badge.svg)](https://github.com/AndrewQuijano/Level-Site-PPDT/actions/workflows/build-gradle-project.yml)  
+[![codecov](https://codecov.io/gh/adwise-fiu/Level-Site-PPDT/branch/main/graph/badge.svg?token=eEtEvBZYu9)](https://codecov.io/gh/AndrewQuijano/Level-Site-PPDT)  
 Implementation of the PPDT in the paper "Evaluating Outsourced Decision Trees by a Level-Based Approach"
 
 ## Libraries
-* crypto.jar library is from this [repository](https://github.com/AndrewQuijano/Homomorphic_Encryption)
+* crypto.jar library is from this [repository](https://github.com/adwise-fiu/Homomorphic_Encryption)
 * weka.jar library is from [SourceForge](https://sourceforge.net/projects/weka/files/weka-3-9/3.9.5/),
-  download the ZIP file and import the weka.jar file**
-
-** To be confirmed/tested again...
+  download the ZIP file and import the weka.jar file
 
 ## Installation
 It is a requirement to install [SDK](https://sdkman.io/install) to install Gradle.
@@ -47,13 +45,13 @@ fi
 wget "https://github.com/bitnami-labs/sealed-secrets/releases/download/v${KUBESEAL_VERSION}/kubeseal-${KUBESEAL_VERSION}-linux-amd64.tar.gz"
 tar -xvzf kubeseal-"${KUBESEAL_VERSION}"-linux-amd64.tar.gz kubeseal
 sudo install -m 755 kubeseal /usr/local/bin/kubeseal
-rm kubeseal
+rm kubeseal*
 
 # Install Helm
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
-rm get_helm
+rm ./get_helm.sh
 
 # Add Sealed Secret Cluster
 helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
@@ -113,7 +111,7 @@ You will need to start and configure minikube. When writing the paper, we provid
 
 - Run the following command to create the cluster
 ```bash
-eksctl create cluster --config-file eks-config/config.yaml
+eksctl create cluster --config-file eks-config/single-cluster.yaml
 ```
 
 - Confirm the EKS cluster exists using the following
@@ -127,7 +125,7 @@ aws eks update-kubeconfig --name ppdt --region us-east-2
 ```
 
 ### Using/Creating a Kubernetes Sealed Secret
-It is suggested you use the existing sealed secret. The password in this secret is aligned with what is on the keystore,
+It is suggested you use the existing sealed secret. The password in this secret is aligned with what is on the keystore.
 
 ```commandline
 kubectl apply -f ppdt-sealedsecret.yaml
@@ -135,8 +133,8 @@ kubectl apply -f ppdt-sealedsecret.yaml
 
 Alternatively, you can create a new sealed secret as follows:
 ```bash
-kubectl create secret generic ppdt-secrets  --from-literal=keystore-pass=<SECRET_VALUE>
-kubectl get secret ppdt-secrets -o yaml | kubeseal > ppdt-sealedsecret.yaml
+kubectl create secret generic ppdt-secrets --from-literal=keystore-pass=<SECRET_VALUE>
+kubectl get secret ppdt-secrets -o yaml | kubeseal --scope cluster-wide > ppdt-sealedsecret.yaml
 ```
 However, if you make a new sealed secret, you should re-make the keystore as well.
 
@@ -166,28 +164,39 @@ ppdt-level-site-08-deploy-6d596967b8-mh9hz   1/1     Running     1 (2m39s ago)  
 ppdt-level-site-09-deploy-8555c56976-752pn   1/1     Running     1 (16h ago)     16h
 ppdt-level-site-10-deploy-67b7c5689b-rkl6r   1/1     Running     1 (2m39s ago)   16h
 ```
-The next step is to start the server site. To do this, run the following command.
+It does take time for the level-site to be able to accept connections. Run the following command on the first level-site,
+and wait for an output in standard output saying `LEVEL SITE SERVER STARTED!`. Use CTRL+C to exit the pod.
+
+    kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-01-deploy" -o name)
+    kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-10-deploy" -o name)
+
+Next, you need to run the server to create Decision Tree and split the model among the level-sites. 
+You can run it either connecting via a terminal to the pod using the commands below.
+
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- /bin/bash
+    gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>
+
+Alternatively, you can combine the above commands as follows:
 
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-server-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.server --args <TRAINING-FILE>"
 
-It does take time for the level-site to be able to accept connections. Run the following command on the first level-site,
-and wait for an output in standard output saying `Ready to accept connections at: 9000`. Use CTRL+C to exit the pod.
-
-    kubectl logs -f $(kubectl get pod -l "pod=ppdt-level-site-01-deploy" -o name)
-
-
-To verify that the server site is ready, use the following command to confirm the server_site is _running_
-and check the logs to confirm we see `Server ready to get public keys from client-site`.
-
-    kubectl logs -f $(kubectl get pod -l "pod=ppdt-server-deploy" -o name)
+Once you see this output `Server ready to get public keys from client-site`, you need to run the client.
 
 **In a NEW terminal**, start the client, run the following commands to complete an evaluation. 
-You would point values to something like `/data/hypothyroid.values`
+You would point values to something like `/data/hypothyroid.values`.
+
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- /bin/bash
+    gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>
+    
+    # Test WITHOUT level-sites
+    gradle run -PchooseRole=weka.finito.client --args '<VALUES-FILE> --server'
+
+Alternatively, you can combine both commands in one go as follows:
 
     kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE>"
 
     # Test WITHOUT level-sites
-    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args <VALUES-FILE> --server"
+    kubectl exec -i -t $(kubectl get pod -l "pod=ppdt-client-deploy" -o name) -- bash -c "gradle run -PchooseRole=weka.finito.client --args '<VALUES-FILE> --server'"
 
 ### Re-running with different experiments
 If you are just re-running the client with the same or different values file, just re-run the above command again. 
@@ -204,14 +213,12 @@ Then repeat the instructions on the previous section.
 ### Clean up
 Destroy the EKS cluster using the following:
 ```bash
-eksctl delete cluster --config-file eks-config/config.yaml --wait
-docker system prune --force
+eksctl delete cluster --config-file eks-config/single-cluster.yaml --wait
 ```
 
 Destroy the MiniKube environment as follows:
 ```bash
 minikube delete
-docker system prune --force
 ```
 
 ## Authors and Acknowledgement
@@ -221,4 +228,7 @@ Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
 [MIT](https://choosealicense.com/licenses/mit/)
 
 ## Project status
-Fully tested and completed. Although I believe I need a label encoder to compare two strings.
+The project is fully tested. 
+Not sure why the encryption library seems to have a bug in comparisons, 
+and TLS Sockets do not work on EKS, but I will fix this eventually.
+Also, I should probably look into a nicer way to make arbitrary YAML files for level-sites.

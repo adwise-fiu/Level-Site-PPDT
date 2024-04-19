@@ -10,51 +10,27 @@ import weka.finito.structs.level_order_site;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
+
 
 public class shared {
-
+    private static final Logger logger = LogManager.getLogger(shared.class);
     public static final String[] protocols = new String[]{ "TLSv1.2", "TLSv1.3"};
-    public static final String[] cipher_suites = new String[] {
-            "TLS_AES_128_GCM_SHA256",
 
-            // Done with bleeding edge, back to TLS v1.2 and below
-            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
-
-            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
-
-            // RSA key transport sucks, but they are needed as a fallback.
-            // For example, microsoft.com fails under all versions of TLS
-            // if they are not included. If only TLS 1.0 is available in
-            // the client, then google.com will fail too. TLS v1.3 is
-            // trying to deprecate them, so it will be interesting to see
-            // what happens.
-            "TLS_RSA_WITH_AES_256_CBC_SHA256",
-            "TLS_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_RSA_WITH_AES_128_CBC_SHA"
-    };
-
-
-    // Used by server-site to hash leaves and client-site to find the leaf
-    public static String hash(String text) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(hash);
+    // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
+    public static BigInteger hash_to_big_integer(String text) {
+        byte [] hash = text.getBytes(StandardCharsets.UTF_8);
+        return new BigInteger(1, hash);
     }
 
     public static void setup_tls() {
@@ -66,6 +42,9 @@ public class shared {
         systemProps.put("javax.net.ssl.keyStore", keystore);
         systemProps.put("javax.net.ssl.trustStore", keystore);
         systemProps.put("javax.net.ssl.trustStorePassword", password);
+
+        // Enable verbose SSL handshake debugging
+        // systemProps.put("javax.net.debug", "ssl,handshake,data");
         System.setProperties(systemProps);
     }
 
@@ -84,12 +63,20 @@ public class shared {
         NodeInfo ls;
         NodeInfo to_return = null;
 
+        // The n index tells you when you are in scope in regard to level-site
+        // Level-sites are made of leaves, and split the inequality into two nodes,
+        // so you have a '<=' and '>' node and '=' and '!=' in pairs
+        logger.debug("In-scope index should be: {} and {}",
+                2 * encrypted_features.get_current_index(), 2 * encrypted_features.get_current_index() + 1);
+
         while ((!equalsFound) && (!terminalLeafFound)) {
             ls = node_level_data.get(node_level_index);
-            System.out.println("j=" + node_level_index);
+            logger.debug("j={}", node_level_index);
+            logger.debug("n={}", n);
             if (ls.isLeaf()) {
                 if (n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1) {
+                    logger.debug("Found the leaf at node={} to be used", n);
                     terminalLeafFound = true;
                     to_return = ls;
                 }
@@ -99,21 +86,45 @@ public class shared {
                 if ((n == 2 * encrypted_features.get_current_index()
                         || n == 2 * encrypted_features.get_current_index() + 1)) {
 
-                    if (ls.comparisonType == 6) {
-                        inequalityHolds = compare(ls, 1,
-                                encrypted_features, niu);
-                        inequalityHolds = !inequalityHolds;
+                    logger.debug("At node={}, I need to compare", n);
+                    logger.debug("I am comparing at node {}", ls);
+                    equalsFound = true;
+
+                    // Niu.Protocol2(encrypted_thresh, encrypted_client_value);
+                    // encrypted_thresh >= encrypted_client_value
+                    // encrypted_client_value <= encrypted_thresh
+                    inequalityHolds = compare(ls, ls.comparisonType, encrypted_features, niu);
+                    if (inequalityHolds) {
+                        if (ls.comparisonType == 4) {
+                            logger.debug("[DT-Threshold] <= [VALUES] is TRUE");
+                        }
+                        else if (ls.comparisonType == 3) {
+                            logger.debug("[DT-Threshold] > [VALUES] is TRUE");
+                        }
+                        else if (ls.comparisonType == 1) {
+                            logger.debug("[DT-Threshold] == [VALUES] is TRUE");
+                        }
+                        else if (ls.comparisonType == 6) {
+                            logger.debug("[DT-Threshold] != [VALUES] is TRUE");
+                        }
+                        encrypted_features.set_next_index(next_index);
                     }
                     else {
-                        inequalityHolds = compare(ls, ls.comparisonType,
-                                encrypted_features, niu);
+                        if (ls.comparisonType == 4) {
+                            logger.debug("[DT-Threshold] <= [VALUES] is FALSE");
+                        }
+                        else if (ls.comparisonType == 3) {
+                            logger.debug("[DT-Threshold] > [VALUES] is FALSE");
+                        }
+                        else if (ls.comparisonType == 1) {
+                            logger.debug("[DT-Threshold] == [VALUES] is FALSE");
+                        }
+                        else if (ls.comparisonType == 6) {
+                            logger.debug("[DT-Threshold] != [VALUES] is FALSE");
+                        }
+                        encrypted_features.set_next_index(next_index + 1);
                     }
-
-                    if (inequalityHolds) {
-                        equalsFound = true;
-                        encrypted_features.set_next_index(next_index);
-                        System.out.println("New index: " + encrypted_features.get_next_index());
-                    }
+                    logger.debug("New index: {}", encrypted_features.get_next_index());
                 }
                 n++;
                 next_index++;
@@ -133,35 +144,66 @@ public class shared {
         boolean answer;
 
         BigIntegers encrypted_values = encrypted_features.get_thresholds(ld.variable_name);
+        if (encrypted_values == null) {
+            throw new RuntimeException(String.format("Seems like the feature %s is not known", ld.variable_name));
+        }
+        else {
+            logger.debug("Parsing the Attribute: {}", ld.variable_name);
+        }
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
+        logger.info(String.format("Using comparison type %d", comparisonType));
 
-        // Encrypt the thresh-hold correctly
-        if ((comparisonType == 1) || (comparisonType == 2) || (comparisonType == 4)) {
+        // Encrypt the thresh-hold correct
+        // Note only types 1, 3, 4, 6 have been known to exist
+        if ((comparisonType == 2) || (comparisonType == 5)) {
             encrypted_thresh = ld.getPaillier();
-            encrypted_client_value = encrypted_values.getIntegerValuePaillier();
+            encrypted_client_value = encrypted_values.integerValuePaillier();
             Niu.writeInt(0);
             Niu.setDGKMode(false);
         }
-        else if ((comparisonType == 3) || (comparisonType == 5)) {
+        else if ((comparisonType == 3) || (comparisonType == 4)) {
             encrypted_thresh = ld.getDGK();
-            encrypted_client_value = encrypted_values.getIntegerValueDGK();
+            encrypted_client_value = encrypted_values.integerValueDGK();
             Niu.writeInt(1);
             Niu.setDGKMode(true);
         }
+        else if (comparisonType == 1 || comparisonType == 6) {
+            encrypted_thresh = ld.getDGK();
+            encrypted_client_value = encrypted_values.integerValueDGK();
+            Niu.writeInt(2);
+            Niu.setDGKMode(true);
+        }
+
         assert encrypted_client_value != null;
         long start_time = System.nanoTime();
-        if ((comparisonType == 1) && (ld.threshold == 0) ||
-                (comparisonType == 4) || (comparisonType == 5)) {
+        if (comparisonType == 1) {
+            logger.info("Using encrypted equals check");
+            answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
+        }
+        else if (comparisonType == 6) {
+            // Also factors in type 6, just need it to the negated result
+            logger.info("Using encrypted inequality check");
+            answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
+            answer = !answer;
+        }
+        // only seen type 4 in the wild
+        else if ((comparisonType == 4) || (comparisonType == 5)) {
+            // Remember, X >= Y is the same as Y <= X
+            // encrypted_thresh >= client_value
+            // client_value <= encrypted_thresh
             answer = Niu.Protocol2(encrypted_thresh, encrypted_client_value);
         }
+        // only seen type 3 in the wild
         else {
+            // client_value >= encrypted_thresh
+            // encrypted_thresh <= client_value
             answer = Niu.Protocol2(encrypted_client_value, encrypted_thresh);
         }
         long stop_time = System.nanoTime();
         double run_time = (double) (stop_time - start_time);
         run_time = run_time / 1000000;
-        System.out.printf("Comparison took %f ms\n", run_time);
+        logger.info(String.format("Comparison took %f ms\n", run_time));
         return answer;
     }
 
@@ -189,6 +231,7 @@ public class shared {
                 weka.finito.structs.level_order_site.class,
                 weka.finito.structs.BigIntegers.class,
                 weka.finito.structs.features.class,
+                weka.finito.utils.LabelEncoder.class,
 
                 java.util.HashMap.class,
                 java.util.ArrayList.class,
@@ -203,5 +246,11 @@ public class shared {
         ois.accept("[B");
         ois.accept("[L*");
         return ois;
+    }
+
+    public static void closeConnection(ServerSocket server_socket) throws IOException {
+        if (server_socket != null) {
+            server_socket.close();
+        }
     }
 }

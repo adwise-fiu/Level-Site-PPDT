@@ -2,7 +2,7 @@
 #================================================================================
 #title           : setup.sh
 #description     : This script will install the software necessary to complete
-#		    Run the Kubernetes cluster for MPC-PPDT
+#		    Run the Kubernetes cluster for Level-Site-PPDT
 #			This is based on a script by John Ryan Allen for an Application Security Assignment
 #author		: Andrew Quijano (afq2003@nyu.edu)
 #date            : April 18, 2023

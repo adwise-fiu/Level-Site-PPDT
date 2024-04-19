@@ -3,6 +3,7 @@ import sys
 import os
 from configobj import ConfigObj
 
+
 def deep_key_update(dict_to_update: dict, key_path: list, value) -> dict:
     key = key_path.pop(0)
     if len(key_path) == 0:
@@ -13,9 +14,8 @@ def deep_key_update(dict_to_update: dict, key_path: list, value) -> dict:
 
 
 template_yaml_directory = 'template_yaml'
-k8_directory = '.'
 k8_client = os.path.join('k8', 'client')
-k8_server = os.path.join('k8', 'server_site')
+k8_server = os.path.join('k8', 'server')
 k8_level_site = os.path.join('k8', 'level_sites')
 
 level_sites = int(sys.argv[1])
@@ -36,7 +36,7 @@ for level in range(1, level_sites):
     all_level_site_domains.append(level_site)
     port_number = 9000 + level - 1
     ports.append(str(port_number))
-all_domains_env = {'name': 'LEVEL_SITE_DOMAINS', 'value': ','.join(all_level_site_domains) }
+all_domains_env = {'name': 'LEVEL_SITE_DOMAINS', 'value': ','.join(all_level_site_domains)}
 
 # Update all values for service - LEVEL-SITE
 for level in range(1, level_sites):
@@ -46,7 +46,7 @@ for level in range(1, level_sites):
 
     # Create new file
     current_level_site_service_file = f"level_site_{level:02}_service.yaml"
-    with open(os.path.join(k8_directory, current_level_site_service_file), 'w') as fd:
+    with open(os.path.join(k8_level_site, current_level_site_service_file), 'w') as fd:
         yaml.dump(level_site_service, fd)
 
 # Update all values for deployment - LEVEL-SITE
@@ -61,29 +61,31 @@ for level in range(1, level_sites):
                     current_level_site_deploy_name)
 
     # Create a new file
-    current_level_site_deploy_file = f"level_site_{level:02}_deploy.yaml"
-    with open(os.path.join(k8_directory, current_level_site_deploy_file), 'w') as fd:
+    current_level_site_deploy_file = f"level_site_{level:02}_deployment.yaml"
+    with open(os.path.join(k8_level_site, current_level_site_deploy_file), 'w') as fd:
         yaml.dump(level_site_deployment, fd)
 
 # -------------------------------Update Client Template--------------------------------------------
 with open(os.path.join(template_yaml_directory, 'client_deployment_template.yaml'), 'r') as fd:
     client_site_deployment = yaml.safe_load(fd)
 
+# Remember, you are OVERWRITING THE 'LEVEL_SITE_DOMAINS' entry, which is at index 5 on the template
 deep_key_update(client_site_deployment, ['spec', 'template', 'spec', 'containers', 0, 'env', 5],
                 all_domains_env)
 
-with open(os.path.join(k8_directory, 'client_deployment.yaml'), 'w') as fd:
+with open(os.path.join(k8_client, 'client_deployment.yaml'), 'w') as fd:
     yaml.dump(client_site_deployment, fd)
 
 # -------------------------------Update Server Template-------------------------------------------
-with open(os.path.join(template_yaml_directory, 'server_site_deployment_template.yaml'), 'r') as fd:
-    server_site_deployment = yaml.safe_load(fd)
+with open(os.path.join(template_yaml_directory, 'server_deployment_template.yaml'), 'r') as fd:
+    server_deployment = yaml.safe_load(fd)
 
-deep_key_update(server_site_deployment, ['spec', 'template', 'spec', 'containers', 0, 'env', 3],
+# Remember, you are OVERWRITING THE 'LEVEL_SITE_DOMAINS' entry, which is at index 3 on the template
+deep_key_update(server_deployment, ['spec', 'template', 'spec', 'containers', 0, 'env', 3],
                 all_domains_env)
 
-with open(os.path.join(k8_directory, 'server_site_deployment.yaml'), 'w') as fd:
-    yaml.dump(client_site_deployment, fd)
+with open(os.path.join(k8_server, 'server_deployment.yaml'), 'w') as fd:
+    yaml.dump(server_deployment, fd)
 
 # -------------------------------Might as well Update Properties File-----------------------------
 config = ConfigObj("config.properties")

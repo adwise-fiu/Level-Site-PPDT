@@ -11,11 +11,13 @@ import java.io.IOException;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
-import static weka.finito.utils.shared.setup_tls;
+import static weka.finito.utils.shared.*;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public final class PrivacyTest {
-
+	private static final Logger logger = LogManager.getLogger(PrivacyTest.class);
 	private String [] level_site_ports_string;
 	private String [] level_site_ips;
 	private int levels;
@@ -24,15 +26,14 @@ public final class PrivacyTest {
 	private String data_directory;
 	private int server_port;
 	private String server_ip;
-	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub", "classes.txt"};
+	private final static String [] delete_files = {"dgk", "dgk.pub", "paillier", "paillier.pub", "label_encoder.bin"};
 	@Before
 	public void read_properties() throws IOException {
-
 		setup_tls();
 
 		// Arguments:
-		System.out.println("Running Full Local Test...");
-		System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		logger.info("Running Full Local Test...");
+        logger.info("Working Directory = {}", System.getProperty("user.dir"));
 
 		Properties config = new Properties();
 		try (FileReader in = new FileReader("config.properties")) {
@@ -51,29 +52,6 @@ public final class PrivacyTest {
 		server_port = Integer.parseInt(config.getProperty("server-port"));
 	}
 
-	@Test
-	public void test_single_site() throws Exception {
-		String answer_path = new File(data_directory, "answers.csv").toString();
-		// Parse CSV file with various tests
-		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				String [] values = line.split(",");
-				String data_set = values[0];
-				String features = values[1];
-				String expected_classification = values[2];
-				String full_feature_path = new File(data_directory, features).toString();
-				String full_data_set_path = new File(data_directory, data_set).toString();
-				System.out.println(full_data_set_path);
-				System.out.println("Features Vector: " + full_feature_path);
-				String classification = test_server_case(full_data_set_path, full_feature_path, key_size, precision,
-						 server_ip, server_port);
-				System.out.println(expected_classification + " =!= " + classification);
-				assertEquals(expected_classification, classification);
-			}
-		}
-	}
-
 	public static String test_server_case(String training_data, String features_file,
 										int key_size, int precision, String server_ip, int server_port)
 			throws InterruptedException {
@@ -84,7 +62,7 @@ public final class PrivacyTest {
 		server.start();
 
 		// Create client
-		client evaluate = new client(key_size, features_file, precision, server_ip, server_port);
+		client evaluate = new client(key_size, features_file, precision, server_ip, server_port, "127.0.0.1");
 		Thread client = new Thread(evaluate);
 		client.start();
 
@@ -103,24 +81,48 @@ public final class PrivacyTest {
 	@Test
 	public void test_all_level_sites() throws Exception {
 		String answer_path = new File(data_directory, "answers.csv").toString();
+		run_test(answer_path, true);
+	}
+
+	public void run_test(String answer_path, boolean use_level_sites) throws Exception {
 		// Parse CSV file with various tests
 		try (BufferedReader br = new BufferedReader(new FileReader(answer_path))) {
-		    String line;
-		    while ((line = br.readLine()) != null) {
-		        String [] values = line.split(",");
-		        String data_set = values[0];
-		        String features = values[1];
-		        String expected_classification = values[2];
+			String line;
+			String classification;
+			while ((line = br.readLine()) != null) {
+				String [] values = line.split(",");
+				String data_set = values[0];
+				String features = values[1];
+				String expected_classification = values[2];
 				String full_feature_path = new File(data_directory, features).toString();
 				String full_data_set_path = new File(data_directory, data_set).toString();
-				System.out.println(full_data_set_path);
-				System.out.println("Feature Vector Path: " + full_feature_path);
-				String classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
-		        		level_site_ips, level_site_ports_string, server_ip, server_port);
-				System.out.println(expected_classification + " =!= " + classification);
+				logger.info(full_data_set_path);
+                logger.info("Feature Vector Path: {}", full_feature_path);
+				if (use_level_sites) {
+					classification = test_level_site(full_data_set_path, full_feature_path, levels, key_size, precision,
+							level_site_ips, level_site_ports_string, server_ip, server_port);
+				}
+				else {
+					classification = test_server_case(full_data_set_path, full_feature_path, key_size, precision,
+							server_ip, server_port);
+				}
+
+                logger.info("{} =!= {}", expected_classification, classification);
 				assertEquals(expected_classification, classification);
-		    }
+			}
 		}
+	}
+
+	@Test
+	public void test_single_site() throws Exception {
+		String answer_path;
+
+		answer_path = new File(data_directory, "answers.csv").toString();
+		run_test(answer_path, false);
+		
+		// Because of the depth of these trees from Liu et al. we will use a test and not for level-site
+		answer_path = new File(data_directory, "answers_liu.csv").toString();
+		run_test(answer_path, false);
 	}
 
 	public static String test_level_site(String training_data, String features_file, int levels,
@@ -146,7 +148,7 @@ public final class PrivacyTest {
 
 		// Create client
     	client evaluate = new client(key_size, features_file, level_site_ips, level_site_ports, precision,
-				server_ip, server_port);
+				server_ip, server_port, "127.0.0.1");
     	Thread client = new Thread(evaluate);
 		client.start();
 
@@ -169,9 +171,9 @@ public final class PrivacyTest {
 	public static void delete_file(String file_name){
 		File myObj = new File(file_name);
 		if (myObj.delete()) {
-			System.out.println("Deleted the file: " + myObj.getName());
+            logger.info("Deleted the file: {}", myObj.getName());
 		} else {
-			System.out.println("Failed to delete the file: " + myObj.getName());
+            logger.info("Failed to delete the file: {}", myObj.getName());
 		}
 	}
 }
