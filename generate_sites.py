@@ -15,7 +15,7 @@ def deep_key_update(dict_to_update: dict, key_path: list, value) -> dict:
 
 template_yaml_directory = 'template_yaml'
 k8_client = os.path.join('k8', 'client')
-k8_server = os.path.join('k8', 'server_site')
+k8_server = os.path.join('k8', 'server')
 k8_level_site = os.path.join('k8', 'level_sites')
 
 level_sites = int(sys.argv[1])
@@ -61,7 +61,7 @@ for level in range(1, level_sites):
                     current_level_site_deploy_name)
 
     # Create a new file
-    current_level_site_deploy_file = f"level_site_{level:02}_deploy.yaml"
+    current_level_site_deploy_file = f"level_site_{level:02}_deployment.yaml"
     with open(os.path.join(k8_level_site, current_level_site_deploy_file), 'w') as fd:
         yaml.dump(level_site_deployment, fd)
 
@@ -82,7 +82,7 @@ with open(os.path.join(template_yaml_directory, 'server_site_deployment_template
 deep_key_update(server_site_deployment, ['spec', 'template', 'spec', 'containers', 0, 'env', 3],
                 all_domains_env)
 
-with open(os.path.join(k8_server, 'server_site_deployment.yaml'), 'w') as fd:
+with open(os.path.join(k8_server, 'server_deployment.yaml'), 'w') as fd:
     yaml.dump(client_site_deployment, fd)
 
 # -------------------------------Might as well Update Properties File-----------------------------
