@@ -134,7 +134,7 @@ kubectl apply -f ppdt-sealedsecret.yaml
 Alternatively, you can create a new sealed secret as follows:
 ```bash
 kubectl create secret generic ppdt-secrets --from-literal=keystore-pass=<SECRET_VALUE>
-kubectl get secret ppdt-secrets -o yaml | kubeseal > ppdt-sealedsecret.yaml
+kubectl get secret ppdt-secrets -o yaml | kubeseal --scope cluster-wide > ppdt-sealedsecret.yaml
 ```
 However, if you make a new sealed secret, you should re-make the keystore as well.
 
