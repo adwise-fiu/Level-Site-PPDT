@@ -4,6 +4,7 @@ metadata:
   name: ppdt-level-site-01-deploy
   labels:
     app: ppdt-level-site-01-deploy
+    role: level-site
 spec:
   replicas: 1
   selector:
@@ -16,7 +17,8 @@ spec:
     spec:
       containers:
         - name: ppdt-level-site-01-deploy
-          image: ppdt:experiment
+          image: andrewquijano92/ppdt
+          imagePullPolicy: Always
           ports:
             - containerPort: 9000
           env:
@@ -26,14 +28,11 @@ spec:
             - name: PORT_NUM
               value: "9000"
 
-            - name: PRECISION
-              value: "2"
+            - name: KEYSTORE
+              value: "keystore"
 
-            - name: TIME_METHODS
-              value: "true"
-
-            - name: AES_PASS
+            - name: PASSWORD
               valueFrom:
                 secretKeyRef:
-                    name: ppdt-secrets
-                    key: aes-key
+                  name: ppdt-secrets
+                  key: keystore-pass

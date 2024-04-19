@@ -4,7 +4,7 @@ metadata:
   name: ppdt-server-deploy
   labels:
     app: ppdt-server-deploy
-    role: client
+    role: server
 spec:
   replicas: 1
   selector:
