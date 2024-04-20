@@ -33,10 +33,10 @@ WORKDIR /code
 RUN keytool -import -alias ${ALIAS} -file ${CERTIFICATE} -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt
 
 # Set permissions
-# RUN useradd tree-user
-# RUN chown -R tree-user:tree-user /scripts/
-# RUN chown -R tree-user:tree-user /code/
-# USER tree-user
+RUN useradd tree-user
+RUN chown -R tree-user:tree-user /scripts/
+RUN chown -R tree-user:tree-user /code/
+USER tree-user
 
 # Define entrypoint
 CMD ["entrypoint.sh"]

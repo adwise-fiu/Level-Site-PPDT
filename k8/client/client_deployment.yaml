@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ppdt-client-deploy
   labels:
     app: ppdt-client-deploy
     role: client
+  name: ppdt-client-deploy
 spec:
   replicas: 1
   selector:
@@ -16,47 +16,36 @@ spec:
         pod: ppdt-client-deploy
     spec:
       containers:
-        - name: ppdt-client-deploy
-          image: andrewquijano92/ppdt
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 9000
-          env:
-            - name: CLIENT_HOSTNAME
-              value: "ppdt-client-service"
-
-            - name: TREE_ROLE
-              value: "CLIENT"
-
-            - name: PRECISION
-              value: "2"
-
-            - name: PORT_NUM
-              value: "9000"
-
-            - name: LEVEL_SITE_DOMAINS
-              value: "ppdt-level-site-01-service,ppdt-level-site-02-service,ppdt-level-site-03-service,ppdt-level-site-04-service,ppdt-level-site-05-service,ppdt-level-site-06-service,ppdt-level-site-07-service,ppdt-level-site-08-service,ppdt-level-site-09-service,ppdt-level-site-10-service"
-
-            - name: PPDT_KEY_SIZE
-              value: "2048"
-
-            - name: SERVER
-              value: "ppdt-server-service"
-
-            - name: GRADLE_USER_HOME
-              value: "gradle_user_home"
-
-            - name: KEYSTORE
-              value: "keystore"
-
-            - name: ALIAS
-              value: "appsec"
-
-            - name: CERTIFICATE
-              value: "ppdt-certificate"
-
-            - name: PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: ppdt-secrets
-                  key: keystore-pass
+      - env:
+        - name: CLIENT_HOSTNAME
+          value: ppdt-client-service
+        - name: TREE_ROLE
+          value: CLIENT
+        - name: PRECISION
+          value: '2'
+        - name: PORT_NUM
+          value: '9000'
+        - name: PPDT_KEY_SIZE
+          value: '2048'
+        - name: LEVEL_SITE_DOMAINS
+          value: ppdt-level-site-01-service,ppdt-level-site-02-service,ppdt-level-site-03-service,ppdt-level-site-04-service,ppdt-level-site-05-service,ppdt-level-site-06-service,ppdt-level-site-07-service,ppdt-level-site-08-service,ppdt-level-site-09-service,ppdt-level-site-10-service,ppdt-level-site-11-service,ppdt-level-site-12-service,ppdt-level-site-13-service,ppdt-level-site-14-service,ppdt-level-site-15-service,ppdt-level-site-16-service,ppdt-level-site-17-service,ppdt-level-site-18-service,ppdt-level-site-19-service,ppdt-level-site-20-service,ppdt-level-site-21-service,ppdt-level-site-22-service
+        - name: SERVER
+          value: ppdt-server-service
+        - name: GRADLE_USER_HOME
+          value: gradle_user_home
+        - name: KEYSTORE
+          value: keystore
+        - name: ALIAS
+          value: appsec
+        - name: CERTIFICATE
+          value: ppdt-certificate
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: keystore-pass
+              name: ppdt-secrets
+        image: andrewquijano92/ppdt
+        imagePullPolicy: Always
+        name: ppdt-client-deploy
+        ports:
+        - containerPort: 9000

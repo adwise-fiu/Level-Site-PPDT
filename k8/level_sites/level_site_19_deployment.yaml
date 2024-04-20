@@ -2,18 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ppdt-level-site-07-deploy
+    app: ppdt-level-site-19-deploy
     role: level-site
-  name: ppdt-level-site-07-deploy
+  name: ppdt-level-site-19-deploy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      pod: ppdt-level-site-07-deploy
+      pod: ppdt-level-site-19-deploy
   template:
     metadata:
       labels:
-        pod: ppdt-level-site-07-deploy
+        pod: ppdt-level-site-19-deploy
     spec:
       containers:
       - env:
@@ -30,6 +30,6 @@ spec:
               name: ppdt-secrets
         image: andrewquijano92/ppdt
         imagePullPolicy: Always
-        name: ppdt-level-site-07-deploy
+        name: ppdt-level-site-19-deploy
         ports:
         - containerPort: 9000
