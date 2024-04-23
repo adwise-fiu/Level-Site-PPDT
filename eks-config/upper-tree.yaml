@@ -4,13 +4,13 @@ kind: ClusterConfig
 metadata:
   name: upper-tree
   region: us-east-2
-  version: "1.28"
+  version: "1.29"
 
 availabilityZones: ["us-east-2a", "us-east-2b", "us-east-2c"]
 
 managedNodeGroups:
   - name: upper-nodes
     instanceType: t2.medium
-    minSize: 3
-    maxSize: 5
-    desiredCapacity: 3
+    minSize: 5
+    maxSize: 7
+    desiredCapacity: 5
