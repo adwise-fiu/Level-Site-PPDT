@@ -3,33 +3,17 @@ kind: ClusterConfig
 
 metadata:
   name: cluster1
-  region: us-east-1
+  region: us-east-2
   version: "1.28"
 
-vpc:
-  subnets:
-    public:
-      us-east-1a:
-        id: subnet-us-east-1a
-        cidr: "10.16.1.0/24"
-      us-east-1b:
-        id: subnet-us-east-1b
-        cidr: "10.16.2.0/24"
-      us-east-1c:
-        id: subnet-us-east-1c
-        cidr: "10.16.3.0/24"
-  clusterEndpoints:
-    publicAccess: true
-    privateAccess: true
+availabilityZones: ["us-east-2a", "us-east-2b", "us-east-2c"]
 
 managedNodeGroups:
-  - name: nodegroup1
+  - name: upper-tree
     instanceType: t2.medium
     minSize: 2
     maxSize: 5
     desiredCapacity: 2
-
-outputClusterName: true
 
 ---
 apiVersion: eksctl.io/v1alpha5
@@ -37,29 +21,14 @@ kind: ClusterConfig
 
 metadata:
   name: cluster2
-  region: us-east-1
+  region: us-east-2
   version: "1.28"
-vpc:
-  subnets:
-    public:
-      us-east-1a:
-        id: subnet-us-east-1a
-        cidr: "10.16.4.0/24"
-      us-east-1b:
-        id: subnet-us-east-1b
-        cidr: "10.16.5.0/24"
-      us-east-1c:
-        id: subnet-us-east-1c
-        cidr: "10.16.6.0/24"
-  clusterEndpoints:
-    publicAccess: true
-    privateAccess: true
+
+availabilityZones: ["us-east-2a", "us-east-2b", "us-east-2c"]
 
 managedNodeGroups:
-  - name: nodegroup2
+  - name: lower-tree
     instanceType: t2.medium
     minSize: 2
     maxSize: 5
     desiredCapacity: 2
-
-outputClusterName: true
