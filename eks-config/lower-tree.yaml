@@ -2,14 +2,14 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: cluster1
+  name: lower-tree
   region: us-east-2
   version: "1.28"
 
 availabilityZones: ["us-east-2a", "us-east-2b", "us-east-2c"]
 
 managedNodeGroups:
-  - name: upper-tree
+  - name: lower-nodes
     instanceType: t2.medium
     minSize: 2
     maxSize: 5
