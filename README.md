@@ -116,12 +116,12 @@ eksctl create cluster --config-file eks-config/single-cluster.yaml
 
 - Confirm the EKS cluster exists using the following
 ```bash
-eksctl get clusters --region us-east-2
+eksctl get clusters --region us-east-1
 ```
 
 - Once you confirm the cluster is created, you need to register the cluster with kubectl:
 ```bash
-aws eks update-kubeconfig --name ppdt --region us-east-2
+aws eks update-kubeconfig --name ppdt --region us-east-1
 ```
 
 ### Using/Creating a Kubernetes Sealed Secret
