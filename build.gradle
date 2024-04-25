@@ -17,13 +17,13 @@ java {
 }
 
 dependencies {
-    implementation 'junit:junit:4.13.1'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation 'junit:junit:4.13.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
 
     // https://mvnrepository.com/artifact/commons-io/commons-io
-    implementation 'commons-io:commons-io:2.14.0'
-    implementation 'org.apache.logging.log4j:log4j-core:2.19.0'
+    implementation 'commons-io:commons-io:2.16.1'
+    implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta1'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
@@ -53,16 +53,27 @@ tasks.withType(JavaCompile).configureEach {
 
 jacocoTestReport {
     reports {
-        // By default do NOT create reports
-        if (project.hasProperty("coverage")) {
-            xml.required=true
-            html.required=true
+        if (project.hasProperty("createReports")) {
+            xml.required = true
+            html.required = true
         }
         else {
-            xml.required=false
-            html.required=false
+            html.required = false
+            xml.required = false
         }
     }
+}
+
+tasks.withType(Test).configureEach {
+    if (project.hasProperty("createReports")) {
+        reports.html.required = true
+        reports.junitXml.required = true
+    }
+    else {
+        reports.html.required = false
+        reports.junitXml.required = false
+    }
+
 }
 
 clean {

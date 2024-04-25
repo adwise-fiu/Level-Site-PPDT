@@ -27,7 +27,7 @@ jobs:
         cache: 'gradle'
 
     - name: Run Gradle Testing and Create Coverage Report
-      run: sh gradlew build -Pcoverage=true
+      run: sh gradlew build -PcreateReports
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
