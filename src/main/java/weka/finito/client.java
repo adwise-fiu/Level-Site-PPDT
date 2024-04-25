@@ -343,7 +343,7 @@ public final class client implements Runnable {
 		long stop_time = System.nanoTime();
 		double run_time = (double) (stop_time - start_time);
 		run_time = run_time / 1000000;
-		logger.info(String.format("Total Client run-time took %f ms for this level-site %d\n", run_time, level));
+		logger.info(String.format("Total Client run-time took %f ms for the level-site %d\n", run_time, level));
 
 		// Get boolean from level-site:
 		// true - get leaf value
@@ -442,9 +442,10 @@ public final class client implements Runnable {
 
 				// For every other level, the level-site will reach out to you
 				while(!classification_complete) {
-                    logger.info("Completed evaluation with level {}", level);
+					logger.info("[Client] Client is now waiting for next level-site");
 					++level;
 					Socket level_site = level_site_listener.accept();
+					logger.info("[Client] Level-site just got features and just connected back for encrypted integer comparison");
 					evaluate_with_level_site(level_site, level);
 				}
 			}
