@@ -421,7 +421,6 @@ public final class client implements Runnable {
 				feature.set_client_port(connection_port);
 			}
 			feature.set_client_ip(client_ip);
-			;
 
 			int level = 0;
 			try(ServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
