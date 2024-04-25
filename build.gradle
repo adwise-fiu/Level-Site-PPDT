@@ -47,11 +47,21 @@ gradle.projectsEvaluated {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.fork = true
+}
 
 jacocoTestReport {
     reports {
-        xml.required=true
-        html.required=true
+        // By default do NOT create reports
+        if (project.hasProperty("coverage")) {
+            xml.required=true
+            html.required=true
+        }
+        else {
+            xml.required=false
+            html.required=false
+        }
     }
 }
 

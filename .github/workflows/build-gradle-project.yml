@@ -26,8 +26,8 @@ jobs:
         java-version: '17'
         cache: 'gradle'
 
-    - name: Run Gradle Testing
-      run: sh gradlew build
+    - name: Run Gradle Testing and Create Coverage Report
+      run: sh gradlew build -Pcoverage=true
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
