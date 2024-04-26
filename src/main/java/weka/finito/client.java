@@ -448,6 +448,7 @@ public final class client implements Runnable {
 					Socket level_site = level_site_listener.accept();
 					long end_wait = System.nanoTime();
 					double wait_time = (double) (end_wait - start_wait);
+					wait_time = wait_time/1000000;
 					logger.info(String.format("[Client] Next Level-site just got features and just connected back for encrypted integer comparison in %f ms", wait_time));
 					evaluate_with_level_site(level_site, level);
 				}
