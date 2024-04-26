@@ -442,10 +442,13 @@ public final class client implements Runnable {
 
 				// For every other level, the level-site will reach out to you
 				while(!classification_complete) {
+					long start_wait = System.nanoTime();
 					logger.info("[Client] Client is now waiting for next level-site");
 					++level;
 					Socket level_site = level_site_listener.accept();
-					logger.info("[Client] Level-site just got features and just connected back for encrypted integer comparison");
+					long end_wait = System.nanoTime();
+					double wait_time = (double) (end_wait - start_wait);
+					logger.info(String.format("[Client] Next Level-site just got features and just connected back for encrypted integer comparison in %f ms", wait_time));
 					evaluate_with_level_site(level_site, level);
 				}
 			}
