@@ -8,10 +8,7 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 
 
 public class depth_analysis {
@@ -37,7 +34,6 @@ public class depth_analysis {
             Attribute x = null;
             for (int i = 0; i < feature.numAttributes(); i++) {
                 Attribute attr = feature.attribute(i);
-                System.out.println(attr.name());
                 if (attr.name().equals(attribute_name)) {
                     value = feature.value(i);
                     x = attr;
@@ -95,7 +91,7 @@ public class depth_analysis {
     public static void main(String [] args) throws Exception {
 
         // check input folder for .model and .arff
-        String data_set = "hypothyroid";
+        String data_set = "spambase";
         String model_file = new File("data",  data_set + ".model").toString();
         String arff_file = new File("data",  data_set + ".arff").toString();
 
@@ -115,57 +111,18 @@ public class depth_analysis {
             data.setClassIndex(data.numAttributes() - 1);
         }
 
-        for (int i = 0; i < tree.getSons().length; i++) {
-            System.out.println("Son: " + i);
-            System.out.println("Son: " + tree.getSons()[i]);
-            String attribute_name = tree.getLocalModel().leftSide(tree.getTrainingData()).strip();
-            String rightSide = tree.getLocalModel().rightSide(i, tree.getTrainingData()).strip();
-            System.out.println("Left side: " + attribute_name);
-            System.out.println("Right side: " + rightSide);
-        }
+        try (FileWriter fileWriter = new FileWriter(data_set + ".csv", true);
+             PrintWriter printWriter = new PrintWriter(fileWriter)) {
 
-        System.out.println("-----------------------------------------");
-
-        // Find one grand-son
-        ClassifierTree son = tree.getSons()[1];
-        for (int i = 0; i < son.getSons().length; i++) {
-            System.out.println("GrandSon: " + i);
-            System.out.println("GrandSon: " + son.getSons()[i]);
-            String attribute_name = son.getLocalModel().leftSide(tree.getTrainingData()).strip();
-            String rightSide = son.getLocalModel().rightSide(i, tree.getTrainingData()).strip();
-            System.out.println("Left side: " + attribute_name);
-            System.out.println("Right side: " + rightSide);
-        }
-
-
-        /*
-        for (int i = 0; i < tree.getSons().length; i++) {
-            for (int j = 0; j < tree.getSons()[i].getSons().length; j++) {
-                System.out.println("Son: " + i + " Grandson: " + j);
-                String attribute_name = tree.getSons()[i].getLocalModel().leftSide(tree.getTrainingData()).strip();
-                String rightSide = tree.getSons()[i].getLocalModel().rightSide(j, tree.getTrainingData()).strip();
-                System.out.println("Left side: " + attribute_name);
-                System.out.println("Right side: " + rightSide);
-            }
-        }
-        */
-
-        // Loop through each instance
-        for (Instance instance : data) {
-            //System.out.println("Instance: " + instance.toString());
-            //System.out.println("Instance: " + instance.attribute(0).name());
-            // Do something with the instance
-
-            try {
+            // Loop through each instance
+            for (Instance instance : data) {
                 String classification = getLeaf(tree, instance);
-                System.out.println("Classification: " + classification);
-                System.out.println("Depth: " + getDepth(tree, classification, 0));
-            } catch (Exception e) {
-                System.out.println("WTF");
-                e.printStackTrace();
+                int depth = getDepth(tree, classification, 0);
+                printWriter.println(classification + "," + depth);
             }
-        }
 
-        //getLeaf(tree);
+        } catch (IOException e) {
+            logger.fatal(e.getStackTrace());
+        }
     }
 }

@@ -2,6 +2,7 @@
 logs
 .env
 .vscode
+*.csv
 
 # No Binaries
 bin
