@@ -89,6 +89,17 @@ When the testing is done, you will have an output directory containing both the 
 your tree. Input the contents of the text file into the website [here](https://dreampuf.github.io/GraphvizOnline/) to get a
 drawing of what the DT looks like.
 
+If you want to analyze the level of each classification in a pre-trained decision tree from the `data` folder, 
+run the following (where argument is the name of the dataset):
+```bash
+./gradlew run -PchooseRole=weka.finito.utils.depth_analysis --args spambase
+```
+This will read the DT in `data/spambase.model` which was trained from the data set `data/spambase.arff`. 
+It will classify all the data in the training set,
+and get the level (1, ..., d) of the classification within the DT model. 
+In the paper, I used this to argue that assuming most training data is like testing data,
+you likely will never need to go down the whole tree often.
+
 ## Running PPDT on Kubernetes clusters
 To make it easier for deploying on the cloud, we also provided a method to export our system into Kubernetes.
 This would assume one execution rather than multiple executions.

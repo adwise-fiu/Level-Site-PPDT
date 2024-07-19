@@ -91,7 +91,7 @@ public class depth_analysis {
     public static void main(String [] args) throws Exception {
 
         // check input folder for .model and .arff
-        String data_set = "spambase";
+        String data_set = args[0];
         String model_file = new File("data",  data_set + ".model").toString();
         String arff_file = new File("data",  data_set + ".arff").toString();
 
@@ -102,7 +102,8 @@ public class depth_analysis {
         try (BufferedReader reader = new BufferedReader(new FileReader(arff_file))) {
             data = new Instances(reader);
         } catch (IOException e2) {
-            logger.error(e2.getStackTrace());
+            logger.fatal("The Training data set was NOT found or not readable at: {}", arff_file);
+            logger.fatal(e2.getStackTrace());
         }
 
         // If the data has a class attribute, set it
@@ -117,11 +118,12 @@ public class depth_analysis {
             // Loop through each instance
             for (Instance instance : data) {
                 String classification = getLeaf(tree, instance);
-                int depth = getDepth(tree, classification, 0);
+                int depth = getDepth(tree, classification, 1);
                 printWriter.println(classification + "," + depth);
             }
 
         } catch (IOException e) {
+            logger.fatal("Unable to write to CSV file");
             logger.fatal(e.getStackTrace());
         }
     }
