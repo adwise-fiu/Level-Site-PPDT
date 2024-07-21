@@ -23,6 +23,8 @@ dependencies {
 
     // https://mvnrepository.com/artifact/commons-io/commons-io
     implementation 'commons-io:commons-io:2.16.1'
+    // https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable
+    implementation 'nz.ac.waikato.cms.weka:weka-dev:3.9.6'
     implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta1'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
