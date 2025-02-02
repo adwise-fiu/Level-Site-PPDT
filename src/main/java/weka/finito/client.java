@@ -213,7 +213,7 @@ public final class client implements Runnable {
 	// Used for set-up
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
-        logger.info("Connecting to {}:{} for set-up", server_ip, server_port);
+        logger.info("Connecting to {}:{} for set-up (MFS)", server_ip, server_port);
 		try (Socket server_site = createSocket(server_ip, server_port)) {
 			ObjectOutputStream to_server_site = new ObjectOutputStream(server_site.getOutputStream());
 			ValidatingObjectInputStream from_server_site = get_ois(server_site);
