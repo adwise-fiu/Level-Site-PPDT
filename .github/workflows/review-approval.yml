@@ -1,0 +1,14 @@
+name: Review Approval
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  approve-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check if review is approved
+      if: github.event.review.state == 'approved'
+      run: echo "Review approved"

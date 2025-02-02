@@ -1,8 +1,20 @@
 Docker:
   - Dockerfile
 
+external-pr:
+  - 'pull_request_target'
+
 Kubernetes:
   - 'k8s/**'
+  - 'templates_yamls/**'
+  - 'eks-config/**'
+
+Gradle:
+  - 'gradle/**'
+  - 'gradlew'
+  - 'gradlew.bat'
+  - 'settings.gradle'
+  - 'gradle.properties'
 
 Documentation:
   - '**/*.md'
