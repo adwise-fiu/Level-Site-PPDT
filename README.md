@@ -89,6 +89,17 @@ When the testing is done, you will have an output directory containing both the 
 your tree. Input the contents of the text file into the website [here](https://dreampuf.github.io/GraphvizOnline/) to get a
 drawing of what the DT looks like.
 
+If you want to analyze the level of each classification in a pre-trained decision tree from the `data` folder, 
+run the following (where argument is the name of the dataset):
+```bash
+./gradlew run -PchooseRole=weka.finito.utils.depth_analysis --args spambase
+```
+This will read the DT in `data/spambase.model` which was trained from the data set `data/spambase.arff`. 
+It will classify all the data in the training set,
+and get the level (1, ..., d) of the classification within the DT model. 
+In the paper, I used this to argue that assuming most training data is like testing data,
+you likely will never need to go down the whole tree often.
+
 ## Running PPDT on Kubernetes clusters
 To make it easier for deploying on the cloud, we also provided a method to export our system into Kubernetes.
 This would assume one execution rather than multiple executions.
@@ -116,12 +127,12 @@ eksctl create cluster --config-file eks-config/single-cluster.yaml
 
 - Confirm the EKS cluster exists using the following
 ```bash
-eksctl get clusters --region us-east-2
+eksctl get clusters --region us-east-1
 ```
 
 - Once you confirm the cluster is created, you need to register the cluster with kubectl:
 ```bash
-aws eks update-kubeconfig --name ppdt --region us-east-2
+aws eks update-kubeconfig --name ppdt --region us-east-1
 ```
 
 ### Using/Creating a Kubernetes Sealed Secret
@@ -136,7 +147,7 @@ Alternatively, you can create a new sealed secret as follows:
 kubectl create secret generic ppdt-secrets --from-literal=keystore-pass=<SECRET_VALUE>
 kubectl get secret ppdt-secrets -o yaml | kubeseal --scope cluster-wide > ppdt-sealedsecret.yaml
 ```
-However, if you make a new sealed secret, you should re-make the keystore as well.
+However, if you make a new sealed secret, you should re-make the keystore as well. Just remember, sealed secrets do not work in multiple clusters by default, as a heads-up.
 
 ### Running Kubernetes Commands
 The next step is to start deploying all the components running the following:
@@ -229,6 +240,10 @@ Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
 
 ## Project status
 The project is fully tested. 
-Not sure why the encryption library seems to have a bug in comparisons, 
-and TLS Sockets do not work on EKS, but I will fix this eventually.
-Also, I should probably look into a nicer way to make arbitrary YAML files for level-sites.
+
+## Current Issues
+1. Not sure why the encryption library seems to have a bug in some specific comparisons in spambase and hypothyroid. I will debug these soon, but overall this works like a charm.
+2. TLS Sockets do not work on EKS, but I will fix this eventually. It works on all connections except once level-site 1 reaches out to the client for evaluation.
+3. Much bigger issue, so the first few runs of this application on EKS, the comparisons are pretty fast, like it takes about 0.5 seconds. But after like 10+ comparisons, the comparison performance just drops off a cliff to like 1 second. 
+The only way I see to restore the same level of performance is to rebuild the EKS cluster. I have NO idea why this performance drop occurs, and I have tried deleting and rebuilding the pods, and even restarting the EC2 instances.
+

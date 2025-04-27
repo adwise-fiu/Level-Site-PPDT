@@ -45,7 +45,7 @@ if [[ $(id) != *\(docker\)* ]]; then
 	echo '[*] Configuring Docker...'
 	echo '##################################################'
 	sleep 3
-	sudo usermod -aG docker $USER
+	sudo usermod -aG docker "$USER"
 
 	echo '#####################################################################'
 	echo '[*] Almost there! Reboot and run this script one more time to finish.'

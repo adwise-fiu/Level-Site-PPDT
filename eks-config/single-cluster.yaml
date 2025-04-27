@@ -3,8 +3,8 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
   name: ppdt
-  region: us-east-2
-  version: "1.28"
+  region: us-east-1
+  version: "1.29"
 
 # Node Groups show up on AWS console
 # Label is necessary so I can target where the pods go with kubectl apply

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ppdt-level-site-21-deploy
+    role: level-site
+  name: ppdt-level-site-21-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: ppdt-level-site-21-deploy
+  template:
+    metadata:
+      labels:
+        pod: ppdt-level-site-21-deploy
+    spec:
+      containers:
+      - env:
+        - name: TREE_ROLE
+          value: LEVEL_SITE
+        - name: PORT_NUM
+          value: '9000'
+        - name: KEYSTORE
+          value: keystore
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: keystore-pass
+              name: ppdt-secrets
+        image: andrewquijano92/ppdt
+        imagePullPolicy: Always
+        name: ppdt-level-site-21-deploy
+        ports:
+        - containerPort: 9000

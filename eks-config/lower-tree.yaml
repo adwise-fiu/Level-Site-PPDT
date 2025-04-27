@@ -1,0 +1,34 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: lower-tree
+  region: us-east-2
+  version: "1.29"
+
+availabilityZones: ["us-east-2a", "us-east-2b", "us-east-2c"]
+
+managedNodeGroups:
+  - name: lower-nodes
+    instanceType: t2.medium
+    minSize: 5
+    maxSize: 7
+    desiredCapacity: 5
+
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: cluster2
+  region: us-east-2
+  version: "1.28"
+
+availabilityZones: ["us-east-2a", "us-east-2b", "us-east-2c"]
+
+managedNodeGroups:
+  - name: lower-tree
+    instanceType: t2.medium
+    minSize: 2
+    maxSize: 5
+    desiredCapacity: 2

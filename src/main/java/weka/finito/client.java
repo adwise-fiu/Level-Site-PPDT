@@ -292,6 +292,7 @@ public final class client implements Runnable {
 	private void evaluate_with_level_site(Socket level_site, int level)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
+		long start_time = System.nanoTime();
 		Object o;
 		bob_joye client;
 		ObjectInputStream from_level_site = null;
@@ -339,17 +340,27 @@ public final class client implements Runnable {
 				client.encrypted_equals();
 			}
 		}
+		long stop_time = System.nanoTime();
+		double run_time = (double) (stop_time - start_time);
+		run_time = run_time / 1000000;
+		logger.info(String.format("Total Client run-time took %f ms for the level-site %d\n", run_time, level));
 
 		// Get boolean from level-site:
 		// true - get leaf value
 		// false - get encrypted AES index for next round
 		classification_complete = client.readBoolean();
 		if (classification_complete) {
+			start_time = System.nanoTime();
+			logger.info("Classification complete!");
 			o = client.readObject();
 			if (o instanceof String) {
 				classification = (String) o;
 				BigInteger temp = PaillierCipher.decrypt(new BigInteger(classification), paillier_private_key);
 				classification = new String(temp.toByteArray(), StandardCharsets.UTF_8);
+				stop_time = System.nanoTime();
+				run_time = (double) (stop_time - start_time);
+				run_time = run_time / 1000000;
+				logger.info(String.format("Client took %f ms to decrypt a %d bit leaf\n", run_time, temp.bitLength()));
 			}
 		}
 	}
@@ -421,7 +432,6 @@ public final class client implements Runnable {
 				feature.set_client_port(connection_port);
 			}
 			feature.set_client_ip(client_ip);
-			;
 
 			int level = 0;
 			try(ServerSocket level_site_listener = createServerSocket(feature.get_client_port())) {
@@ -432,9 +442,14 @@ public final class client implements Runnable {
 
 				// For every other level, the level-site will reach out to you
 				while(!classification_complete) {
-                    logger.info("Completed evaluation with level {}", level);
+					long start_wait = System.nanoTime();
+					logger.info("[Client] Client is now waiting for next level-site");
 					++level;
 					Socket level_site = level_site_listener.accept();
+					long end_wait = System.nanoTime();
+					double wait_time = (double) (end_wait - start_wait);
+					wait_time = wait_time/1000000;
+					logger.info(String.format("[Client] Next Level-site just got features and just connected back for encrypted integer comparison in %f ms", wait_time));
 					evaluate_with_level_site(level_site, level);
 				}
 			}
