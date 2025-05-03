@@ -1,4 +1,4 @@
-package weka.finito.utils;
+package edu.fiu.adwise.weka.finito.utils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -89,8 +89,7 @@ public class depth_analysis {
 
 
     public static void main(String [] args) throws Exception {
-
-        // check input folder for .model and .arff
+        // check the input folder for .model and .arff
         String data_set = args[0];
         String model_file = new File("data",  data_set + ".model").toString();
         String arff_file = new File("data",  data_set + ".arff").toString();

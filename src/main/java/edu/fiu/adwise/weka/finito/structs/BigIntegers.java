@@ -1,4 +1,4 @@
-package weka.finito.structs;
+package edu.fiu.adwise.weka.finito.structs;
 
 import java.io.Serial;
 import java.io.Serializable;

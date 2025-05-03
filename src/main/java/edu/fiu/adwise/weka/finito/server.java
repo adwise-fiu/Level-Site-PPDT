@@ -1,4 +1,4 @@
-package weka.finito;
+package edu.fiu.adwise.weka.finito;
 
 import java.io.File;
 import java.io.ObjectOutputStream;
@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,28 +14,28 @@ import java.lang.System;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
-import security.dgk.DGKPublicKey;
-import security.misc.HomomorphicException;
-import security.paillier.PaillierCipher;
-import security.socialistmillionaire.alice_joye;
-import security.paillier.PaillierPublicKey;
 import weka.classifiers.trees.j48.BinC45ModelSelection;
 import weka.classifiers.trees.j48.C45PruneableClassifierTree;
 import weka.classifiers.trees.j48.ClassifierTree;
 import weka.core.Instances;
-
 import weka.core.SerializationHelper;
-import weka.finito.structs.features;
-import weka.finito.structs.level_order_site;
-import weka.finito.structs.NodeInfo;
 
-import static weka.finito.client.createServerSocket;
-import static weka.finito.client.createSocket;
-import static weka.finito.utils.shared.*;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.misc.HomomorphicException;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierCipher;
+import edu.fiu.adwise.homomorphic_encryption.socialistmillionaire.alice_joye;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierPublicKey;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import weka.finito.utils.LabelEncoder;
+
+import edu.fiu.adwise.weka.finito.structs.features;
+import edu.fiu.adwise.weka.finito.structs.level_order_site;
+import edu.fiu.adwise.weka.finito.structs.NodeInfo;
+import static edu.fiu.adwise.weka.finito.client.createServerSocket;
+import static edu.fiu.adwise.weka.finito.client.createSocket;
+import static edu.fiu.adwise.weka.finito.utils.shared.*;
+import edu.fiu.adwise.weka.finito.utils.LabelEncoder;
 
 public final class server implements Runnable {
 	private static final Logger logger = LogManager.getLogger(server.class);
@@ -180,7 +179,7 @@ public final class server implements Runnable {
 		}
 	}
 
-	// Talk to Client to get the Public Keys. Give client hashed classes and complete Label Encoder
+	// Talk to Client to get the Public Keys. Give a client hashed classes and complete Label Encoder
 	private void client_communication() throws Exception {
 		ServerSocket serverSocket = createServerSocket(server_port);
         logger.info("Server ready to get public keys from client on port: {}", server_port);
@@ -264,7 +263,7 @@ public final class server implements Runnable {
 			return j48;
 		}
 
-		// If this is a .arff file
+		// If this is an .arff file
 		Instances train = null;
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(arff_file))) {
@@ -381,7 +380,7 @@ public final class server implements Runnable {
 							}
 						}
 
-						// Obtain and encrypt the threshold for level-site usage
+						// Get and encrypt the threshold for level-site usage
 						String threshold_string = new String(rightValue);
 
 						try {

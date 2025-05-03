@@ -1,10 +1,10 @@
-package weka.finito.structs;
+package edu.fiu.adwise.weka.finito.structs;
 
-import security.dgk.DGKOperations;
-import security.dgk.DGKPublicKey;
-import security.misc.HomomorphicException;
-import security.paillier.PaillierCipher;
-import security.paillier.PaillierPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKOperations;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.misc.HomomorphicException;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierCipher;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierPublicKey;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -12,7 +12,8 @@ import java.util.HashMap;
 
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
-import weka.finito.utils.LabelEncoder;
+import edu.fiu.adwise.weka.finito.utils.LabelEncoder;
+
 
 public final class features implements Serializable {
     // private static final Logger logger = LogManager.getLogger(features.class);
@@ -23,7 +24,7 @@ public final class features implements Serializable {
     private int next_index;
     private int current_index;
     private final HashMap<String, BigIntegers> thresholds;
-    private String thresh_hold_map;
+    private final String thresh_hold_map;
 
     public features(String path, int precision, PaillierPublicKey paillier_public_key,
                     DGKPublicKey dgk_public_key, LabelEncoder encoder)
@@ -84,7 +85,7 @@ public final class features implements Serializable {
                 key = split[0];
                 value = split[1];
 
-                // I need to refer to label encoder after training to know what I am doing...
+                // I need to refer to the label encoder after training to know what I am doing...
                 try {
                     double_value = Double.parseDouble(value);
                 } catch (NumberFormatException e) {
@@ -119,7 +120,7 @@ public final class features implements Serializable {
                 key = split[0];
                 value = split[1];
 
-                // I need to refer to label encoder after training to know what I am doing...
+                // I need to refer to the label encoder after training to know what I am doing...
                 try {
                     double_value = Double.parseDouble(value);
                 }

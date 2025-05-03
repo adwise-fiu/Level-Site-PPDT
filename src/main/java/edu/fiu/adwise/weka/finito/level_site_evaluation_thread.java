@@ -1,15 +1,12 @@
-package weka.finito;
+package edu.fiu.adwise.weka.finito;
 
 import java.io.EOFException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.System;
 
-import security.misc.HomomorphicException;
-import security.socialistmillionaire.alice_joye;
-import weka.finito.structs.NodeInfo;
-import weka.finito.structs.features;
-import weka.finito.structs.level_order_site;
+import edu.fiu.adwise.homomorphic_encryption.misc.HomomorphicException;
+import edu.fiu.adwise.homomorphic_encryption.socialistmillionaire.alice_joye;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,8 +15,11 @@ import java.net.Socket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static weka.finito.client.createSocket;
-import static weka.finito.utils.shared.*;
+import edu.fiu.adwise.weka.finito.structs.NodeInfo;
+import edu.fiu.adwise.weka.finito.structs.level_order_site;
+import edu.fiu.adwise.weka.finito.structs.features;
+import static edu.fiu.adwise.weka.finito.client.createSocket;
+import static edu.fiu.adwise.weka.finito.utils.shared.*;
 
 public class level_site_evaluation_thread implements Runnable {
 	private static final Logger logger = LogManager.getLogger(level_site_evaluation_thread.class);
@@ -50,7 +50,7 @@ public class level_site_evaluation_thread implements Runnable {
 	}
 
 	protected void init() throws IOException {
-		// All level-sites except 0 (already checked in constructor), must do this.
+		// All level-sites except 0 (already checked in constructor) must do this.
 		if(previous_site == null) {
 			logger.debug("Evaluation thread will now do the listening");
 			if (previous_level_site_listener != null) {
@@ -64,8 +64,8 @@ public class level_site_evaluation_thread implements Runnable {
 			logger.debug("Connection to previous level-site already exists!");
 		}
 
-		// All the level-sites should do this step though, except level-site d
-		// Create a persistent connection to next level-site and oos to send the next stuff down
+		// All the level-sites should do this step, though, except level-site d
+		// Create a persistent connection to the next level-site and oos to send the next stuff down
 		if (next_level_site == null) {
 			if (level_site_data.get_next_level_site() != null) {
 				next_level_site_socket = createSocket(level_site_data.get_next_level_site(),
@@ -89,7 +89,7 @@ public class level_site_evaluation_thread implements Runnable {
 
 		// Null, keep going down the tree,
 		// Not null, you got the correct leaf node of your DT!
-		// encrypted_features will have index updated within traverse_level
+		// encrypted_features will have an index updated within traverse_level
 		NodeInfo reply = traverse_level(level_site_data, encrypted_features, niu);
 		niu.writeInt(-1);
 
@@ -109,7 +109,7 @@ public class level_site_evaluation_thread implements Runnable {
 		logger.info(String.format("Total Level-Site run-time took %f ms\n", run_time));
 	}
 
-	// This will run the communication with client and next level site
+	// This will run the communication with the client and next level site
 	public final void run() {
 		logger.debug("Showing level-site");
 		logger.debug(level_site_data.toString());
@@ -132,7 +132,7 @@ public class level_site_evaluation_thread implements Runnable {
 								+ "received an object that should be features!");
 					}
                     logger.info("Level-site {} got encrypted features!", level_site_data.get_level());
-					// Create connection to the client
+					// Create a connection to the client
 					client_socket = createSocket(
 							encrypted_features.get_client_ip(),
 							encrypted_features.get_client_port());
@@ -145,7 +145,7 @@ public class level_site_evaluation_thread implements Runnable {
 				closeConnection(next_level_site_socket);
 			}
 			else {
-				// I already got client socket and features, so evaluate thread now and close
+				// I already got client socket and features, so evaluate the thread now and close
 				evaluate();
 			}
 		}

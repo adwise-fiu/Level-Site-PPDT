@@ -1,12 +1,8 @@
-package weka.finito.utils;
+package edu.fiu.adwise.weka.finito.utils;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
-import security.misc.HomomorphicException;
-import security.socialistmillionaire.alice;
-import weka.finito.structs.BigIntegers;
-import weka.finito.structs.NodeInfo;
-import weka.finito.structs.features;
-import weka.finito.structs.level_order_site;
+import edu.fiu.adwise.homomorphic_encryption.misc.HomomorphicException;
+import edu.fiu.adwise.homomorphic_encryption.socialistmillionaire.alice;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -20,8 +16,10 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
-
+import edu.fiu.adwise.weka.finito.structs.BigIntegers;
+import edu.fiu.adwise.weka.finito.structs.NodeInfo;
+import edu.fiu.adwise.weka.finito.structs.features;
+import edu.fiu.adwise.weka.finito.structs.level_order_site;
 
 public class shared {
     private static final Logger logger = LogManager.getLogger(shared.class);
@@ -64,7 +62,7 @@ public class shared {
         NodeInfo to_return = null;
 
         // The n index tells you when you are in scope in regard to level-site
-        // Level-sites are made of leaves, and split the inequality into two nodes,
+        // Level-sites are made of leaves and split the inequality into two nodes,
         // so you have a '<=' and '>' node and '=' and '!=' in pairs
         logger.debug("In-scope index should be: {} and {}",
                 2 * encrypted_features.get_current_index(), 2 * encrypted_features.get_current_index() + 1);
@@ -152,7 +150,7 @@ public class shared {
         }
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
-        logger.info(String.format("Using comparison type %d", comparisonType));
+        logger.info("Using comparison type {}", comparisonType);
 
         // Encrypt the thresh-hold correct
         // Note only types 1, 3, 4, 6 have been known to exist
@@ -182,7 +180,7 @@ public class shared {
             answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
         }
         else if (comparisonType == 6) {
-            // Also factors in type 6, just need it to the negated result
+            // Also, factors in type 6 just need it to the negated result
             logger.info("Using encrypted inequality check");
             answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
             answer = !answer;
@@ -227,11 +225,11 @@ public class shared {
     public static ValidatingObjectInputStream get_ois(Socket socket) throws IOException {
         ValidatingObjectInputStream ois = new ValidatingObjectInputStream(socket.getInputStream());
         ois.accept(
-                weka.finito.structs.NodeInfo.class,
-                weka.finito.structs.level_order_site.class,
-                weka.finito.structs.BigIntegers.class,
-                weka.finito.structs.features.class,
-                weka.finito.utils.LabelEncoder.class,
+                edu.fiu.adwise.weka.finito.structs.NodeInfo.class,
+                edu.fiu.adwise.weka.finito.structs.level_order_site.class,
+                edu.fiu.adwise.weka.finito.structs.BigIntegers.class,
+                edu.fiu.adwise.weka.finito.structs.features.class,
+                edu.fiu.adwise.weka.finito.utils.LabelEncoder.class,
 
                 java.util.HashMap.class,
                 java.util.ArrayList.class,

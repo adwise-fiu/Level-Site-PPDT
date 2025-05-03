@@ -1,7 +1,7 @@
-package weka.finito.structs;
+package edu.fiu.adwise.weka.finito.structs;
 
-import security.dgk.DGKPublicKey;
-import security.paillier.PaillierPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierPublicKey;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -20,7 +20,7 @@ public final class level_order_site implements Serializable {
 	public final PaillierPublicKey paillier_public_key;
 	public final DGKPublicKey dgk_public_key;
     private final List<NodeInfo> node_level_data = new ArrayList<>();
-	// Set to value to a client, to let level-site d-1 know to talk to a client next with answer
+	// Set to classification to a client, to let level-site d-1 know to talk to a client next with the answer
 	private String next_level_site = null;
 	private int next_level_site_port = -1;
 	private int level_site_listening_port = -1;

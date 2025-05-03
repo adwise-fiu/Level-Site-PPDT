@@ -1,10 +1,10 @@
-package weka.finito.structs;
+package edu.fiu.adwise.weka.finito.structs;
 
-import security.dgk.DGKOperations;
-import security.dgk.DGKPublicKey;
-import security.misc.HomomorphicException;
-import security.paillier.PaillierCipher;
-import security.paillier.PaillierPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKOperations;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.misc.HomomorphicException;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierCipher;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierPublicKey;
 
 import java.io.Serial;
 import java.io.Serializable;

@@ -1,9 +1,6 @@
-package weka.finito;
+package edu.fiu.adwise.weka.finito;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
-import weka.finito.structs.features;
-import weka.finito.structs.level_order_site;
-
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
@@ -11,9 +8,11 @@ import java.lang.System;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import static weka.finito.client.createServerSocket;
-import static weka.finito.client.createSocket;
-import static weka.finito.utils.shared.*;
+import edu.fiu.adwise.weka.finito.structs.level_order_site;
+import edu.fiu.adwise.weka.finito.structs.features;
+import static edu.fiu.adwise.weka.finito.client.createServerSocket;
+import static edu.fiu.adwise.weka.finito.client.createSocket;
+import static edu.fiu.adwise.weka.finito.utils.shared.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,7 +69,7 @@ public class level_site_server implements Runnable {
         while(! isStopped()) {
             Socket client_socket;
             try {
-            	// logger.info("[Main Level-Site Server] Ready to accept connections at: " + this.serverPort);
+            	// logger.info("[Main Level-Site Server] Ready-to-accept connections at: " + this.serverPort);
                 if (level_site_parameters == null) {
                     // You need the training data...
                     client_socket = this.serverSocket.accept();
@@ -95,7 +94,7 @@ public class level_site_server implements Runnable {
                 throw new RuntimeException("Error accepting client connection", e);
             }
 
-            // Collect the object, and see what to do depending on the object.
+            // Collect the object and see what to do depending on the object.
             try {
                 oos = new ObjectOutputStream(client_socket.getOutputStream());
                 ois = get_ois(client_socket);
@@ -144,7 +143,7 @@ public class level_site_server implements Runnable {
                 logger.error(e.getStackTrace());
             }
         }
-        logger.info("Server Stopped on port: {}", this.serverPort); ;
+        logger.info("Server Stopped on port: {}", this.serverPort);
         long stop_time = System.nanoTime();
         double run_time = (double) (stop_time - start_time)/1000000;
         logger.info(String.format("Time to start up: %f\n", run_time));

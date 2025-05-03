@@ -1,4 +1,4 @@
-package weka.finito;
+package edu.fiu.adwise.weka.finito;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -9,27 +9,27 @@ import java.security.KeyPair;
 import java.lang.System;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
-import security.dgk.DGKKeyPairGenerator;
-import security.dgk.DGKPrivateKey;
-import security.dgk.DGKPublicKey;
-import security.misc.HomomorphicException;
-import security.paillier.PaillierCipher;
-import security.paillier.PaillierKeyPairGenerator;
-import security.paillier.PaillierPrivateKey;
-import security.paillier.PaillierPublicKey;
-import security.socialistmillionaire.bob_joye;
-import weka.finito.structs.features;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKKeyPairGenerator;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKPrivateKey;
+import edu.fiu.adwise.homomorphic_encryption.dgk.DGKPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.misc.HomomorphicException;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierCipher;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierKeyPairGenerator;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierPrivateKey;
+import edu.fiu.adwise.homomorphic_encryption.paillier.PaillierPublicKey;
+import edu.fiu.adwise.homomorphic_encryption.socialistmillionaire.bob_joye;
 
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import static weka.finito.utils.shared.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import weka.finito.utils.LabelEncoder;
+
+import edu.fiu.adwise.weka.finito.structs.features;
+import static edu.fiu.adwise.weka.finito.utils.shared.*;
+import edu.fiu.adwise.weka.finito.utils.LabelEncoder;
 
 public final class client implements Runnable {
 	private static final Logger logger = LogManager.getLogger(client.class);

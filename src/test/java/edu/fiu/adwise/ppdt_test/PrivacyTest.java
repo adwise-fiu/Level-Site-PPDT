@@ -1,8 +1,7 @@
+package edu.fiu.adwise.ppdt_test;
+
 import org.junit.Before;
 import org.junit.Test;
-import weka.finito.client;
-import weka.finito.level_site_server;
-import weka.finito.server;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,7 +10,11 @@ import java.io.IOException;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
-import static weka.finito.utils.shared.*;
+
+import edu.fiu.adwise.weka.finito.client;
+import edu.fiu.adwise.weka.finito.level_site_server;
+import edu.fiu.adwise.weka.finito.server;
+import static edu.fiu.adwise.weka.finito.utils.shared.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -77,7 +80,7 @@ public final class PrivacyTest {
 		return evaluate.getClassification();
 	}
 
-	// Use this to test with level-sites
+	// Use this to test it with level-sites
 	@Test
 	public void test_all_level_sites() throws Exception {
 		String answer_path = new File(data_directory, "answers.csv").toString();
@@ -120,7 +123,7 @@ public final class PrivacyTest {
 		answer_path = new File(data_directory, "answers.csv").toString();
 		run_test(answer_path, false);
 		
-		// Because of the depth of these trees from Liu et al. we will use a test and not for level-site
+		// Because of the depth of these trees from Liu et al., we will use a test and not for level-site
 		answer_path = new File(data_directory, "answers_liu.csv").toString();
 		run_test(answer_path, false);
 	}

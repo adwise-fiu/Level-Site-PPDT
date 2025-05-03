@@ -1,4 +1,5 @@
-package weka.finito.utils;
+package edu.fiu.adwise.weka.finito.utils;
+
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashMap;
