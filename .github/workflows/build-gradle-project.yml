@@ -2,13 +2,7 @@ name: Build Gradle project
 
 on:
   workflow_dispatch:
-  pull_request_review:
-    types: [submitted]
-  push:
-    branches:
-      - main
-      - feature*
-      - fix*
+  pull_request:
 
 # Automatically cancel any previous workflow on a new push.
 concurrency:
@@ -17,7 +11,6 @@ concurrency:
 
 jobs:
   build-gradle-project:
-    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     env:
       ALIAS: appsec
@@ -40,7 +33,7 @@ jobs:
         cache: 'gradle'
 
     - name: Run Gradle Testing and Create Coverage Report
-      run: sh gradlew build -PcreateReports
+      run: ./gradlew test jacocoTestReport -PcreateReports
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
