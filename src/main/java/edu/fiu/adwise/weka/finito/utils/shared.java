@@ -48,11 +48,10 @@ public class shared {
 
     /**
      * Configures the TLS environment using system properties.
-     * If you get a null pointer, you forgot to populate environment variables...
      */
     public static void setup_tls() {
-        String keystore = System.getenv("KEYSTORE");
-        String password = System.getenv("PASSWORD");
+        String keystore = System.getenv("KEYSTORE") != null ? System.getenv("KEYSTORE") : "";
+        String password = System.getenv("PASSWORD") != null ? System.getenv("PASSWORD") : "";
         Properties systemProps = System.getProperties();
         systemProps.put("javax.net.ssl.keyStorePassword", password);
         systemProps.put("javax.net.ssl.keyStore", keystore);
