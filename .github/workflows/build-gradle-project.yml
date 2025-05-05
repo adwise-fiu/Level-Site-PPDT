@@ -3,6 +3,11 @@ name: Build Gradle project
 on:
   workflow_dispatch:
   pull_request:
+  pull_request_review:
+    types: [submitted]
+  # Runs every 30 days at midnight, just to make sure the checkmark is always there
+  schedule:
+    - cron: "0 0 30 * *"
 
 # Automatically cancel any previous workflow on a new push.
 concurrency:
@@ -11,6 +16,7 @@ concurrency:
 
 jobs:
   build-gradle-project:
+    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     env:
       ALIAS: appsec
