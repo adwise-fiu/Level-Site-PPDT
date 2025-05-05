@@ -2,9 +2,15 @@ Docker:
   - 'Dockerfile'
 
 Kubernetes:
-  - 'k8s/**'
+  - 'k8/**'
   - 'templates_yamls/**'
   - 'eks-config/**'
+  - 'template_yaml/**'
+  - 'scripts/**'
+  - 'Dockerfile'
+
+Data:
+  - 'data/**'
 
 Gradle:
   - 'gradle/**'
@@ -12,9 +18,13 @@ Gradle:
   - 'gradlew.bat'
   - 'settings.gradle'
   - 'gradle.properties'
+  - 'build.gradle'
 
 Documentation:
   - '**/*.md'
 
 Github-files:
   - '.github/**'
+
+Java:
+  - '**/*.java'

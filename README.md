@@ -1,12 +1,9 @@
 # Level-Site-PPDT
-[![Build Gradle project](https://github.com/adwise-fiu/Level-Site-PPDT/actions/workflows/build-gradle-project.yml/badge.svg)](https://github.com/AndrewQuijano/Level-Site-PPDT/actions/workflows/build-gradle-project.yml)  
-[![codecov](https://codecov.io/gh/adwise-fiu/Level-Site-PPDT/branch/main/graph/badge.svg?token=eEtEvBZYu9)](https://codecov.io/gh/AndrewQuijano/Level-Site-PPDT)  
-Implementation of the PPDT in the paper "Evaluating Outsourced Decision Trees by a Level-Based Approach"
+[![Build Gradle project](https://github.com/adwise-fiu/Level-Site-PPDT/actions/workflows/build-gradle-project.yml/badge.svg?branch=main)](https://github.com/adwise-fiu/Level-Site-PPDT/actions/workflows/build-gradle-project.yml)
 
-## Libraries
-* crypto.jar library is from this [repository](https://github.com/adwise-fiu/Homomorphic_Encryption)
-* weka.jar library is from [SourceForge](https://sourceforge.net/projects/weka/files/weka-3-9/3.9.5/),
-  download the ZIP file and import the weka.jar file
+[![codecov](https://codecov.io/gh/adwise-fiu/Level-Site-PPDT/branch/main/graph/badge.svg?token=eEtEvBZYu9)](https://codecov.io/gh/AndrewQuijano/Level-Site-PPDT)  
+
+Implementation of the PPDT in the paper "Evaluating Outsourced Decision Trees by a Level-Based Approach"
 
 ## Installation
 It is a requirement to install [SDK](https://sdkman.io/install) to install Gradle.
@@ -234,6 +231,8 @@ minikube delete
 
 ## Authors and Acknowledgement
 Code Authors: Andrew Quijano, Spyros T. Halkidis, Kevin Gallagher
+
+Kevin Gallagher is supported by NOVA LINCS ref. [UIDB/04516/2020](https://doi.org/10.54499/UIDB/04516/2020) and ref. [UIDP/04516/2020](https://doi.org/10.54499/UIDP/04516/2020) with the financial support of FCT.IP.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
