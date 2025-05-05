@@ -31,34 +31,88 @@ import edu.fiu.adwise.weka.finito.structs.features;
 import static edu.fiu.adwise.weka.finito.utils.shared.*;
 import edu.fiu.adwise.weka.finito.utils.LabelEncoder;
 
+/**
+ * Client class for handling encrypted communication and classification tasks.
+ */
 public final class client implements Runnable {
+
+	/** Logger for logging messages and errors. */
 	private static final Logger logger = LogManager.getLogger(client.class);
+
+	/** SSL server socket factory for secure communication. */
 	private static final SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+
+	/** SSL socket factory for secure communication. */
 	private static final SSLSocketFactory socket_factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
+	/** Path to the features file. */
 	private final String features_file;
+
+	/** Key size for encryption. */
 	private final int key_size;
+
+	/** Precision for floating-point operations. */
 	private final int precision;
-	private final String [] level_site_ips;
-	private final int [] level_site_ports;
+
+	/** IP addresses of level sites. */
+	private final String[] level_site_ips;
+
+	/** Ports of level sites. */
+	private final int[] level_site_ports;
+
+	/** Port for communication. */
 	private final int port;
+
+	/** Classification result. */
 	private String classification = null;
+
+	/** DGK key pair. */
 	private KeyPair dgk;
+
+	/** Paillier key pair. */
 	private KeyPair paillier;
+
+	/** Features object for encrypted data. */
 	private features feature = null;
+
+	/** Flag indicating if classification is complete. */
 	private boolean classification_complete = false;
+
+	/** DGK public key. */
 	private DGKPublicKey dgk_public_key;
+
+	/** Paillier public key. */
 	private PaillierPublicKey paillier_public_key;
+
+	/** DGK private key. */
 	private DGKPrivateKey dgk_private_key;
+
+	/** Paillier private key. */
 	private PaillierPrivateKey paillier_private_key;
+
+	/** Server IP address. */
 	private final String server_ip;
+
+	/** Client IP address. */
 	private final String client_ip;
+
+	/** Server port for communication. Level-sites will reach out to the client after level-site 0 */
 	private final int server_port;
+
+	/** Label encoder for classification labels. */
 	private LabelEncoder label_encoder;
 
-    //For k8s deployment.
+	/**
+	 * Main method for Kubernetes deployment.
+	 * Reads environment variables, initializes the client, and starts the evaluation process.
+	 *
+	 * @param args Command-line arguments.
+	 *             args[0] - Path to the features file.
+	 *             args[1] (optional) - "--server" to test with a single server-site.
+	 */
     public static void main(String[] args) {
 		setup_tls();
-		
+
         // Declare variables needed.
         int key_size = -1;
         int precision = -1;
@@ -129,7 +183,18 @@ public final class client implements Runnable {
 		test.run();
     }
 
-	// For local host testing with GitHub Actions, used in PrivacyTest.java
+	/**
+	 * Constructor for local host testing with GitHub Actions.
+	 *
+	 * @param key_size       Size of the cryptographic key.
+	 * @param features_file  Path to the features file.
+	 * @param level_site_ips Array of level-site IPs.
+	 * @param level_site_ports Array of level-site ports.
+	 * @param precision      Precision for calculations.
+	 * @param server_ip      Server IP address.
+	 * @param server_port    Server port.
+	 * @param client_ip      Client IP address.
+	 */
 	public client(int key_size, String features_file, String [] level_site_ips, int [] level_site_ports,
 				  int precision, String server_ip, int server_port, String client_ip) {
 		this.key_size = key_size;
@@ -143,7 +208,18 @@ public final class client implements Runnable {
 		this.client_ip = client_ip;
 	}
 
-	// Testing using Kubernetes, NOT used in PrivacyTest.java
+	/**
+	 * Constructor for Kubernetes testing.
+	 *
+	 * @param key_size       Size of the cryptographic key.
+	 * @param features_file  Path to the features file.
+	 * @param level_site_ips Array of level-site IPs.
+	 * @param port           Port for communication.
+	 * @param precision      Precision for calculations.
+	 * @param server_ip      Server IP address.
+	 * @param server_port    Server port.
+	 * @param client_ip      Client IP address.
+	 */
 	public client(int key_size, String features_file, String [] level_site_ips, int port,
 				  int precision, String server_ip, int server_port, String client_ip) {
 		this.key_size = key_size;
@@ -157,7 +233,16 @@ public final class client implements Runnable {
 		this.client_ip = client_ip;
 	}
 
-	// Testing using only a single server, no level-sites, used in PrivacyTest.java and in main()
+	/**
+	 * Constructor for testing with a single server-site.
+	 *
+	 * @param key_size       Size of the cryptographic key.
+	 * @param features_file  Path to the features file.
+	 * @param precision      Precision for calculations.
+	 * @param server_ip      Server IP address.
+	 * @param server_port    Server port.
+	 * @param client_ip      Client IP address.
+	 */
 	public client(int key_size, String features_file,
                   int precision, String server_ip, int server_port, String client_ip) {
 		this.key_size = key_size;
@@ -171,11 +256,19 @@ public final class client implements Runnable {
 		this.client_ip = client_ip;
 	}
 
-	// Get Classification after Evaluation
+
+	/**
+	 * Retrieves the classification result after evaluation.
+	 *
+	 * @return The classification result as a String.
+	 */
 	public String getClassification() {
 		return this.classification;
 	}
 
+	/**
+	 * Generates cryptographic key pairs for DGK and Paillier encryption.
+	 */
 	public void generate_keys() {
 		// Generate Key Pairs
 		DGKKeyPairGenerator p = new DGKKeyPairGenerator();
@@ -192,6 +285,11 @@ public final class client implements Runnable {
 		paillier_private_key = (PaillierPrivateKey) paillier.getPrivate();
 	}
 
+	/**
+	 * Checks if cryptographic keys are needed by attempting to read them from files.
+	 *
+	 * @return True if keys are needed, false otherwise.
+	 */
 	private boolean need_keys() {
 		try {
 			dgk_public_key = DGKPublicKey.readKey("dgk.pub");
@@ -210,7 +308,14 @@ public final class client implements Runnable {
 		}
     }
 
-	// Used for set-up
+	/**
+	 * Sets up the client with the server-site by exchanging public keys and receiving the label encoder.
+	 *
+	 * @param paillier Paillier public key.
+	 * @param dgk      DGK public key.
+	 * @throws IOException            If an I/O error occurs.
+	 * @throws ClassNotFoundException If the label encoder class is not found.
+	 */
 	private void setup_with_server_site(PaillierPublicKey paillier, DGKPublicKey dgk)
 			throws IOException, ClassNotFoundException {
         logger.info("Connecting to {}:{} for set-up", server_ip, server_port);
@@ -231,7 +336,18 @@ public final class client implements Runnable {
 		logger.info("Completed set-up with server");
 	}
 
-	// Evaluation
+	/**
+	 * Reads features from a file and initializes the feature object.
+	 *
+	 * @param path               Path to the features file.
+	 * @param paillier_public_key Paillier public key.
+	 * @param dgk_public_key      DGK public key.
+	 * @param precision           Precision for calculations.
+	 * @param encoder             Label encoder.
+	 * @return A features object.
+	 * @throws IOException            If an I/O error occurs.
+	 * @throws HomomorphicException   If a homomorphic encryption error occurs.
+	 */
 	private features read_features(String path,
 								   PaillierPublicKey paillier_public_key,
 								   DGKPublicKey dgk_public_key, int precision, LabelEncoder encoder)
@@ -240,6 +356,14 @@ public final class client implements Runnable {
         return new features(path, precision, paillier_public_key, dgk_public_key, encoder);
 	}
 
+	/**
+	 * Evaluates the features with the server-site.
+	 *
+	 * @param server_site Socket connection to the server-site.
+	 * @throws IOException            If an I/O error occurs.
+	 * @throws HomomorphicException   If a homomorphic encryption error occurs.
+	 * @throws ClassNotFoundException If a class is not found during deserialization.
+	 */
 	private void evaluate_with_server_site(Socket server_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 		// Communicate with each Level-Site
@@ -288,7 +412,15 @@ public final class client implements Runnable {
 		}
 	}
 
-	// Function used to Evaluate for each level-site
+	/**
+	 * Evaluates the features with a level-site.
+	 *
+	 * @param level_site Socket connection to the level-site.
+	 * @param level      The level of the site in the hierarchy.
+	 * @throws IOException            If an I/O error occurs.
+	 * @throws ClassNotFoundException If a class is not found during deserialization.
+	 * @throws HomomorphicException   If a homomorphic encryption error occurs.
+	 */
 	private void evaluate_with_level_site(Socket level_site, int level)
 			throws IOException, ClassNotFoundException, HomomorphicException {
 		// Communicate with each Level-Site
@@ -365,7 +497,9 @@ public final class client implements Runnable {
 		}
 	}
 
-	// Function used to Train (if needed) and Evaluate
+	/**
+	 * Runs the client process, including key generation, setup, and evaluation.
+	 */
 	public void run() {
 
 		// Step: 1
@@ -478,7 +612,15 @@ public final class client implements Runnable {
 		}
 	}
 
-	// For some reason, the moment I move this to shared.java, it just fails
+	/**
+	 * Creates a socket connection to the specified hostname and port.
+	 * For some reason, the moment I move this to shared.java, it just fails.
+	 *
+	 * @param hostname The hostname or IP address to connect to.
+	 * @param port The port number to connect to.
+	 * @return A `Socket` object representing the connection.
+	 * @throws RuntimeException If the socket cannot be created due to an I/O error.
+	 */
 	public static Socket createSocket(String hostname, int port) {
 		Socket client_socket;
 		try {
@@ -492,6 +634,13 @@ public final class client implements Runnable {
 		return client_socket;
 	}
 
+	/**
+	 * Creates a server socket that listens on the specified port.
+	 *
+	 * @param serverPort The port number on which the server socket will listen to.
+	 * @return A `ServerSocket` object representing the server socket.
+	 * @throws RuntimeException If the server socket cannot be created due to an I/O error.
+	 */
 	public static ServerSocket createServerSocket(int serverPort) {
 		ServerSocket serverSocket;
 		try {

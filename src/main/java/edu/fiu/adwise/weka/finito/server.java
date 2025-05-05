@@ -37,22 +37,59 @@ import static edu.fiu.adwise.weka.finito.client.createSocket;
 import static edu.fiu.adwise.weka.finito.utils.shared.*;
 import edu.fiu.adwise.weka.finito.utils.LabelEncoder;
 
+/**
+ * The `server` class handles the training and evaluation of decision trees
+ * for privacy-preserving distributed decision tree (PPDT) classification.
+ */
 public final class server implements Runnable {
+
+	/** Logger for the server class. */
 	private static final Logger logger = LogManager.getLogger(server.class);
+
+	/** Operating system name. */
 	private static final String os = System.getProperty("os.name").toLowerCase();
+
+	/** Path to the training data file. */
 	private final String training_data;
-	private final String [] level_site_ips;
-	private int [] level_site_ports = null;
+
+	/** IP addresses of level sites. */
+	private final String[] level_site_ips;
+
+	/** Ports for level sites. */
+	private int[] level_site_ports = null;
+
+	/** Port for server communication. */
 	private int port = -1;
+
+	/** Paillier public key for encryption. */
 	private PaillierPublicKey paillier_public;
+
+	/** DGK public key for encryption. */
 	private DGKPublicKey dgk_public;
+
+	/** Precision for floating-point operations. */
 	private final int precision;
+
+	/** Decision tree model. */
 	private ClassifierTree ppdt = null;
+
+	/** List of all level sites. */
 	private final List<level_order_site> all_level_sites = new ArrayList<>();
+
+	/** Server port for communication. */
 	private final int server_port;
+
+	/** Number of evaluations to perform. */
 	private int evaluations = 1;
+
+	/** Label encoder for categorical data. */
 	private final LabelEncoder label_encoder = new LabelEncoder();
 
+	/**
+	 * Main method to initialize and run the server.
+	 *
+	 * @param args Command-line arguments. Expects the path to the training data file.
+	 */
     public static void main(String[] args) {
 		setup_tls();
 
@@ -97,7 +134,15 @@ public final class server implements Runnable {
 		server.run();
 	}
 
-	// For Cloud environment, (Testing with Kubernetes/EKS, for level-sites AND server for easier testing)
+	/**
+	 * Constructor for cloud environment testing.
+	 *
+	 * @param training_data Path to the training data file.
+	 * @param level_site_domains IP addresses of level sites.
+	 * @param port Port for communication.
+	 * @param precision Precision for floating-point operations.
+	 * @param server_port Server port for communication.
+	 */
 	public server(String training_data, String [] level_site_domains, int port, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = level_site_domains;
@@ -108,7 +153,15 @@ public final class server implements Runnable {
 		this.evaluations = 1000;
 	}
 
-	// For local host testing, (GitHub Actions CI, on PrivacyTest.java, for level-sites)
+	/**
+	 * Constructor for local host testing with level sites.
+	 *
+	 * @param training_data Path to the training data file.
+	 * @param level_site_ips IP addresses of level sites.
+	 * @param level_site_ports Ports for level sites.
+	 * @param precision Precision for floating-point operations.
+	 * @param server_port Server port for communication.
+	 */
 	public server(String training_data, String [] level_site_ips, int [] level_site_ports, int precision,
 				  int server_port) {
 		this.training_data = training_data;
@@ -118,7 +171,13 @@ public final class server implements Runnable {
 		this.server_port = server_port;
 	}
 
-	// For Local host testing, (GitHub Actions CI, on PrivacyTest.java, for evaluating directly to server)
+	/**
+	 * Constructor for local host testing without level sites.
+	 *
+	 * @param training_data Path to the training data file.
+	 * @param precision Precision for floating-point operations.
+	 * @param server_port Server port for communication.
+	 */
 	public server(String training_data, int precision, int server_port) {
 		this.training_data = training_data;
 		this.level_site_ips = null;
@@ -126,6 +185,16 @@ public final class server implements Runnable {
 		this.server_port = server_port;
 	}
 
+	/**
+	 * Runs the server site to handle direct evaluation requests from clients.
+	 * Listens on the specified port and processes client requests until the
+	 * specified number of evaluations is completed.
+	 *
+	 * @param port The port on which the server will listen for client connections.
+	 * @throws IOException If an I/O error occurs while handling sockets.
+	 * @throws HomomorphicException If an error occurs during homomorphic encryption operations.
+	 * @throws ClassNotFoundException If a class required for deserialization is not found.
+	 */
 	private void run_server_site(int port) throws IOException, HomomorphicException, ClassNotFoundException {
 		int count = 0;
 		try (ServerSocket serverSocket = createServerSocket(port)) {
@@ -139,8 +208,17 @@ public final class server implements Runnable {
 		}
 	}
 
-	// This is essentially the same as running all level-sites on one server, But
-	// you will lose timing attack protection, see the paper
+	/**
+	 * Evaluates a client request directly on the server without using level-sites.
+	 * Processes encrypted features sent by the client and traverses the decision tree
+	 * to find the appropriate leaf node.
+	 * This is essentially the same as running all level-sites on one server, but
+	 * you will lose timing attack protection, see the paper
+	 * @param client_site The socket connection to the client.
+	 * @throws IOException If an I/O error occurs during communication.
+	 * @throws HomomorphicException If an error occurs during homomorphic encryption operations.
+	 * @throws ClassNotFoundException If a class required for deserialization is not found.
+	 */
 	private void evaluate_with_client_directly(Socket client_site)
 			throws IOException, HomomorphicException, ClassNotFoundException {
 
@@ -179,7 +257,12 @@ public final class server implements Runnable {
 		}
 	}
 
-	// Talk to Client to get the Public Keys. Give a client hashed classes and complete Label Encoder
+	/**
+	 * Handles communication with the client to exchange public keys and train the decision tree.
+	 * Also trains level-sites if required and sends the label encoder back to the client.
+	 *
+	 * @throws Exception If an error occurs during communication or training.
+	 */
 	private void client_communication() throws Exception {
 		ServerSocket serverSocket = createServerSocket(server_port);
         logger.info("Server ready to get public keys from client on port: {}", server_port);
@@ -213,10 +296,22 @@ public final class server implements Runnable {
 		serverSocket.close();
 	}
 
+	/**
+	 * Checks if the operating system is Unix-based.
+	 *
+	 * @return True if the operating system is Unix-based, false otherwise.
+	 */
 	private static boolean isUnix() {
 		return (server.os.contains("nix") || server.os.contains("nux") || server.os.contains("aix"));
 	}
 
+	/**
+	 * Generates a visual representation of the decision tree in DOT and PNG formats.
+	 *
+	 * @param j48 The decision tree to be visualized.
+	 * @param base_name The base name for the output files.
+	 * @throws Exception If an error occurs during file generation or processing.
+	 */
 	private static void printTree(ClassifierTree j48, String base_name)
 			throws Exception {
 		File output_dot_file = new File("output", base_name + ".dot");
@@ -239,10 +334,17 @@ public final class server implements Runnable {
 		}
 	}
 
-	// Reference:
-	// https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811
-	// I reversed engineered this line of code
-	// https://git.cms.waikato.ac.nz/weka/weka/-/blob/main/trunk/weka/src/main/java/weka/classifiers/trees/J48.java#L164
+	/**
+     * Trains a decision tree using the provided ARFF file and saves the model.
+     * If the file is already a model file, it loads and visualizes the tree.
+     * Reference:
+     * <a href="https://stackoverflow.com/questions/33556543/how-to-save-model-and-apply-it-on-a-test-dataset-on-java/33571811#33571811">save_weka_model</a>
+     * <a href="https://git.cms.waikato.ac.nz/weka/weka/-/blob/main/trunk/weka/src/main/java/weka/classifiers/trees/J48.java#L164">I reversed engineered this line of code</a>
+     *
+     * @param arff_file The path to the ARFF or model file.
+     * @return The trained decision tree.
+     * @throws Exception If an error occurs during training or file processing.
+     */
 	private static ClassifierTree train_decision_tree(String arff_file)
 			throws Exception {
 		File training_file = new File(arff_file);
@@ -288,7 +390,15 @@ public final class server implements Runnable {
 	    return j48;
 	}
 
-	// Given a Plain-text Decision Tree, split the data up for each level site.
+	/**
+	 * Splits a plain-text decision tree into data for each level site.
+	 * This method traverses the decision tree and organizes its nodes into levels,
+	 * encrypting the data for secure processing at each level site.
+	 *
+	 * @param root The root of the decision tree to be split.
+	 * @param all_level_sites A list to store the data for each level site.
+	 * @throws Exception If an error occurs during encryption or data processing.
+	 */
 	private void get_level_site_data(ClassifierTree root, List<level_order_site> all_level_sites)
 			throws Exception {
 
@@ -430,9 +540,11 @@ public final class server implements Runnable {
 		} // While a tree is not empty
 	}
 
-	// Run should
-	// Train, ONLY if necessary
-	// Evaluate, be prepared for either level-site or no level-site case, 1 time
+	/**
+	 * Executes the main server logic. Trains the decision tree if necessary,
+	 * communicates with the client to retrieve public keys, and evaluates the tree
+	 * either with or without level sites.
+	 */
 	public void run() {
 
 		try {
@@ -440,7 +552,7 @@ public final class server implements Runnable {
 			if (ppdt == null) {
 				ppdt = train_decision_tree(this.training_data);
 				// Get Public Keys from Client AND train level-sites
-				client_communication();	
+				client_communication();
 			}
 		}
 		catch (Exception e) {
@@ -470,6 +582,13 @@ public final class server implements Runnable {
 		}
 	}
 
+	/**
+	 * Trains the level sites by sending encrypted data to each site.
+	 * Ensures that the number of level sites matches the requirements of the decision tree.
+	 * Uses secure communication for data transmission.
+	 *
+	 * @throws RuntimeException If there are insufficient level sites or an I/O error occurs.
+	 */
 	private void train_level_sites() {
 		ObjectOutputStream to_level_site;
 		ValidatingObjectInputStream from_level_site;
@@ -543,5 +662,4 @@ public final class server implements Runnable {
 			}
 		}
 	}
-
 }
