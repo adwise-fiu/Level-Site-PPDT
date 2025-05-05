@@ -1,12 +1,8 @@
-package weka.finito.utils;
+package edu.fiu.adwise.weka.finito.utils;
 
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
-import security.misc.HomomorphicException;
-import security.socialistmillionaire.alice;
-import weka.finito.structs.BigIntegers;
-import weka.finito.structs.NodeInfo;
-import weka.finito.structs.features;
-import weka.finito.structs.level_order_site;
+import edu.fiu.adwise.homomorphic_encryption.misc.HomomorphicException;
+import edu.fiu.adwise.homomorphic_encryption.socialistmillionaire.alice;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -20,21 +16,41 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import edu.fiu.adwise.weka.finito.structs.BigIntegers;
+import edu.fiu.adwise.weka.finito.structs.NodeInfo;
+import edu.fiu.adwise.weka.finito.structs.features;
+import edu.fiu.adwise.weka.finito.structs.level_order_site;
 
-
-
+/**
+ * Utility class providing shared methods for encryption, TLS setup, and network communication.
+ * This class includes methods for hashing strings, setting up TLS properties, traversing nodes within a level of a decision tree.
+ * I should note, it is in a shared function as this is used for both testing the level-site approach and everything in one server.
+ */
 public class shared {
-    private static final Logger logger = LogManager.getLogger(shared.class);
-    public static final String[] protocols = new String[]{ "TLSv1.2", "TLSv1.3"};
 
-    // Need to enforce it to be positive, since it is 255 bits or so, I can only use Paillier
+    /** Logger for logging messages and errors. */
+    private static final Logger logger = LogManager.getLogger(shared.class);
+
+    /** Supported TLS protocols. */
+    public static final String[] protocols = new String[]{ "TLSv1.2", "TLSv1.3" };
+
+    /**
+     * Converts a string into a positive BigInteger using UTF-8 encoding.
+     * Need to enforce it to be positive to fit constraints of homomorphic encryption;
+     * since it is 255 bits or so, I can only use Paillier.
+     * @param text The input string to hash.
+     * @return A positive BigInteger representation of the string.
+     */
     public static BigInteger hash_to_big_integer(String text) {
-        byte [] hash = text.getBytes(StandardCharsets.UTF_8);
+        byte[] hash = text.getBytes(StandardCharsets.UTF_8);
         return new BigInteger(1, hash);
     }
 
+    /**
+     * Configures the TLS environment using system properties.
+     * If you get a null pointer, you forgot to populate environment variables...
+     */
     public static void setup_tls() {
-        // If you get a null pointer, you forgot to populate environment variables...
         String keystore = System.getenv("KEYSTORE");
         String password = System.getenv("PASSWORD");
         Properties systemProps = System.getProperties();
@@ -42,17 +58,26 @@ public class shared {
         systemProps.put("javax.net.ssl.keyStore", keystore);
         systemProps.put("javax.net.ssl.trustStore", keystore);
         systemProps.put("javax.net.ssl.trustStorePassword", password);
-
-        // Enable verbose SSL handshake debugging
-        // systemProps.put("javax.net.debug", "ssl,handshake,data");
         System.setProperties(systemProps);
     }
 
+    /**
+     * Traverses a level-order site to find the appropriate node based on encrypted features.
+     * Essentially, traverse every node in the level of the tree, the index will inform you which node to visit.
+     * If the node is a classification, return the node.
+     * Otherwise, you need to compare the encrypted features with the node's threshold, and update the index for the next level-site.
+     * @param level_site_data The level-order site data.
+     * @param encrypted_features The encrypted features to compare.
+     * @param niu The Alice protocol instance for comparison.
+     * @return The matching NodeInfo object.
+     * @throws HomomorphicException If an error occurs during homomorphic operations.
+     * @throws IOException If an I/O error occurs.
+     * @throws ClassNotFoundException If a class is not found during deserialization.
+     */
     public static NodeInfo traverse_level(level_order_site level_site_data,
-                                         features encrypted_features,
-                                         alice niu)
+                                          features encrypted_features,
+                                          alice niu)
             throws HomomorphicException, IOException, ClassNotFoundException {
-
         List<NodeInfo> node_level_data = level_site_data.get_node_data();
         boolean terminalLeafFound = false;
         boolean equalsFound = false;
@@ -64,7 +89,7 @@ public class shared {
         NodeInfo to_return = null;
 
         // The n index tells you when you are in scope in regard to level-site
-        // Level-sites are made of leaves, and split the inequality into two nodes,
+        // Level-sites are made of leaves and split the inequality into two nodes,
         // so you have a '<=' and '>' node and '=' and '!=' in pairs
         logger.debug("In-scope index should be: {} and {}",
                 2 * encrypted_features.get_current_index(), 2 * encrypted_features.get_current_index() + 1);
@@ -136,7 +161,19 @@ public class shared {
         return to_return;
     }
 
-    // Used by level-site and server-site to compare with a client
+    /**
+     * A wrapper for encrypted integer comparison protocol.
+     * This will handle which encryption scheme and comparison is to be used.
+     *
+     * @param ld The NodeInfo containing the threshold.
+     * @param comparisonType The type of comparison to perform.
+     * @param encrypted_features The encrypted features to compare.
+     * @param Niu The Alice protocol instance for comparison.
+     * @return True if the comparison holds, false otherwise.
+     * @throws ClassNotFoundException If a class is not found during deserialization.
+     * @throws HomomorphicException If an error occurs during homomorphic operations.
+     * @throws IOException If an I/O error occurs.
+     */
     public static boolean compare(NodeInfo ld, int comparisonType,
                                   features encrypted_features, alice Niu)
             throws ClassNotFoundException, HomomorphicException, IOException {
@@ -152,7 +189,7 @@ public class shared {
         }
         BigInteger encrypted_client_value = null;
         BigInteger encrypted_thresh = null;
-        logger.info(String.format("Using comparison type %d", comparisonType));
+        logger.info("Using comparison type {}", comparisonType);
 
         // Encrypt the thresh-hold correct
         // Note only types 1, 3, 4, 6 have been known to exist
@@ -182,7 +219,7 @@ public class shared {
             answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
         }
         else if (comparisonType == 6) {
-            // Also factors in type 6, just need it to the negated result
+            // Also, factors in type 6, just need it to the negated result
             logger.info("Using encrypted inequality check");
             answer = Niu.encrypted_equals(encrypted_thresh, encrypted_client_value);
             answer = !answer;
@@ -207,38 +244,59 @@ public class shared {
         return answer;
     }
 
-    public static void closeConnection(ObjectOutputStream oos, 
-                    ObjectInputStream ois, Socket client_socket) throws IOException {
+    /**
+     * Closes the connection by closing the provided streams and socket.
+     *
+     * @param oos The ObjectOutputStream to close.
+     * @param ois The ObjectInputStream to close.
+     * @param client_socket The client socket to close.
+     * @throws IOException If an I/O error occurs.
+     */
+    public static void closeConnection(ObjectOutputStream oos,
+                                       ObjectInputStream ois, Socket client_socket) throws IOException {
         if (oos != null) {
             oos.close();
         }
-		if (ois != null) {
+        if (ois != null) {
             ois.close();
         }
-		if (client_socket != null && client_socket.isConnected()) {
-			client_socket.close();
-		}
-	}
+        if (client_socket != null && client_socket.isConnected()) {
+            client_socket.close();
+        }
+    }
 
+    /**
+     * Closes the connection for a given client socket.
+     *
+     * @param client_socket The client socket to close.
+     * @throws IOException If an I/O error occurs.
+     */
     public static void closeConnection(Socket client_socket) throws IOException {
         closeConnection(null, null, client_socket);
     }
 
+    /**
+     * Creates a ValidatingObjectInputStream for a given socket.
+     * This restricts the types of objects that can be deserialized to prevent security issues.
+     * We restrict the types to only classes needed for the decision tree protocol implemented.
+     *
+     * @param socket The socket to read from.
+     * @return A ValidatingObjectInputStream instance.
+     * @throws IOException If an I/O error occurs.
+     */
     public static ValidatingObjectInputStream get_ois(Socket socket) throws IOException {
         ValidatingObjectInputStream ois = new ValidatingObjectInputStream(socket.getInputStream());
         ois.accept(
-                weka.finito.structs.NodeInfo.class,
-                weka.finito.structs.level_order_site.class,
-                weka.finito.structs.BigIntegers.class,
-                weka.finito.structs.features.class,
-                weka.finito.utils.LabelEncoder.class,
-
+                edu.fiu.adwise.weka.finito.structs.NodeInfo.class,
+                edu.fiu.adwise.weka.finito.structs.level_order_site.class,
+                edu.fiu.adwise.weka.finito.structs.BigIntegers.class,
+                edu.fiu.adwise.weka.finito.structs.features.class,
+                edu.fiu.adwise.weka.finito.utils.LabelEncoder.class,
                 java.util.HashMap.class,
                 java.util.ArrayList.class,
                 java.lang.String.class,
-                security.paillier.PaillierPublicKey.class,
-                security.dgk.DGKPublicKey.class,
-
+                edu.fiu.adwise.homomorphic_encryption.paillier.PaillierPublicKey.class,
+                edu.fiu.adwise.homomorphic_encryption.dgk.DGKPublicKey.class,
                 java.lang.Number.class,
                 java.math.BigInteger.class,
                 java.lang.Long.class
@@ -248,6 +306,12 @@ public class shared {
         return ois;
     }
 
+    /**
+     * Closes the connection for a given server socket.
+     *
+     * @param server_socket The server socket to close.
+     * @throws IOException If an I/O error occurs.
+     */
     public static void closeConnection(ServerSocket server_socket) throws IOException {
         if (server_socket != null) {
             server_socket.close();

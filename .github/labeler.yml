@@ -1,8 +1,5 @@
 Docker:
-  - Dockerfile
-
-external-pr:
-  - 'pull_request_target'
+  - 'Dockerfile'
 
 Kubernetes:
   - 'k8s/**'
@@ -20,4 +17,4 @@ Documentation:
   - '**/*.md'
 
 Github-files:
-  - .github/**
+  - '.github/**'

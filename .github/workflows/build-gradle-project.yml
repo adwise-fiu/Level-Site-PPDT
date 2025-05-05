@@ -10,6 +10,11 @@ on:
       - feature*
       - fix*
 
+# Automatically cancel any previous workflow on a new push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 jobs:
   build-gradle-project:
     if: github.event.review.state == 'approved'

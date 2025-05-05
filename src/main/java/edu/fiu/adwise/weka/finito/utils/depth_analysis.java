@@ -1,4 +1,4 @@
-package weka.finito.utils;
+package edu.fiu.adwise.weka.finito.utils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,23 +10,35 @@ import weka.core.SerializationHelper;
 
 import java.io.*;
 
-
+/**
+ * Utility class for analyzing the depth of the classification each instance in a decision tree from the training data.
+ * This analysis is useful, since we are assuming testing data will be similar to the training data.
+ * It stands to reason that we'd want to know how deep the classification is, for each instance in the training data, to
+ * eventually justify using our approach in evaluating a decision tree.
+ */
 public class depth_analysis {
 
+    /** Logger for logging messages and errors. */
     private static final Logger logger = LogManager.getLogger(depth_analysis.class);
 
+    /**
+     * Retrieves the leaf node classification for a given instance in the decision tree.
+     * If you are curious, the numbers in parentheses can obtain as follows
+     * tree.getLocalModel().distribution().numIncorrect() + tree.getLocalModel().distribution().numCorrect();
+     * tree.getLocalModel().distribution().numIncorrect();
+     *
+     * @param tree The decision tree to traverse.
+     * @param feature The instance to classify.
+     * @return The classification label of the leaf node.
+     * @throws Exception If an error occurs during tree traversal.
+     */
     public static String getLeaf(ClassifierTree tree, Instance feature) throws Exception {
         if (tree.isLeaf()) {
-            // if you are curious, the numbers in parentheses can obtain as follows
-            // tree.getLocalModel().distribution().numIncorrect() + tree.getLocalModel().distribution().numCorrect();
-            // tree.getLocalModel().distribution().numIncorrect();
             return tree.getLocalModel().dumpLabel(0, tree.getTrainingData());
-        }
-        else {
-            // Parse Tree and Features
+        } else {
             String attribute_name = tree.getLocalModel().leftSide(tree.getTrainingData()).strip();
             String rightSide = tree.getLocalModel().rightSide(0, tree.getTrainingData()).strip();
-            String [] comparison = rightSide.split(" ");
+            String[] comparison = rightSide.split(" ");
             String operation = comparison[0];
             String tree_value_string = comparison[1];
 
@@ -45,38 +57,41 @@ public class depth_analysis {
                 // String comparisons only
                 if (tree_value_string.equals(feature.stringValue(x))) {
                     return getLeaf(tree.getSons()[0], feature);
-                }
-                else {
+                } else {
                     return getLeaf(tree.getSons()[1], feature);
                 }
-            }
-            else if (operation.equals("<=")) {
+            } else if (operation.equals("<=")) {
                 // Numbers only
                 if (value <= Double.parseDouble(tree_value_string)) {
                     return getLeaf(tree.getSons()[0], feature);
-                }
-                else {
+                } else {
                     return getLeaf(tree.getSons()[1], feature);
                 }
-            }
-            else {
+            } else {
                 System.out.println("IMPOSSIBLE!!!");
                 return null;
             }
         }
     }
 
+    /**
+     * Calculates the depth of a specific leaf node in the decision tree.
+     *
+     * @param tree The decision tree to traverse.
+     * @param leaf The classification label of the leaf node.
+     * @param depth The current depth during traversal.
+     * @return The depth of the specified leaf node, or -1 if not found.
+     * @throws Exception If an error occurs during tree traversal.
+     */
     public static int getDepth(ClassifierTree tree, String leaf, int depth) throws Exception {
         if (tree.isLeaf()) {
             String full_leaf = tree.getLocalModel().dumpLabel(0, tree.getTrainingData());
             if (full_leaf.equals(leaf)) {
                 return depth;
-            }
-            else {
+            } else {
                 return -1;
             }
-        }
-        else {
+        } else {
             for (int i = 0; i < tree.getSons().length; i++) {
                 // Determine which type of comparison is occurring.
                 if (getDepth(tree.getSons()[i], leaf, depth) != -1) {
@@ -87,15 +102,17 @@ public class depth_analysis {
         return -1;
     }
 
-
-    public static void main(String [] args) throws Exception {
-
-        // check input folder for .model and .arff
+    /**
+     * Main method for analyzing the depth of decision trees and writing results to a CSV file.
+     *
+     * @param args Command-line arguments, where the first argument is the dataset name.
+     * @throws Exception If an error occurs during processing.
+     */
+    public static void main(String[] args) throws Exception {
         String data_set = args[0];
-        String model_file = new File("data",  data_set + ".model").toString();
-        String arff_file = new File("data",  data_set + ".arff").toString();
+        String model_file = new File("data", data_set + ".model").toString();
+        String arff_file = new File("data", data_set + ".arff").toString();
 
-        // Read the .model file and create the dot file
         ClassifierTree tree = (ClassifierTree) SerializationHelper.read(model_file);
         Instances data = null;
 
@@ -106,7 +123,6 @@ public class depth_analysis {
             logger.fatal(e2.getStackTrace());
         }
 
-        // If the data has a class attribute, set it
         assert data != null;
         if (data.classIndex() == -1) {
             data.setClassIndex(data.numAttributes() - 1);
@@ -115,7 +131,6 @@ public class depth_analysis {
         try (FileWriter fileWriter = new FileWriter(data_set + ".csv", true);
              PrintWriter printWriter = new PrintWriter(fileWriter)) {
 
-            // Loop through each instance
             for (Instance instance : data) {
                 String classification = getLeaf(tree, instance);
                 int depth = getDepth(tree, classification, 1);
