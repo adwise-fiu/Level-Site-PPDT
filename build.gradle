@@ -1,7 +1,10 @@
 plugins {
     id 'java'
+    id 'java-library'
     id 'jacoco'
     id 'application'
+    id 'maven-publish'
+    id 'signing'
 }
 
 group 'io.github.andrewquijano'
@@ -17,17 +20,26 @@ java {
 }
 
 dependencies {
-    implementation 'junit:junit:4.13.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0-M2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.0-M2'
+    testImplementation 'junit:junit:4.13.2'
 
-    implementation 'io.github.andrewquijano:ciphercraft:1.0.3'
+    implementation 'io.github.andrewquijano:ciphercraft:1.0.6'
     // https://mvnrepository.com/artifact/commons-io/commons-io
     implementation 'commons-io:commons-io:2.16.1'
     // https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-dev
     implementation 'nz.ac.waikato.cms.weka:weka-dev:3.9.6'
-    implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta1'
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
+    implementation 'org.apache.logging.log4j:log4j-core:2.24.3'
+}
+
+// To create the JAR file with 'gradlew jar'
+tasks.named('jar') {
+    archiveFileName = "${project.name}-${project.version}.jar"
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': System.getenv('VERSION') ?: project.version
+        )
+    }
 }
 
 // Commenting because it doesn't work well on TravisCI
@@ -88,4 +100,85 @@ check.dependsOn jacocoTestReport
 
 application {
     mainClass.set(project.findProperty("chooseRole").toString())
+}
+
+tasks.register('generateJavadoc', Javadoc) {
+    source = sourceSets.main.allJava
+    classpath = sourceSets.main.compileClasspath
+    options.encoding = 'UTF-8'
+    options.memberLevel = JavadocMemberLevel.PUBLIC
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.docTitle = 'Level-Site Privacy-Preserving Decision Tree'
+}
+
+// This is for publishing the library to Maven Central
+publishing {
+    publications {
+        register("mavenJava", MavenPublication) {
+            from components.java
+
+            pom {
+                name.set('level-site-ppdt')
+                description.set('This JAR file is used for implementing the Level-Site Privacy-Preserving Decision Trees (PPDT). ' +
+                        'See the paper "Enhanced Outsourced and Secure Inference for Tall Sparse Decision Trees" which describes the implementation and ' +
+                        'performance gains this approach has in avoiding the conversion to a complete binary tree as in the Joye and Salehi paper.')
+                url.set('https://github.com/adwise-fiu/Level-Site-PPDT')
+
+                licenses {
+                    license {
+                        name.set('MIT License')
+                        url.set('https://opensource.org/licenses/MIT')
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set('AndrewQuijano')
+                        name.set('Andrew Quijano')
+                        email.set('andrew.quijano@nyu.edu')
+                    }
+                }
+
+                scm {
+                    connection.set('scm:git:git://github.com/adwise-fiu/Level-Site-PPDT.git')
+                    developerConnection.set('scm:git:ssh://github.com:adwise-fiu/Level-Site-PPDT.git')
+                    url.set('https://github.com/adwise-fiu/Level-Site-PPDT')
+                }
+            }
+        }
+    }
+}
+
+// Update this file, ~/.gnupg/dirmngr.conf
+// and add this line to the file 'keyserver hkps://keyserver.ubuntu.com'
+// then run 'gpg --send-keys YOUR_KEY_ID'
+signing {
+    // Point to the key file on your machine, used for local testing
+    def signingKeyFile = findProperty("signingKeyFile") ?: System.getenv("SIGNING_KEY_FILE")
+    // gpg --armor --export-secret-keys YOUR_KEY_ID, export the key into a secret
+    def signingKey = findProperty("signingKey") ?: System.getenv("SIGNING_KEY") ?: ""
+    // If no property or environment variable is found, it will be empty password
+    def signingPassword = findProperty("signingPassword") ?: System.getenv("SIGNING_PASSWORD") ?: ""
+
+    if (signingKeyFile) {
+        println("Reading signing key from file: $signingKeyFile")
+        def signingKey_content = new File(signingKeyFile.toString()).text
+        useInMemoryPgpKeys(signingKey_content.toString(), signingPassword.toString())
+        publishing.publications.named("mavenJava").configure { publication ->
+            signing.sign(publication)
+        }
+    }
+    else {
+        println("No signing key file found, will attempt to use in-memory key")
+        if (signingKey) {
+            println("Using in-memory signing key")
+            useInMemoryPgpKeys(signingKey.toString(), signingPassword?.toString())
+            publishing.publications.named("mavenJava").configure { publication ->
+                signing.sign(publication)
+            }
+        }
+        else {
+            println("No signing key found. Skipping signing.")
+        }
+    }
 }
