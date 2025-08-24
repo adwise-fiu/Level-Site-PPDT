@@ -15,6 +15,8 @@ repositories {
 }
 
 java {
+    withJavadocJar()
+    withSourcesJar()
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
@@ -156,7 +158,7 @@ signing {
     // Point to the key file on your machine, used for local testing
     def signingKeyFile = findProperty("signingKeyFile") ?: System.getenv("SIGNING_KEY_FILE")
     // gpg --armor --export-secret-keys YOUR_KEY_ID, export the key into a secret
-    def signingKey = findProperty("signingKey") ?: System.getenv("SIGNING_KEY") ?: ""
+    def signingKey = findProperty("signingKey") ?: System.getenv("SIGNING_KEY")
     // If no property or environment variable is found, it will be empty password
     def signingPassword = findProperty("signingPassword") ?: System.getenv("SIGNING_PASSWORD") ?: ""
 
