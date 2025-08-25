@@ -138,6 +138,11 @@ publishing {
                         id.set('AndrewQuijano')
                         name.set('Andrew Quijano')
                         email.set('andrew.quijano@nyu.edu')
+                        roles.add('Lead Developer')
+                        organization {
+                            name.set('New York University')
+                            url.set('https://www.nyu.edu')
+                        }
                     }
                 }
 
